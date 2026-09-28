@@ -1,7 +1,7 @@
 ---
-title: "REST API Endpoints for System Settings"
+title: "Mushroom Pi REST API — Settings Endpoint Reference"
 sidebarTitle: "Settings"
-description: "Retrieve and update Mushroom Pi system settings programmatically, including display preferences and polling configuration."
+description: "Retrieve and update system-wide Mushroom Pi settings — temperature unit, sensor reading retention period, and polling interval — via the REST API."
 ---
 
 The Settings API exposes the system-wide configuration that governs how Mushroom Pi behaves — the temperature unit displayed in the dashboard, how many days of sensor readings to retain before pruning, and other operational preferences. You can read the current settings to inspect your installation's configuration, or update individual fields without touching the dashboard.
@@ -34,7 +34,7 @@ curl -H "Authorization: Bearer <your-token>" \
 </ResponseField>
 
 <ResponseField name="dataRetentionDays" type="integer">
-  Number of days for which sensor readings are retained in the SQLite database before being pruned. Set to `0` to disable automatic pruning.
+  Number of days for which sensor readings are retained before being pruned. Set to `0` to disable automatic pruning.
 </ResponseField>
 
 <ResponseField name="pollingIntervalSeconds" type="integer">

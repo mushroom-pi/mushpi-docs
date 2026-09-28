@@ -1,7 +1,7 @@
 ---
-title: "Mushroom Pi System Architecture and Components"
+title: "Mushroom Pi Architecture: Firmware, Backend, Dashboard"
 sidebarTitle: "System Overview"
-description: "Understand how Mushroom Pi's firmware, backend, and dashboard work together to automate your mushroom grow environment."
+description: "Learn how the Pico firmware, NestJS backend, and React dashboard combine to give you automated control over your mushroom grow environment."
 ---
 
 Mushroom Pi is made up of three cooperating components that each run on separate hardware and communicate over your local network. Understanding how they fit together helps you configure the system correctly, extend it to multiple grow spaces, and quickly pinpoint the source of any problem that arises.
@@ -36,13 +36,12 @@ The backend identifies each unit by the address it announces on first contact. R
 
 ## Repositories
 
-Every component lives in its own repository. You only need to interact with these directly if you are extending or contributing to the system — for running Mushroom Pi, the single container image from `mushpi-ops` is the entry point.
+Every component lives in its own open-source repository. You only need to work with these directly if you are extending or contributing to Mushroom Pi — to run it, the published container image is the only entry point you need.
 
 | Repository | What it contains |
 |---|---|
 | [`mushpi-grow`](https://github.com/mushroom-pi/mushpi-grow) | MicroPython firmware for the Pico 2W — DHT11 sensor reading, relay control, hysteresis loop, REST API on port 5000 |
-| [`mushpi-server`](https://github.com/mushroom-pi/mushpi-server) | NestJS 11 backend — 60s cron polling, SQLite storage, control proxying, batches, recipes, images, OpenAPI spec |
+| [`mushpi-server`](https://github.com/mushroom-pi/mushpi-server) | NestJS 11 backend — 60s cron polling, SQLite storage, control proxying, batches, recipes, OpenAPI spec |
 | [`mushpi-client`](https://github.com/mushroom-pi/mushpi-client) | React 19 dashboard — auto-generated OpenAPI client, MUI v7, TanStack Query, Recharts |
 | [`mushpi-mock`](https://github.com/mushroom-pi/mushpi-mock) | FastAPI mock Pico unit — mirrors the `mushpi-grow` REST API for demos and testing without hardware |
-| [`mushpi-ops`](https://github.com/mushroom-pi/mushpi-ops) | Release and self-hosting entry point — Dockerfile, Compose file, CI publish to GHCR |
-| [`mushpi-docs`](https://github.com/mushroom-pi/mushpi-docs) | C4 architecture diagrams, hardware reference, MVP roadmap |
+| [`mushpi-ops`](https://github.com/mushroom-pi/mushpi-ops) | Self-hosting entry point — the published container image, Compose file, and deployment manifest |

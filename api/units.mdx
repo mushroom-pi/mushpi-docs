@@ -1,7 +1,7 @@
 ---
-title: "REST API Endpoints for Pico Units"
+title: "Mushroom Pi REST API Units — List, Get and Control"
 sidebarTitle: "Units"
-description: "List, retrieve, and send control commands to registered Pico units via the Mushroom Pi REST API."
+description: "List all registered Pico units, retrieve a single unit with its latest sensor readings, and send relay control commands via the Mushroom Pi REST API."
 ---
 
 Pico units are the physical Raspberry Pi Pico 2W devices deployed in your grow spaces. Each unit reads a DHT11 temperature/humidity sensor and drives humidifier, fan, and heater relays through an onboard hysteresis control loop. The Units API lets you enumerate registered devices, inspect their latest sensor readings and relay states, and send manual relay commands — all over the same REST API that powers the dashboard.
@@ -107,7 +107,7 @@ curl -H "Authorization: Bearer <your-token>" \
 </ResponseField>
 
 <ResponseField name="latestReading" type="object">
-  The most recent sensor reading stored in the database for this unit.
+  The most recent sensor reading collected from this unit.
 
   <Expandable title="latestReading fields">
     <ResponseField name="latestReading.temperature" type="number">

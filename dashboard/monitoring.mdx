@@ -1,5 +1,5 @@
 ---
-title: "Monitor Temperature and Humidity in Real Time"
+title: "Live Sensor Monitoring in the Mushroom Pi Dashboard"
 sidebarTitle: "Monitoring"
 description: "View live sensor readings and relay states for each Pico unit, and browse historical temperature and humidity charts in the Mushroom Pi dashboard."
 ---
@@ -25,7 +25,7 @@ If a unit has not been polled recently — for example because it is offline or 
 
 Below the live readings, the monitoring view renders two interactive line charts powered by **Recharts**:
 
-- **Temperature over time** — a continuous line showing every recorded temperature reading stored in the SQLite database for the selected unit.
+- **Temperature over time** — a continuous line showing every recorded temperature reading for the selected unit.
 - **Humidity over time** — the equivalent chart for relative humidity.
 
 You can zoom and pan both charts to inspect specific windows of time. Hover over any data point to see the exact value and timestamp. The charts are a practical way to correlate environmental changes — a humidity dip, a temperature spike — with events in your grow such as fruiting or contamination.

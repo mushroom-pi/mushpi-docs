@@ -1,7 +1,7 @@
 ---
-title: "Register a Pico Unit with the Mushroom Pi Server"
+title: "Register a Pico 2W Unit with Your Mushroom Pi Server"
 sidebarTitle: "Pico Registration"
-description: "Connect a flashed Raspberry Pi Pico 2W to your Mushroom Pi server so it appears in the dashboard and begins sending sensor data."
+description: "Connect a flashed Raspberry Pi Pico 2W to your Mushroom Pi server so the unit appears in the dashboard and begins sending live sensor data."
 ---
 
 When a flashed Pico 2W powers on, it connects to your Wi-Fi network and announces itself to the Mushroom Pi server by calling the backend's announce endpoint. The server registers the unit, assigns it an ID, and begins polling it every 60 seconds to collect temperature and humidity readings. From that point on, the unit appears in your dashboard and participates in any batch or recipe you assign to it.
@@ -27,10 +27,10 @@ When a flashed Pico 2W powers on, it connects to your Wi-Fi network and announce
     Connect the Pico 2W to power via USB. On boot it will:
 
     1. Connect to the Wi-Fi network using the credentials in its config
-    2. Send an announce request to `http://<pi-ip>:3000/units/announce`
+    2. Send an announce request to the Mushroom Pi server at `http://<pi-ip>:3000`
     3. Start the DHT11 sensor loop and wait for the server to poll it
 
-    The server processes the announce request and registers the unit in SQLite. This happens automatically — you don't need to do anything on the server side.
+    The server processes the announce request and registers the unit automatically — you don't need to do anything on the server side.
   </Step>
 
   <Step title="Verify the unit appears in the dashboard">

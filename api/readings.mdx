@@ -1,7 +1,7 @@
 ---
-title: "REST API Endpoints for Sensor Readings"
+title: "Mushroom Pi REST API — Query Sensor Reading History"
 sidebarTitle: "Readings"
-description: "Query historical temperature and humidity readings for your grow units via the Mushroom Pi REST API."
+description: "Query historical temperature and humidity readings by unit, time range, and page size via the Mushroom Pi REST API. Export data for custom analysis."
 ---
 
 The Readings API provides access to the historical temperature and humidity data that the backend collects from each Pico unit during its 60-second polling cycle. Use it to export data to external analysis tools, build custom dashboards, generate reports, or feed readings into alerting pipelines — everything the built-in Recharts graphs display is available here in raw JSON form.
@@ -52,7 +52,7 @@ curl -H "Authorization: Bearer <your-token>" \
 ```
 
 <ResponseField name="id" type="integer">
-  Auto-incrementing primary key for the reading record in SQLite.
+  Unique numeric identifier for the reading record.
 </ResponseField>
 
 <ResponseField name="unitId" type="string">

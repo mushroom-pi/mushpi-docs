@@ -1,14 +1,14 @@
 ---
-title: "Authenticating with the Mushroom Pi API"
+title: "Mushroom Pi REST API Authentication Reference Guide"
 sidebarTitle: "Authentication"
-description: "Mushroom Pi API authentication — how to obtain and use credentials to make authorized requests to the REST API."
+description: "How to obtain and use credentials to make authorised requests to the Mushroom Pi REST API from scripts, curl, or any HTTP client on your LAN."
 ---
 
 The Mushroom Pi API is self-hosted and runs entirely on your local network. Authentication ensures that only authorised clients — your dashboard, your scripts, and the tools you choose — can read sensor data or send relay commands to your grow units. Because the system controls physical hardware (humidifiers, fans, and heaters), it is important that unauthenticated requests are rejected even on a trusted LAN.
 
 ## Credentials
 
-Your API credentials are configured during the first-boot setup of the Mushroom Pi stack. If you need to rotate or retrieve them, refer to the setup section of your deployment guide (`mushpi-ops/DEPLOYMENT.md`).
+Your API credentials are configured during the first-boot setup of the Mushroom Pi stack. If you need to rotate or retrieve them, refer to the setup section of your deployment guide.
 
 ## Making Authenticated Requests
 

@@ -1,16 +1,16 @@
 ---
-title: "Pico Firmware REST API Endpoint Reference"
+title: "Mushroom Pi Pico Firmware API — Endpoint Reference"
 sidebarTitle: "Endpoints"
-description: "Full reference for the mushpi-grow REST API endpoints: status, control, and announce — the interface between your Pico 2W and the backend server."
+description: "Full reference for the Pico 2W firmware REST API: GET /status for live readings, POST /control for relay commands, and GET /announce for unit discovery."
 ---
 
-The `mushpi-grow` MicroPython firmware exposes three HTTP endpoints through its Microdot server on port 5000. These endpoints form the entire interface between the Pico 2W and the NestJS backend — the backend reads `/status` on every 60-second poll, sends relay commands to `/control`, and uses `/announce` for initial unit discovery. You can call any of these endpoints directly from a terminal or script for diagnostics and manual control.
+The `mushpi-grow` MicroPython firmware exposes three HTTP endpoints through its Microdot server on port 5000. These endpoints form the entire interface between the Pico 2W and the Mushroom Pi backend — the backend reads `/status` on every 60-second poll, sends relay commands to `/control`, and uses `/announce` for initial unit discovery. You can call any of these endpoints directly from a terminal or script for diagnostics and manual control.
 
 ---
 
 ## GET /status
 
-Returns the current sensor reading from the DHT11 sensor and the live state of all three relay outputs. This is the primary endpoint polled by the backend on its 60-second cron schedule.
+Returns the current sensor reading from the DHT11 sensor and the live state of all three relay outputs. This is the primary endpoint polled by the backend every 60 seconds.
 
 ### Request
 
@@ -123,7 +123,7 @@ curl http://<pico-ip>:5000/announce
 ```
 
 <ResponseField name="id" type="string">
-  The persistent unique identifier for this Pico unit. This value is set during first-boot provisioning and is used as the primary key throughout the backend API.
+  The persistent unique identifier for this Pico unit. This value is set during first-boot provisioning and is used as the unit identifier throughout the backend API.
 </ResponseField>
 
 <ResponseField name="version" type="string">

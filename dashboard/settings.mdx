@@ -1,7 +1,7 @@
 ---
-title: "Configure Mushroom Pi Dashboard Settings"
+title: "Configure the Mushroom Pi Dashboard: Settings Guide"
 sidebarTitle: "Settings"
-description: "Adjust system-wide settings in the Mushroom Pi dashboard including units of measurement, polling behavior, and notification preferences."
+description: "Adjust settings in the Mushroom Pi dashboard — choose temperature units, manage registered Pico units, and configure data retention."
 ---
 
 The Settings page is where you tailor the Mushroom Pi dashboard to match your setup and preferences. From here you can change how the dashboard displays readings, review the polling configuration, manage which Pico units are active, and control how long the system keeps historical data. Most changes take effect immediately; a small number require restarting the container.
@@ -23,7 +23,7 @@ The Settings page is where you tailor the Mushroom Pi dashboard to match your se
   | **Polling interval** | The interval at which the backend polls each Pico unit for a new sensor reading. The default is **60 seconds**. |
 
   <Note>
-    The polling interval is configured on the backend via the server's environment variables, not through the dashboard UI. This panel is **informational** — it shows you the current setting so you know how fresh your readings are. To change the interval, update the relevant environment variable and restart the container. See [Environment Configuration](/configuration/environment) for details.
+    The polling interval is informational — it shows you how fresh your readings are. This value is fixed at deployment time and is not adjustable through the dashboard UI. See [Environment Configuration](/configuration/environment) if you need to change it.
   </Note>
 </Accordion>
 
@@ -39,7 +39,7 @@ The Settings page is where you tailor the Mushroom Pi dashboard to match your se
 </Accordion>
 
 <Accordion title="Data Retention">
-  **Data retention** controls how long the system keeps historical sensor readings in the SQLite database.
+  **Data retention** controls how long the system keeps historical sensor readings.
 
   | Setting | Description |
   |---|---|
@@ -49,9 +49,9 @@ The Settings page is where you tailor the Mushroom Pi dashboard to match your se
 </Accordion>
 
 <Note>
-  Some settings — particularly those that affect the backend's runtime behaviour, such as the polling interval and database path — require **restarting the container** to take effect. You can restart the container from the host machine with `docker compose restart` (or the equivalent command for your deployment). Changes made through the dashboard UI that are marked as requiring a restart will display a reminder banner until the container is cycled. See [Self-Hosting](/deployment/self-hosting) for container management instructions.
+  Some settings require **restarting the container** to take effect. Changes made through the dashboard UI that require a restart will display a reminder banner until the container is cycled. You can restart the container from the host machine with `docker compose restart`. See [Self-Hosting](/deployment/self-hosting) for container management instructions.
 </Note>
 
 ## Advanced configuration
 
-Settings that cannot be changed through the dashboard UI — including the polling interval, the port the server listens on, and the SQLite database location — are controlled by environment variables passed to the container at startup. See [Environment Configuration](/configuration/environment) for a full reference of every available variable and how to set it in your `compose.yml` or `.env` file.
+Some settings — such as the polling interval — cannot be changed through the dashboard UI and must be configured before the container starts. See [Environment Configuration](/configuration/environment) for a full reference of every available option and how to set it in your `compose.yml` or `.env` file.

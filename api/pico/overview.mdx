@@ -1,7 +1,7 @@
 ---
-title: "Mushroom Pi Pico Firmware REST API"
+title: "Mushroom Pi Pico REST API Overview and Getting Started"
 sidebarTitle: "Overview"
-description: "The Pico 2W firmware exposes a lightweight REST API on port 5000 for sensor readings, relay control, and unit announcement."
+description: "Each Pico 2W running mushpi-grow exposes a lightweight REST API on port 5000 for live sensor readings, relay control, and unit self-announcement."
 ---
 
 Each Raspberry Pi Pico 2W running the `mushpi-grow` MicroPython firmware includes a small HTTP server built on [Microdot](https://github.com/miguelgrinberg/microdot). This server listens on port 5000 and provides three endpoints: one for reading the current sensor values and relay states, one for issuing relay commands, and one for unit discovery. The Mushroom Pi backend polls this API every 60 seconds to collect readings and to proxy control commands from the dashboard — but you can also call it directly from any HTTP client on the same network.
@@ -15,7 +15,7 @@ http://<pico-ip>:5000
 Replace `<pico-ip>` with the local network IP address of the Pico unit. You can find this in the backend dashboard under the unit's detail view, or in the response from `GET /api/units/:id` (see [Units](/api/units)).
 
 <Note>
-  This API is primarily designed for the NestJS backend to consume. Sending commands directly to the Pico bypasses the backend's automatic hysteresis control loop and may cause the relay state to be overridden at the next polling cycle. Use direct calls for diagnostics, hardware testing, or one-off manual overrides — not as a replacement for the backend control flow.
+  This API is primarily consumed by the Mushroom Pi backend. Sending commands directly to the Pico bypasses the backend's automatic hysteresis control loop and may cause the relay state to be overridden at the next polling cycle. Use direct calls for diagnostics, hardware testing, or one-off manual overrides — not as a replacement for the backend control flow.
 </Note>
 
 ## Endpoints

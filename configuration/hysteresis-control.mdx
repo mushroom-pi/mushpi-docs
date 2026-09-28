@@ -1,7 +1,7 @@
 ---
-title: "Tuning the Hysteresis Control Loop on Your Pico"
+title: "Tuning the Hysteresis Control Loop on Your Pico 2W"
 sidebarTitle: "Hysteresis Control"
-description: "Understand and adjust the hysteresis control loop that regulates temperature and humidity on your Raspberry Pi Pico 2W."
+description: "Understand and adjust the hysteresis control loop that regulates temperature and humidity on your Raspberry Pi Pico 2W grow controller."
 ---
 
 Your Pico 2W doesn't simply switch the humidifier or heater on whenever a reading dips below the target — that would cause the relay to chatter on and off dozens of times a minute, wearing it out quickly. Instead, the firmware runs a **hysteresis control loop**: it defines a band around your target value and only acts when the reading drifts outside that band. Once the relay switches, it stays in that state until the reading crosses the opposite edge of the band. The result is stable, quiet control with far fewer relay cycles.

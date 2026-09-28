@@ -1,7 +1,7 @@
 ---
-title: "Flash and Configure the Pico 2W Firmware"
+title: "Flash and Configure Your Pico 2W MicroPython Firmware"
 sidebarTitle: "Pico Firmware"
-description: "How to install MicroPython on your Raspberry Pi Pico 2W and deploy the mushpi-grow firmware for sensor reading and relay control."
+description: "How to install MicroPython on your Raspberry Pi Pico 2W and deploy the mushpi-grow firmware to enable sensor reading, relay control, and the REST API."
 ---
 
 The grow-unit firmware lives in the **[mushpi-grow](https://github.com/mushroom-pi/mushpi-grow)** repository. It is written in MicroPython and uses [Microdot](https://github.com/miguelgrinberg/microdot) to serve a lightweight REST API on port 5000 — the same API the NestJS backend polls every 60 seconds to collect sensor readings and issue relay commands. Getting it running takes five steps: flash MicroPython onto the Pico, clone the repo, edit the config, copy the files across, and reboot.

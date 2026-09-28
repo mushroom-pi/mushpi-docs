@@ -1,7 +1,7 @@
 ---
-title: "Self-Host Mushroom Pi on a Raspberry Pi 3"
+title: "Deploy Mushroom Pi: Self-Hosting on Raspberry Pi 3"
 sidebarTitle: "Self-Hosting"
-description: "Deploy the Mushroom Pi server and dashboard on a Raspberry Pi 3 using the official container image from GHCR."
+description: "Deploy the Mushroom Pi server and dashboard on a Raspberry Pi 3 using the official ghcr.io/mushroom-pi/mushpi container image — no build step required."
 ---
 
 Mushroom Pi ships as a single container image that bundles the NestJS backend and React dashboard together, serving both on port 3000. You pull one image, run one container, and your grow-control server is live — no build step required. This page walks you through getting that container running on a Raspberry Pi 3 using either a plain `docker run` command or a Compose file you can keep in version control.
@@ -70,7 +70,7 @@ http://<pi-ip>:3000
 Replace `<pi-ip>` with your Raspberry Pi's local IP address (find it with `hostname -I` on the Pi). The Mushroom Pi dashboard should load within a few seconds of the container starting.
 
 <Tip>
-For production use, pin your deployment to a specific release tag instead of `latest` — for example, `ghcr.io/mushroom-pi/mushpi:v1.2.0`. This ensures you don't inadvertently pull a breaking change during a routine container restart. Check the [mushpi-ops releases](https://github.com/mushroom-pi/mushpi-ops/releases) page for the latest stable tag.
+For production use, pin your deployment to a specific release tag instead of `latest` — for example, `ghcr.io/mushroom-pi/mushpi:v1.2.0`. This ensures you don't inadvertently pull a breaking change during a routine container restart. Check the [Mushroom Pi releases](https://github.com/mushroom-pi/mushpi-ops/releases) page for the latest stable tag.
 </Tip>
 
 ## Next steps
