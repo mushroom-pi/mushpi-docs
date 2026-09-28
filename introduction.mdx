@@ -1,0 +1,59 @@
+---
+title: "What Is Mushroom Pi? Open-Source Grow Controller"
+sidebarTitle: "Introduction"
+description: "Mushroom Pi automates temperature and humidity control for mushroom cultivation using a Pico 2W, NestJS backend, and React dashboard."
+---
+
+Mushroom Pi is an open-source automated grow controller that keeps your mushroom cultivation environment on target without constant manual intervention. You set the temperature and humidity ranges you want, and the system handles the rest — switching a humidifier, fan, or heater on and off as conditions drift, logging every reading, and giving you a live dashboard so you always know what is happening inside your grow space.
+
+## The three tiers
+
+Mushroom Pi is built as three cooperating layers. You do not need to understand the internals to use it, but knowing what each layer does helps you troubleshoot and extend the system.
+
+**Firmware (Pico 2W)** — A small MicroPython program that runs directly on your Raspberry Pi Pico 2W. It reads a DHT11 temperature and humidity sensor several times per minute and drives up to three relays (humidifier, fan, and heater) through a hysteresis control loop. The loop keeps devices from switching on and off too rapidly by only acting when a reading crosses a configurable threshold. The Pico also exposes a tiny REST API on port 5000 so the backend can poll it and send commands.
+
+**Backend server (NestJS)** — A NestJS 11 application that runs in a Docker container on your Raspberry Pi 3. Every 60 seconds it polls each registered Pico unit, records the sensor readings in a local SQLite database, and proxies any control commands you send from the dashboard back to the correct unit. It also exposes a full OpenAPI REST API that the dashboard — and any other client you build — consumes.
+
+**Web dashboard (React)** — A React 19 single-page application served by the same container as the backend. You open it in any browser on your local network. From here you monitor live conditions, view historical charts, manage cultivation batches and recipes, and adjust relay thresholds — no command line required.
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Environmental Control" icon="temperature-half">
+    Temperature and humidity are held within your target ranges by a relay-based hysteresis control loop that runs entirely on the Pico, so control continues even if the server is briefly unreachable.
+  </Card>
+  <Card title="Multi-Unit Support" icon="network-wired">
+    Register as many Pico 2W units as you need. Each controls its own independent grow space, and the dashboard shows them all side by side.
+  </Card>
+  <Card title="Batch & Recipe Management" icon="flask">
+    Track cultivation runs as named batches and store reusable environment recipes — target temperature, humidity, and relay settings — so you can repeat successful grows with one click.
+  </Card>
+  <Card title="Historical Charts" icon="chart-line">
+    Every sensor reading is stored in SQLite and rendered as interactive time-series charts in the dashboard, so you can spot trends and correlate environmental changes with grow outcomes.
+  </Card>
+  <Card title="Self-Hosted" icon="server">
+    Everything runs on your own hardware inside your local network. No cloud account, no subscription, and no data leaving your home.
+  </Card>
+  <Card title="Open Source" icon="code-branch">
+    Every component — firmware, backend, dashboard, mock, and ops tooling — is published on GitHub under an open licence. Fork, adapt, and contribute freely.
+  </Card>
+</CardGroup>
+
+## How it works
+
+When you power on a Pico unit, it connects to your Wi-Fi network, starts reading the DHT11 sensor, and begins running the relay control loop based on the targets stored in its configuration. Every 60 seconds, the backend server reaches out to the Pico, collects the latest reading, and saves it to the database.
+
+You open the dashboard in your browser and see the current temperature and humidity for each registered unit, alongside charts of recent history. When you want to change a target — say, raise the humidity threshold for pinning — you update it in the dashboard. The backend sends the new setting to the Pico, which applies it immediately and continues controlling the relays against the new target.
+
+If you are starting a new cultivation run, you create a batch in the dashboard, optionally attach a recipe that captures your preferred environmental settings, and the system tracks that run's conditions over its full lifetime.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get your first Pico unit and container running in under an hour.
+  </Card>
+  <Card title="System Overview" icon="sitemap" href="/system-overview">
+    See how the firmware, backend, and dashboard communicate in more detail.
+  </Card>
+</CardGroup>

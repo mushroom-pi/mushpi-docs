@@ -1,0 +1,90 @@
+---
+title: "REST API Endpoints for Sensor Readings"
+sidebarTitle: "Readings"
+description: "Query historical temperature and humidity readings for your grow units via the Mushroom Pi REST API."
+---
+
+The Readings API provides access to the historical temperature and humidity data that the backend collects from each Pico unit during its 60-second polling cycle. Use it to export data to external analysis tools, build custom dashboards, generate reports, or feed readings into alerting pipelines — everything the built-in Recharts graphs display is available here in raw JSON form.
+
+---
+
+## GET /api/readings
+
+Returns an array of historical sensor readings, optionally filtered by unit and time range.
+
+### Query Parameters
+
+<ParamField query="unitId" type="string">
+  Filter results to a specific Pico unit. Omit to retrieve readings across all units.
+</ParamField>
+
+<ParamField query="from" type="string (ISO 8601)">
+  Return only readings recorded at or after this timestamp. Example: `2025-01-15T00:00:00Z`.
+</ParamField>
+
+<ParamField query="to" type="string (ISO 8601)">
+  Return only readings recorded at or before this timestamp. Example: `2025-01-15T23:59:59Z`.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Maximum number of readings to return. Defaults to `100`. Results are returned in reverse-chronological order (most recent first).
+</ParamField>
+
+### Request
+
+```bash
+curl -H "Authorization: Bearer <your-token>" \
+  "http://<pi-ip>:3000/api/readings?unitId=pico-01&from=2025-01-15T00:00:00Z&to=2025-01-15T23:59:59Z&limit=50"
+```
+
+### Response `200 OK`
+
+```json
+[
+  {
+    "id": 1234,
+    "unitId": "pico-01",
+    "temperature": 22.5,
+    "humidity": 88.0,
+    "timestamp": "2025-01-15T10:30:00Z"
+  }
+]
+```
+
+<ResponseField name="id" type="integer">
+  Auto-incrementing primary key for the reading record in SQLite.
+</ResponseField>
+
+<ResponseField name="unitId" type="string">
+  Identifier of the Pico unit that produced this reading.
+</ResponseField>
+
+<ResponseField name="temperature" type="number">
+  Temperature in degrees Celsius as measured by the DHT11 sensor at the time of polling.
+</ResponseField>
+
+<ResponseField name="humidity" type="number">
+  Relative humidity percentage as measured by the DHT11 sensor at the time of polling.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string (ISO 8601)">
+  The UTC time at which the backend recorded this reading.
+</ResponseField>
+
+### Pagination example
+
+To walk through a large dataset in pages of 200:
+
+```bash
+# Page 1
+curl -H "Authorization: Bearer <your-token>" \
+  "http://<pi-ip>:3000/api/readings?unitId=pico-01&limit=200"
+
+# Page 2 — set `to` to the timestamp of the last result from page 1
+curl -H "Authorization: Bearer <your-token>" \
+  "http://<pi-ip>:3000/api/readings?unitId=pico-01&to=2025-01-14T22:10:00Z&limit=200"
+```
+
+<Note>
+  Older readings may be pruned automatically based on the `dataRetentionDays` value in your system settings. If you need to retain historical data beyond the configured window, export it using this endpoint before it is cleaned up. See [Settings](/api/settings) for configuration options.
+</Note>

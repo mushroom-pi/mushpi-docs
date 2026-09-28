@@ -1,0 +1,83 @@
+---
+title: "Use mushpi-mock to Develop Without Hardware"
+sidebarTitle: "Mock Pico"
+description: "Run mushpi-mock, a FastAPI service that simulates a Raspberry Pi Pico 2W unit, so you can develop and test Mushroom Pi without physical hardware."
+---
+
+`mushpi-mock` is a FastAPI service that mirrors the full `mushpi-grow` REST API — the announce endpoint, the status polling endpoint, and the relay control endpoint — responding exactly as a real Pico 2W would. The Mushroom Pi backend cannot tell the difference between a mock unit and a real one. This means you can build new server features, test dashboard flows, and experiment with recipe logic on your laptop without owning any hardware at all.
+
+## Prerequisites
+
+Before you start, make sure you have the following installed:
+
+- **Python 3.11 or later**
+- **[uv](https://docs.astral.sh/uv/)** — the fast Python package and project manager used by `mushpi-mock`
+
+## Run the Mock
+
+<Steps>
+  <Step title="Clone the mushpi-mock repository">
+    ```bash
+    git clone https://github.com/mushroom-pi/mushpi-mock.git && cd mushpi-mock
+    ```
+  </Step>
+
+  <Step title="Install dependencies with uv">
+    `uv sync` reads the project's lockfile and installs all dependencies into an isolated virtual environment in one step — no manual `pip install` or `venv` creation needed:
+
+    ```bash
+    uv sync
+    ```
+  </Step>
+
+  <Step title="Start the mock service">
+    Launch `mushpi-mock` using `uv run` so it runs inside the managed environment:
+
+    ```bash
+    uv run python main.py
+    ```
+
+    The mock starts on **port 5000** by default and prints a confirmation once it's ready to accept requests.
+  </Step>
+
+  <Step title="Register the mock as a unit in the Mushroom Pi backend">
+    Open the Mushroom Pi dashboard (or call the backend API directly) and add a new Pico unit pointing to:
+
+    ```
+    http://localhost:5000
+    ```
+
+    The backend will poll this address on its next cycle (within 60 seconds) and the mock unit will appear as active in the dashboard.
+  </Step>
+
+  <Step title="Develop against the mock">
+    The mock responds to all standard endpoints — announce, status, and relay control — just like a real Pico. Sensor readings are randomized within realistic ranges on each poll, and relay state changes are tracked in memory so control commands round-trip correctly. Work on your feature, watch the dashboard update, and iterate without touching any hardware.
+  </Step>
+</Steps>
+
+## What mushpi-mock Simulates
+
+| Capability | Details |
+|---|---|
+| **Sensor readings** | Temperature and humidity values randomized within realistic mushroom-grow ranges on every poll, keeping the dashboard graphs lively |
+| **Relay state management** | Tracks humidifier, fan, and heater relay states in memory; control commands from the backend flip the state as expected |
+| **Announce endpoint** | Responds to the server's discovery handshake with the same metadata structure a real Pico sends on boot |
+| **REST API surface** | Full parity with the `mushpi-grow` REST API — the server uses the same code paths for mock and real units |
+
+## Running Multiple Mock Units
+
+You can run several instances of `mushpi-mock` simultaneously to simulate a multi-unit grow operation. Start each instance on a different port:
+
+```bash
+# Terminal 1 — unit A
+PORT=5000 uv run python main.py
+
+# Terminal 2 — unit B
+PORT=5001 uv run python main.py
+```
+
+Register each address as a separate unit in the dashboard and you'll have a fully simulated multi-chamber environment to develop against.
+
+<Note>
+`mushpi-mock` is a development and testing tool only — it does not interface with any GPIO pins, relays, or sensors. Running it in a production deployment alongside real Pico units is harmless but pointless; it will never control real hardware.
+</Note>

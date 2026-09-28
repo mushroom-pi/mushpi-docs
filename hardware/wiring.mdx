@@ -1,0 +1,64 @@
+---
+title: "Wiring the Pico 2W: DHT11 and Relay Connections"
+sidebarTitle: "Wiring"
+description: "Step-by-step wiring guide for connecting a DHT11 sensor and three-channel relay module to your Raspberry Pi Pico 2W."
+---
+
+Wiring a Mushroom Pi unit involves two connections: a DHT11 sensor that reports temperature and humidity back to the firmware, and a three-channel relay module that switches your humidifier, fan, and heater on and off. Both run at 3.3 V logic and draw minimal current, so the Pico's own power rails are sufficient for the control side. The relay module's output terminals are where mains-voltage appliances connect — read the safety warning below before you proceed.
+
+<Warning>
+  The **output side** of a relay module (the terminals labelled COM, NO, and NC) may carry mains voltage (110 V or 230 V AC) when you connect real appliances. Work on the wiring only when the appliances are **unplugged from the wall**. If you are not comfortable working with mains wiring, have a qualified electrician complete that portion. The Pico-side (input) wiring described in this guide is low-voltage and safe to handle at any time.
+</Warning>
+
+## Wiring Steps
+
+<Steps>
+  <Step title="Connect the DHT11 sensor">
+    The DHT11 has three pins (some breakout modules add a fourth pull-up resistor pin — check your board's silkscreen):
+
+    - **VCC → Pico pin 36 (3V3 OUT)** — provides 3.3 V power to the sensor
+    - **GND → any Pico GND pin** (e.g. pin 38)
+    - **DATA → a GPIO pin of your choice** — the default in the firmware config is GPIO 15 (pin 20), but you can change it
+
+    If your DHT11 is a bare component (not a module), add a 10 kΩ pull-up resistor between DATA and VCC.
+  </Step>
+
+  <Step title="Connect the relay module">
+    Most five-volt relay modules accept 3.3 V logic signals from the Pico's GPIO pins:
+
+    - **VCC → Pico pin 36 (3V3 OUT)** or the module's own 5 V rail if it has an optocoupler that needs 5 V logic — check your module's datasheet
+    - **GND → any Pico GND pin**
+    - **IN1 (humidifier relay) → GPIO pin** — firmware default is GPIO 16 (pin 21)
+    - **IN2 (fan relay) → GPIO pin** — firmware default is GPIO 17 (pin 22)
+    - **IN3 (heater relay) → GPIO pin** — firmware default is GPIO 18 (pin 24)
+
+    Most relay modules are **active-low**: the relay energises when the GPIO is pulled LOW. The firmware accounts for this; verify that your module matches.
+  </Step>
+
+  <Step title="Power the Pico via USB">
+    Connect a 5 V / 2.5 A USB power supply to the Pico's micro-USB port. The Pico will boot immediately and, once the firmware is flashed, connect to your Wi-Fi network and start the REST API on port 5000.
+
+    During development you can power the Pico from your computer's USB port and use the same cable for `mpremote` access.
+  </Step>
+</Steps>
+
+## Pin Mapping Reference
+
+| Component | Pico Physical Pin | GPIO | Notes |
+|---|---|---|---|
+| DHT11 VCC | 36 | — | 3V3 OUT rail |
+| DHT11 GND | 38 | — | Any GND pin works |
+| DHT11 DATA | 20 | GPIO 15 | Default; configurable in firmware config |
+| Relay VCC | 36 | — | 3V3 OUT (or external 5 V if module requires it) |
+| Relay GND | 38 | — | Any GND pin works |
+| Relay IN1 — Humidifier | 21 | GPIO 16 | Default; configurable in firmware config |
+| Relay IN2 — Fan | 22 | GPIO 17 | Default; configurable in firmware config |
+| Relay IN3 — Heater | 24 | GPIO 18 | Default; configurable in firmware config |
+
+<Note>
+  The GPIO numbers in the table above are the firmware defaults. You can remap all of them in the firmware's config file — see [Pico Firmware](/hardware/pico-firmware) for details. The physical pin numbers follow the standard Raspberry Pi Pico 2W pinout diagram.
+</Note>
+
+## After Wiring
+
+Once all the connections are secure, flash the MicroPython firmware (see [Pico Firmware](/hardware/pico-firmware)). After a successful boot, the Pico will expose a REST API on **port 5000**. You can verify connectivity from any device on the same network by visiting `http://<pico-ip>:5000/status` in a browser or with `curl`.

@@ -1,0 +1,49 @@
+---
+title: "Authenticating with the Mushroom Pi API"
+sidebarTitle: "Authentication"
+description: "Mushroom Pi API authentication — how to obtain and use credentials to make authorized requests to the REST API."
+---
+
+The Mushroom Pi API is self-hosted and runs entirely on your local network. Authentication ensures that only authorised clients — your dashboard, your scripts, and the tools you choose — can read sensor data or send relay commands to your grow units. Because the system controls physical hardware (humidifiers, fans, and heaters), it is important that unauthenticated requests are rejected even on a trusted LAN.
+
+## Credentials
+
+Your API credentials are configured during the first-boot setup of the Mushroom Pi stack. If you need to rotate or retrieve them, refer to the setup section of your deployment guide (`mushpi-ops/DEPLOYMENT.md`).
+
+## Making Authenticated Requests
+
+The API uses token-based authentication. Pass your token in the `Authorization` header of every request:
+
+```bash
+curl -H "Authorization: Bearer <your-token>" \
+     http://<pi-ip>:3000/api/units
+```
+
+Replace `<your-token>` with the credential issued during setup, and `<pi-ip>` with the IP address or hostname of your Raspberry Pi.
+
+### Example — listing units
+
+```bash
+curl \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Accept: application/json" \
+  http://<pi-ip>:3000/api/units
+```
+
+### Example — sending a control command
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"relay": "humidifier", "state": true}' \
+  http://<pi-ip>:3000/api/units/pico-01/control
+```
+
+<Note>
+  When you access Mushroom Pi through the web dashboard, authentication is handled automatically. You only need to manage tokens when making direct API calls from scripts or external tools.
+</Note>
+
+<Tip>
+  The Swagger UI at `http://<your-pi-ip>:3000/api/docs` documents the exact authentication scheme configured for your installation and provides an **Authorize** button that stores your token for the duration of your browser session — making it easy to try authenticated requests interactively.
+</Tip>

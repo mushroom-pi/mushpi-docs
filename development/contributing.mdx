@@ -1,0 +1,53 @@
+---
+title: "Contribute to Mushroom Pi Open-Source Repositories"
+sidebarTitle: "Contributing"
+description: "How to contribute to Mushroom Pi — from reporting bugs and suggesting features to submitting pull requests across the project's repositories."
+---
+
+Mushroom Pi is fully open source and contributions are welcome at every level — whether you've spotted a typo in the docs, hit a bug in the firmware, or have a feature idea that would make the dashboard more useful for growers. The project is organized as a set of independent repositories, each owning one slice of the system, so you can contribute to the part you care about without touching anything else.
+
+## Repository Map
+
+| Repository | Description | GitHub |
+|---|---|---|
+| `mushpi-grow` | MicroPython firmware for the Pico 2W — DHT11 sensor reading, relay control, and the hysteresis control loop | [mushroom-pi/mushpi-grow](https://github.com/mushroom-pi/mushpi-grow) |
+| `mushpi-server` | NestJS 11 backend — 60s cron polling, SQLite storage, control proxying, batches, recipes, and OpenAPI spec | [mushroom-pi/mushpi-server](https://github.com/mushroom-pi/mushpi-server) |
+| `mushpi-client` | React 19 dashboard — auto-generated OpenAPI client, MUI v7, TanStack Query, and Recharts graphs | [mushroom-pi/mushpi-client](https://github.com/mushroom-pi/mushpi-client) |
+| `mushpi-mock` | FastAPI mock Pico service — mirrors the `mushpi-grow` REST API for development and testing without hardware | [mushroom-pi/mushpi-mock](https://github.com/mushroom-pi/mushpi-mock) |
+| `mushpi-docs` | C4 architecture diagrams, hardware reference, agent orchestration maps, and the MVP roadmap | [mushroom-pi/mushpi-docs](https://github.com/mushroom-pi/mushpi-docs) |
+| `mushpi-ops` | The self-hosting entry point — Dockerfile, Docker Compose, CI publish pipeline to GHCR, and the release manifest | [mushroom-pi/mushpi-ops](https://github.com/mushroom-pi/mushpi-ops) |
+
+## How to Contribute
+
+### Report a bug or request a feature
+
+Open an issue on the repository that owns the relevant code. If you're not sure which repo is responsible, open the issue on `mushpi-server` and the maintainers will route it. Good bug reports include:
+
+- What you expected to happen
+- What actually happened
+- Steps to reproduce
+- Your deployment environment (OS, Docker version, hardware)
+
+### Submit a pull request
+
+1. **Fork** the repository you want to change on GitHub.
+2. **Clone** your fork locally and create a feature branch:
+   ```bash
+   git checkout -b fix/my-descriptive-branch-name
+   ```
+3. **Make your changes** and verify them against the build and test instructions in that repo's `README.md`. Every repository documents its own setup, run, and test workflow.
+4. **Open a pull request** against the `main` branch of the upstream repository. Describe what you changed and why; link any related issues.
+
+Keep pull requests focused — one logical change per PR makes review faster.
+
+### Improve the documentation
+
+The user-facing docs (the site you're reading now) live in `mushpi-docs`. If you spot something incorrect, unclear, or missing, open an issue or PR there. Documentation improvements are just as valuable as code changes.
+
+<Note>
+Each repository is fully independent — you only need to clone the one you're working on. There is no monorepo setup or cross-repo tooling required for standard contributions. The optional AI orchestration workspace (`mushpi-orchestration`) is one person's development workflow; you don't need it to contribute.
+</Note>
+
+## Contact
+
+If you have a question that doesn't fit neatly into a GitHub issue — or you'd like to discuss a larger contribution before investing time in it — email the maintainers at [mushpi@amda.dev](mailto:mushpi@amda.dev).

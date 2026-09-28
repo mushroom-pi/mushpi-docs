@@ -1,0 +1,109 @@
+---
+title: "Update and Back Up Your Mushroom Pi Installation"
+sidebarTitle: "Updates & Backups"
+description: "Keep your Mushroom Pi server up to date and protect your grow history data with regular backups of the SQLite database."
+---
+
+Keeping your Mushroom Pi installation current and your data safe are two separate habits worth building early. Server updates take under two minutes and preserve all your data because the database lives in a Docker volume, not inside the container. Backups are a single `docker run` command you can schedule with cron. This page covers both.
+
+---
+
+## Updating the server
+
+<Steps>
+  <Step title="Pull the latest image">
+    SSH into your Raspberry Pi and pull the latest Mushroom Pi image from GHCR:
+
+    ```bash
+    docker pull ghcr.io/mushroom-pi/mushpi:latest
+    ```
+
+    Docker will download only the layers that have changed since your last pull. If you pinned to a specific tag (recommended), replace `latest` with the new tag — for example, `ghcr.io/mushroom-pi/mushpi:v1.3.0`.
+  </Step>
+
+  <Step title="Stop and remove the old container">
+    Bring down the running container. Your data volume is **not** affected by this step:
+
+    ```bash
+    docker stop mushpi && docker rm mushpi
+    ```
+  </Step>
+
+  <Step title="Start a new container from the updated image">
+    Re-run the same command you used during initial deployment. The `mushpi-data` volume is automatically re-attached, so your database, settings, and grow history are all intact:
+
+    ```bash
+    docker run -d \
+      --restart unless-stopped \
+      -p 3000:3000 \
+      -v mushpi-data:/data \
+      --name mushpi \
+      ghcr.io/mushroom-pi/mushpi:latest
+    ```
+
+    If you're using Docker Compose, run `docker compose pull` followed by `docker compose up -d` instead — Compose handles the stop/remove/recreate cycle for you.
+  </Step>
+</Steps>
+
+---
+
+## Updating Pico firmware
+
+<Steps>
+  <Step title="Get the latest mushpi-grow firmware">
+    On your development machine, pull the latest firmware from the mushpi-grow repository:
+
+    ```bash
+    # If you already have a local clone:
+    git -C mushpi-grow pull
+
+    # Or clone it fresh:
+    git clone https://github.com/mushroom-pi/mushpi-grow.git
+    ```
+  </Step>
+
+  <Step title="Review and update the config if needed">
+    Open `config.py` and confirm the settings are still correct for your setup — in particular, verify that `SERVER_URL` still points to `http://<pi-ip>:3000`. Apply any changes before copying files to the Pico.
+  </Step>
+
+  <Step title="Copy the updated files to the Pico and reboot">
+    Connect the Pico 2W to your computer via USB and use `mpremote` to copy the updated firmware files across, then reboot:
+
+    ```bash
+    mpremote connect auto cp -r . :
+    mpremote connect auto reset
+    ```
+
+    The Pico will announce itself to the server again on reboot. Its registration record in the dashboard is preserved — no re-registration is needed.
+  </Step>
+</Steps>
+
+---
+
+## Backing up your data
+
+All Mushroom Pi data lives in the `mushpi-data` Docker volume as a single SQLite file — `mushpi.db`. To back it up, spin up a temporary Alpine container that mounts both the data volume and your current directory, then copies the database out:
+
+```bash
+docker run --rm \
+  -v mushpi-data:/data \
+  -v $(pwd):/backup \
+  alpine \
+  cp /data/mushpi.db /backup/mushpi.db
+```
+
+This places `mushpi.db` in your current working directory. Copy it to off-Pi storage (a USB drive, NAS, or remote host) to complete the backup.
+
+<Warning>
+For a consistent, uncorrupted backup, **stop the Mushroom Pi container before copying the database file**. SQLite can be in the middle of a write when the copy runs, which may produce a corrupt backup. Run `docker stop mushpi` first, take the backup, then `docker start mushpi`.
+</Warning>
+
+<Tip>
+Automate backups with a cron job on the Raspberry Pi. Open the crontab with `crontab -e` and add a line like the one below to create a timestamped backup every night at 2 AM:
+
+```cron
+0 2 * * * docker stop mushpi && docker run --rm -v mushpi-data:/data -v /home/pi/backups:/backup alpine cp /data/mushpi.db /backup/mushpi-$(date +\%Y\%m\%d).db && docker start mushpi
+```
+
+Pair this with a script that prunes backups older than 30 days to keep your storage usage in check.
+</Tip>

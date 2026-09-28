@@ -1,0 +1,67 @@
+---
+title: "Configure Mushroom Pi Server Environment"
+sidebarTitle: "Environment"
+description: "Configure the Mushroom Pi server container using environment variables to set ports, database path, polling interval, and logging level."
+---
+
+The Mushroom Pi server container reads all of its runtime configuration from environment variables — there is no config file to edit inside the image. You pass these variables when you start the container, making it straightforward to tune the server for your setup, swap in a different database location, or silence noisy logs without rebuilding anything.
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `3000` | HTTP port the server listens on |
+| `DB_PATH` | `/data/mushpi.db` | Path to the SQLite database file |
+| `POLL_INTERVAL_MS` | `60000` | How often (ms) the backend polls each Pico unit |
+| `LOG_LEVEL` | `info` | Logging verbosity: `error`, `warn`, `info`, `debug` |
+| `CORS_ORIGIN` | `*` | Allowed CORS origins for the API |
+
+## Passing Variables to the Container
+
+<CodeGroup>
+
+```bash Docker Run
+docker run -d \
+  --name mushpi \
+  -p 3000:3000 \
+  -v mushpi-data:/data \
+  -e PORT=3000 \
+  -e DB_PATH=/data/mushpi.db \
+  -e POLL_INTERVAL_MS=60000 \
+  -e LOG_LEVEL=info \
+  -e CORS_ORIGIN=* \
+  ghcr.io/mushroom-pi/mushpi
+```
+
+```yaml Docker Compose
+services:
+  mushpi:
+    image: ghcr.io/mushroom-pi/mushpi
+    ports:
+      - "3000:3000"
+    volumes:
+      - mushpi-data:/data
+    environment:
+      PORT: 3000
+      DB_PATH: /data/mushpi.db
+      POLL_INTERVAL_MS: 60000
+      LOG_LEVEL: info
+      CORS_ORIGIN: "*"
+
+volumes:
+  mushpi-data:
+```
+
+</CodeGroup>
+
+<Warning>
+Always mount a persistent volume at the directory containing your `DB_PATH` (the default is `/data`). If you skip the volume mount, the SQLite database lives only inside the container's writable layer and is destroyed every time the container is removed or re-created — taking all your sensor history, batches, and recipes with it.
+</Warning>
+
+## Notes on Specific Variables
+
+**`POLL_INTERVAL_MS`** — The backend polls every Pico unit on this interval using a scheduled cron job. The default of 60 seconds is a good balance between responsiveness and load. Reducing it below `10000` (10 s) is not recommended; the Pico firmware needs time to respond and the DHT11 sensor itself requires at least one second between readings.
+
+**`LOG_LEVEL`** — Set to `debug` during initial setup to see every poll cycle and HTTP exchange. Switch back to `info` (or `warn`) once everything is running to keep logs manageable.
+
+**`CORS_ORIGIN`** — The wildcard default is fine for a private local-network deployment. If you expose the API publicly, set this to the exact origin of your dashboard (e.g., `https://mushpi.example.com`) to prevent cross-origin requests from other sites.

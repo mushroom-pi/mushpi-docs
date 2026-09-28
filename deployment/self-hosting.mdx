@@ -1,0 +1,78 @@
+---
+title: "Self-Host Mushroom Pi on a Raspberry Pi 3"
+sidebarTitle: "Self-Hosting"
+description: "Deploy the Mushroom Pi server and dashboard on a Raspberry Pi 3 using the official container image from GHCR."
+---
+
+Mushroom Pi ships as a single container image that bundles the NestJS backend and React dashboard together, serving both on port 3000. You pull one image, run one container, and your grow-control server is live — no build step required. This page walks you through getting that container running on a Raspberry Pi 3 using either a plain `docker run` command or a Compose file you can keep in version control.
+
+<Note>
+**Prerequisites before you begin:**
+- Raspberry Pi 3 with at least 1 GB RAM running a 64-bit OS (Raspberry Pi OS Lite recommended)
+- microSD card, 16 GB or larger
+- Docker installed and running on the Pi ([install guide](https://docs.docker.com/engine/install/raspberry-pi-os/))
+- The Pi connected to your local network (wired or Wi-Fi)
+</Note>
+
+## Choose your deployment approach
+
+<Tabs>
+  <Tab title="Docker Run (simple)">
+    The quickest way to get Mushroom Pi running is a single `docker run` command. Run this on your Raspberry Pi:
+
+    ```bash
+    docker run -d \
+      --restart unless-stopped \
+      -p 3000:3000 \
+      -v mushpi-data:/data \
+      --name mushpi \
+      ghcr.io/mushroom-pi/mushpi:latest
+    ```
+
+    Docker will pull the image from GHCR on first run, create a named volume called `mushpi-data` to persist your SQLite database, and start the container in the background. The `--restart unless-stopped` flag means the server comes back up automatically after a reboot.
+  </Tab>
+  <Tab title="Docker Compose (recommended)">
+    A Compose file is easier to manage long-term — you can edit it, commit it to a repo, and redeploy with a single command. Create a file called `compose.yml` on your Pi:
+
+    ```yaml
+    services:
+      mushpi:
+        image: ghcr.io/mushroom-pi/mushpi:latest
+        container_name: mushpi
+        restart: unless-stopped
+        ports:
+          - "3000:3000"
+        volumes:
+          - mushpi-data:/data
+
+    volumes:
+      mushpi-data:
+    ```
+
+    Then bring it up:
+
+    ```bash
+    docker compose up -d
+    ```
+
+    To stop the server at any time, run `docker compose down` from the same directory. Your data volume is preserved between stop/start cycles.
+  </Tab>
+</Tabs>
+
+## Verify the server is running
+
+Once the container starts, open a browser on any device on the same network and navigate to:
+
+```
+http://<pi-ip>:3000
+```
+
+Replace `<pi-ip>` with your Raspberry Pi's local IP address (find it with `hostname -I` on the Pi). The Mushroom Pi dashboard should load within a few seconds of the container starting.
+
+<Tip>
+For production use, pin your deployment to a specific release tag instead of `latest` — for example, `ghcr.io/mushroom-pi/mushpi:v1.2.0`. This ensures you don't inadvertently pull a breaking change during a routine container restart. Check the [mushpi-ops releases](https://github.com/mushroom-pi/mushpi-ops/releases) page for the latest stable tag.
+</Tip>
+
+## Next steps
+
+With the server running, head to [First Boot](/deployment/first-boot) to complete the initial setup wizard, set your admin credentials, and prepare your server to receive Pico units.

@@ -1,0 +1,47 @@
+---
+title: "Required Hardware Components for Mushroom Pi"
+sidebarTitle: "Components"
+description: "Everything you need to build a Mushroom Pi grow controller: a Pico 2W, DHT11 sensor, relay module, and power supply."
+---
+
+To build one Mushroom Pi grow unit you need a small collection of off-the-shelf electronics: a Raspberry Pi Pico 2W as the brains, a DHT11 sensor to read the environment, and a three-channel relay module to switch your humidifier, fan, and heater. You also need a server host — a Raspberry Pi 3 is the recommended target, though any Linux machine with Docker will work. The sections below list everything, including optional items for prototyping.
+
+## Pico Unit Components
+
+These components make up the physical grow controller that sits inside or beside each grow space.
+
+| Component | Qty | Notes |
+|---|---|---|
+| Raspberry Pi Pico 2W | 1 | The microcontroller — must be the **2W** variant for built-in Wi-Fi |
+| DHT11 temperature & humidity sensor | 1 | Reads ambient conditions inside the grow space |
+| 3-channel relay module (5 V coil) | 1 | Switches the humidifier (CH1), fan (CH2), and heater (CH3) |
+| Jumper wires (male–male and male–female) | 1 set | For connecting sensor and relay module to the Pico headers |
+| USB power supply — 5 V / 2.5 A minimum | 1 | Powers the Pico; a standard phone charger at 2.5 A or above is fine |
+| Micro-USB cable | 1 | Both for flashing firmware and for permanent power |
+
+## Server Host Components
+
+The backend and dashboard ship as a single container image. You need one host on your local network to run it.
+
+| Component | Qty | Notes |
+|---|---|---|
+| Raspberry Pi 3 (1 GB RAM) | 1 | Minimum recommended host; any Linux machine with Docker works too |
+| microSD card — 16 GB or larger | 1 | Stores the OS, container image, and SQLite database |
+| Power supply for the Pi 3 | 1 | Official Raspberry Pi 3 PSU (5 V / 2.5 A micro-USB) recommended |
+| Ethernet cable or 2.4 GHz Wi-Fi | — | The server host must be reachable on the same network as the Pico units |
+
+## Optional Components
+
+| Component | Notes |
+|---|---|
+| Half-size or full-size breadboard | Useful for prototyping before soldering or using a project enclosure |
+| Pin headers for Pico | Pre-soldered on some Pico variants; required if yours is headerless |
+| Enclosure / project box | Protects the electronics in a real grow environment |
+
+<Info>
+  All of the Pico-side components are widely available from electronics distributors such as Adafruit, SparkFun, Pimoroni, AliExpress, and Amazon. Search for "Raspberry Pi Pico 2W", "DHT11 module", and "5V 3-channel relay module". The Raspberry Pi 3 is available directly from the Raspberry Pi Foundation and its licensed resellers.
+</Info>
+
+## Server Hosting Alternatives
+
+The container image (`ghcr.io/mushroom-pi/mushpi`) targets a **Raspberry Pi 3 with 1 GB RAM** as its primary platform, but it runs on any Linux host that has Docker installed — an existing home server, a NUC, or a cloud VM all work. The Pico units communicate with the server over your local network (or via Tailscale for remote access), so the host just needs a stable IP or hostname on the same network as your Pico units.

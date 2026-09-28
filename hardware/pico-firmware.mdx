@@ -1,0 +1,101 @@
+---
+title: "Flash and Configure the Pico 2W Firmware"
+sidebarTitle: "Pico Firmware"
+description: "How to install MicroPython on your Raspberry Pi Pico 2W and deploy the mushpi-grow firmware for sensor reading and relay control."
+---
+
+The grow-unit firmware lives in the **[mushpi-grow](https://github.com/mushroom-pi/mushpi-grow)** repository. It is written in MicroPython and uses [Microdot](https://github.com/miguelgrinberg/microdot) to serve a lightweight REST API on port 5000 — the same API the NestJS backend polls every 60 seconds to collect sensor readings and issue relay commands. Getting it running takes five steps: flash MicroPython onto the Pico, clone the repo, edit the config, copy the files across, and reboot.
+
+<Note>
+  **Prerequisites before you start:**
+  - Python 3.8 or later installed on your computer
+  - `mpremote` (`pip install mpremote`) **or** [Thonny IDE](https://thonny.org) — either tool can copy files to the Pico
+  - A micro-USB cable that carries data (not charge-only)
+  - The Pico 2W physically wired up as described in [Wiring](/hardware/wiring)
+</Note>
+
+## Flashing Steps
+
+<Steps>
+  <Step title="Download and flash MicroPython">
+    Download the latest **Raspberry Pi Pico 2W** UF2 image from the official MicroPython downloads page at [micropython.org/download/RPI_PICO2_W](https://micropython.org/download/RPI_PICO2_W/).
+
+    To enter bootloader mode:
+
+    1. Hold the **BOOTSEL** button on the Pico.
+    2. While holding BOOTSEL, connect the Pico to your computer via USB.
+    3. Release BOOTSEL — the Pico mounts as a USB drive called **RPI-RP2**.
+    4. Drag and drop the `.uf2` file onto the **RPI-RP2** drive.
+
+    The Pico reboots automatically and is now running MicroPython. The USB drive disappears and the Pico re-enumerates as a serial device.
+  </Step>
+
+  <Step title="Clone the mushpi-grow repository">
+    On your computer, clone the firmware repository:
+
+    ```bash
+    git clone https://github.com/mushroom-pi/mushpi-grow.git
+    cd mushpi-grow
+    ```
+  </Step>
+
+  <Step title="Edit the firmware config file">
+    Open the config file (typically `src/config.py`) in your editor and set the following values for your environment:
+
+    | Setting | Description |
+    |---|---|
+    | `WIFI_SSID` | Your Wi-Fi network name |
+    | `WIFI_PASSWORD` | Your Wi-Fi password |
+    | `DHT_PIN` | GPIO number for the DHT11 DATA line (default `15`) |
+    | `RELAY_HUMIDIFIER_PIN` | GPIO number for humidifier relay IN1 (default `16`) |
+    | `RELAY_FAN_PIN` | GPIO number for fan relay IN2 (default `17`) |
+    | `RELAY_HEATER_PIN` | GPIO number for heater relay IN3 (default `18`) |
+    | `BACKEND_URL` | Full URL of your NestJS backend, e.g. `http://192.168.1.100:3000` |
+
+    Make sure the GPIO values here match your physical wiring from the [Wiring guide](/hardware/wiring).
+  </Step>
+
+  <Step title="Copy firmware files to the Pico using mpremote">
+    With the Pico connected via USB (and MicroPython already flashed), copy the entire `src/` directory to the Pico's root filesystem:
+
+    ```bash
+    mpremote cp -r src/. :
+    ```
+
+    This transfers `main.py`, `config.py`, and all other firmware modules. The `:` refers to the root of the Pico's filesystem. If `mpremote` cannot find the device automatically, specify the port explicitly:
+
+    ```bash
+    # Linux / macOS
+    mpremote connect /dev/ttyACM0 cp -r src/. :
+
+    # Windows
+    mpremote connect COM3 cp -r src/. :
+    ```
+
+    Alternatively, you can use **Thonny**: open each file from `src/`, then use *File → Save as…* and choose *MicroPython device* as the destination.
+  </Step>
+
+  <Step title="Reboot the Pico">
+    Press **Ctrl-D** in an open `mpremote` REPL session, or physically disconnect and reconnect the USB cable. The Pico will:
+
+    1. Run `main.py` on boot.
+    2. Connect to your Wi-Fi network (the onboard LED blinks during connection).
+    3. Start the Microdot REST API on **port 5000**.
+
+    The backend will discover the Pico on its next 60-second poll cycle — or you can register it manually through the dashboard.
+  </Step>
+</Steps>
+
+<Tip>
+  If you don't have physical hardware yet, use **[mushpi-mock](https://github.com/mushroom-pi/mushpi-mock)** during development. It is a FastAPI service that mirrors the mushpi-grow REST API exactly — the backend cannot tell the difference. Run `mushpi-mock` on your development machine and point the backend at it to develop and test the full stack without any Pico or sensors.
+</Tip>
+
+## Verify the Pico Is Running
+
+Once the Pico has booted and joined your network, confirm that the REST API is reachable. Find the Pico's IP address from your router's DHCP table (or from the `mpremote` REPL with `import network; print(network.WLAN(network.STA_IF).ifconfig())`), then run:
+
+```bash
+curl http://<pico-ip>:5000/status
+```
+
+You should receive a JSON response with the current sensor readings and relay states. If the request times out, check that the Pico's LED is solid (indicating a successful Wi-Fi connection), re-verify your `WIFI_SSID` and `WIFI_PASSWORD` in `config.py`, and re-deploy the files.

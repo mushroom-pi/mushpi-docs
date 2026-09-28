@@ -1,0 +1,59 @@
+---
+title: "Tuning the Hysteresis Control Loop on Your Pico"
+sidebarTitle: "Hysteresis Control"
+description: "Understand and adjust the hysteresis control loop that regulates temperature and humidity on your Raspberry Pi Pico 2W."
+---
+
+Your Pico 2W doesn't simply switch the humidifier or heater on whenever a reading dips below the target — that would cause the relay to chatter on and off dozens of times a minute, wearing it out quickly. Instead, the firmware runs a **hysteresis control loop**: it defines a band around your target value and only acts when the reading drifts outside that band. Once the relay switches, it stays in that state until the reading crosses the opposite edge of the band. The result is stable, quiet control with far fewer relay cycles.
+
+## How the Band Works
+
+The band is defined as a ± offset from your target. Here's a concrete example for humidity control:
+
+| Condition | Value | What happens |
+|---|---|---|
+| Target humidity | 90% RH | Your recipe's set point |
+| Band (± offset) | ±2% RH | Configured hysteresis width |
+| Lower threshold | 88% RH | Humidifier turns **ON** when reading falls below this |
+| Upper threshold | 92% RH | Humidifier turns **OFF** when reading rises above this |
+
+The same logic applies to temperature: the heater turns on when temperature drops below `(target − band)` and turns off when it rises above `(target + band)`.
+
+## Where to Configure Hysteresis
+
+You can set the hysteresis band in two places:
+
+1. **Pico firmware config** — Edit the configuration values directly in the `mushpi-grow` firmware before flashing to your Pico. This sets the default the Pico uses if it hasn't received instructions from the server.
+2. **Dashboard recipe settings** — In the Mushroom Pi dashboard, open your recipe and adjust the temperature and humidity hysteresis fields. The server sends the updated values to the Pico the next time it polls (every 60 seconds by default), overriding the firmware defaults.
+
+For day-to-day tuning, the dashboard is the easiest path — no reflashing required.
+
+## Tuning Tips
+
+<Tip>
+**Use a wider band to protect your relays.** A band of ±3–5% RH or ±1–2°C means the relay switches only a handful of times per hour. This is the right choice for consumer-grade relay modules and extends their lifespan significantly.
+</Tip>
+
+<Tip>
+**Tighten the band only when precision matters.** A band of ±0.5–1% RH gives tighter control but switches the relay much more frequently. Reserve narrow bands for situations where exact conditions are critical, and pair them with a solid-state relay (SSR) that handles high switching rates better than mechanical relays.
+</Tip>
+
+## Common Pitfalls
+
+<Accordion title="Relay chatter (band too narrow)">
+If you hear the relay clicking rapidly — several times per minute — your band is almost certainly too narrow. The sensor reading is oscillating around the threshold, causing the relay to flip back and forth. Widen the band by 1–2 percentage points (or degrees) until the clicking stops. Sustained chatter can destroy a mechanical relay in hours.
+</Accordion>
+
+<Accordion title="Overshooting (band too wide with slow hardware)">
+A large band combined with a slow-responding humidifier or heater can cause significant overshoot: the device keeps running past the upper threshold because it takes time for the environment to respond. If you consistently see readings that spike well beyond `target + band`, try narrowing the band slightly or positioning the sensor closer to the output of the device so it detects the change sooner.
+</Accordion>
+
+<Accordion title="DHT11 accuracy limits affecting control quality">
+The DHT11 sensor has a rated accuracy of **±2°C** and **±5% RH**. This means a reading of 90% RH could represent anywhere from 85–95% actual humidity. Setting a hysteresis band narrower than the sensor's own error margin is counterproductive — the "control" you're seeing is partly just sensor noise. Factor the sensor's error floor into your band size: a minimum of ±2% RH and ±1°C is a practical lower bound with the DHT11.
+</Accordion>
+
+## Sensor Accuracy
+
+<Note>
+The DHT11 sensor built into the standard Mushroom Pi hardware has a rated accuracy of ±2°C for temperature and ±5% RH for humidity. These are not precise laboratory instruments. If your grow requires tighter accuracy, consider upgrading to a DHT22 (±0.5°C, ±2–5% RH) or an SHT31 (±0.3°C, ±2% RH) and updating the firmware accordingly. For most mushroom species, the DHT11's accuracy is entirely adequate when paired with a sensibly sized hysteresis band.
+</Note>

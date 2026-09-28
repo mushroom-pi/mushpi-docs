@@ -1,0 +1,65 @@
+---
+title: "Register a Pico Unit with the Mushroom Pi Server"
+sidebarTitle: "Pico Registration"
+description: "Connect a flashed Raspberry Pi Pico 2W to your Mushroom Pi server so it appears in the dashboard and begins sending sensor data."
+---
+
+When a flashed Pico 2W powers on, it connects to your Wi-Fi network and announces itself to the Mushroom Pi server by calling the backend's announce endpoint. The server registers the unit, assigns it an ID, and begins polling it every 60 seconds to collect temperature and humidity readings. From that point on, the unit appears in your dashboard and participates in any batch or recipe you assign to it.
+
+## Prerequisites
+
+- Your Pico 2W must already be flashed with the [mushpi-grow](https://github.com/mushroom-pi/mushpi-grow) firmware
+- The Pico and the Raspberry Pi server must be on the **same local network**
+- The Mushroom Pi server must be running and accessible at `http://<pi-ip>:3000`
+
+<Steps>
+  <Step title="Set the server URL in the Pico firmware config">
+    Before powering on the Pico, open its firmware configuration file (typically `config.py` in the mushpi-grow repo) and set the server URL to point at your Mushroom Pi server:
+
+    ```python
+    SERVER_URL = "http://<pi-ip>:3000"
+    ```
+
+    Replace `<pi-ip>` with the local IP address you noted during [first boot](/deployment/first-boot). Save the file and copy it to the Pico using `mpremote` (see the [mushpi-grow README](https://github.com/mushroom-pi/mushpi-grow) for full flashing instructions).
+  </Step>
+
+  <Step title="Power on the Pico">
+    Connect the Pico 2W to power via USB. On boot it will:
+
+    1. Connect to the Wi-Fi network using the credentials in its config
+    2. Send an announce request to `http://<pi-ip>:3000/units/announce`
+    3. Start the DHT11 sensor loop and wait for the server to poll it
+
+    The server processes the announce request and registers the unit in SQLite. This happens automatically — you don't need to do anything on the server side.
+  </Step>
+
+  <Step title="Verify the unit appears in the dashboard">
+    In your browser, open the Mushroom Pi dashboard at `http://<pi-ip>:3000` and navigate to the **Units** page. The newly registered Pico should appear in the list within a few seconds of powering on, showing its unique ID and the time it last announced itself.
+  </Step>
+
+  <Step title="Confirm sensor readings are coming in">
+    Wait up to 60 seconds for the server's polling cycle to run. Refresh the **Units** page and select your unit — you should see live temperature and humidity readings from the DHT11 sensor. If readings are present, the unit is fully operational.
+  </Step>
+</Steps>
+
+<Accordion title="Unit not appearing in the dashboard?">
+  If the Pico doesn't show up on the Units page within a minute or two, work through these checks:
+
+  **Check Wi-Fi connectivity**
+  - Confirm the Wi-Fi SSID and password in the Pico's config file are correct
+  - Make sure the Pico is within range of your router
+  - The Pico 2W only supports 2.4 GHz networks — verify your router is broadcasting on 2.4 GHz
+
+  **Verify the server URL in the firmware config**
+  - Double-check that `SERVER_URL` in `config.py` exactly matches `http://<pi-ip>:3000` with no trailing slash
+  - Confirm the Pi's IP address hasn't changed since you noted it (consider assigning a static IP or DHCP reservation to your Pi)
+
+  **Check Pico logs via serial**
+  - Connect the Pico to your computer via USB and open a serial terminal (e.g. `mpremote connect auto`) to view runtime output
+  - Look for connection errors, Wi-Fi failures, or HTTP error codes from the announce request
+
+  **Check the server logs**
+  - On the Raspberry Pi, run `docker logs mushpi` to see whether the server is receiving the announce request and whether any errors are logged
+</Accordion>
+
+You can register as many Pico 2W units as you need — each one controls its own independent grow space. All registered units are visible on the **Units** page, and each can be assigned to a separate batch with its own temperature and humidity targets.

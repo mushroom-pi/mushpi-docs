@@ -1,0 +1,207 @@
+---
+title: "REST API Endpoints for Growing Recipes"
+sidebarTitle: "Recipes"
+description: "Create and manage growing recipes that define target temperature and humidity for mushroom species via the Mushroom Pi REST API."
+---
+
+A growing recipe encodes the environmental targets for a particular mushroom species or cultivation stage — the temperature and humidity the Pico unit should maintain, and the tolerance bands within which the hysteresis control loop operates. Once defined, a recipe can be attached to any number of cultivation batches, making it easy to standardise conditions across multiple runs or units. The Recipes API gives you full programmatic control over your recipe library.
+
+---
+
+## GET /api/recipes
+
+Returns an array of all growing recipes.
+
+### Request
+
+```bash
+curl -H "Authorization: Bearer <your-token>" \
+     http://<pi-ip>:3000/api/recipes
+```
+
+### Response `200 OK`
+
+```json
+[
+  {
+    "id": "recipe-oyster-standard",
+    "name": "Oyster Standard",
+    "targetTemperature": 22.0,
+    "temperatureBand": 1.5,
+    "targetHumidity": 90.0,
+    "humidityBand": 5.0,
+    "notes": "Suitable for blue, pink, and golden oyster varieties."
+  }
+]
+```
+
+<ResponseField name="id" type="string">
+  Unique identifier for the recipe.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Human-readable recipe name.
+</ResponseField>
+
+<ResponseField name="targetTemperature" type="number">
+  Desired ambient temperature in degrees Celsius.
+</ResponseField>
+
+<ResponseField name="temperatureBand" type="number">
+  Allowed deviation (±) from `targetTemperature` before the heater relay activates. For example, a target of `22.0` with a band of `1.5` triggers the heater below `20.5 °C`.
+</ResponseField>
+
+<ResponseField name="targetHumidity" type="number">
+  Desired relative humidity percentage.
+</ResponseField>
+
+<ResponseField name="humidityBand" type="number">
+  Allowed deviation (±) from `targetHumidity` before the humidifier relay activates.
+</ResponseField>
+
+<ResponseField name="notes" type="string | null">
+  Optional free-text notes about this recipe.
+</ResponseField>
+
+---
+
+## POST /api/recipes
+
+Creates a new growing recipe.
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  A descriptive name for the recipe (for example, `"Shiitake Fruiting"`).
+</ParamField>
+
+<ParamField body="targetTemperature" type="number" required>
+  Target ambient temperature in degrees Celsius.
+</ParamField>
+
+<ParamField body="temperatureBand" type="number" required>
+  Hysteresis band for temperature control in degrees Celsius.
+</ParamField>
+
+<ParamField body="targetHumidity" type="number" required>
+  Target relative humidity as a percentage (0–100).
+</ParamField>
+
+<ParamField body="humidityBand" type="number" required>
+  Hysteresis band for humidity control as a percentage.
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Optional. Free-text notes about this recipe.
+</ParamField>
+
+### Request
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Shiitake Fruiting",
+    "targetTemperature": 18.0,
+    "temperatureBand": 2.0,
+    "targetHumidity": 85.0,
+    "humidityBand": 5.0,
+    "notes": "Cool-shock triggered fruiting conditions."
+  }' \
+  http://<pi-ip>:3000/api/recipes
+```
+
+### Response `201 Created`
+
+Returns the newly created recipe object.
+
+```json
+{
+  "id": "recipe-shiitake-fruiting",
+  "name": "Shiitake Fruiting",
+  "targetTemperature": 18.0,
+  "temperatureBand": 2.0,
+  "targetHumidity": 85.0,
+  "humidityBand": 5.0,
+  "notes": "Cool-shock triggered fruiting conditions."
+}
+```
+
+---
+
+## PATCH /api/recipes/:id
+
+Partially updates an existing recipe. Any field can be changed without affecting batches that currently reference the recipe — updates take effect on the next poll cycle.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the recipe to update.
+</ParamField>
+
+### Request Body
+
+Send only the fields you want to change. All fields are optional.
+
+<ParamField body="name" type="string">
+  Updated recipe name.
+</ParamField>
+
+<ParamField body="targetTemperature" type="number">
+  Updated target temperature in °C.
+</ParamField>
+
+<ParamField body="temperatureBand" type="number">
+  Updated temperature hysteresis band in °C.
+</ParamField>
+
+<ParamField body="targetHumidity" type="number">
+  Updated target humidity percentage.
+</ParamField>
+
+<ParamField body="humidityBand" type="number">
+  Updated humidity hysteresis band percentage.
+</ParamField>
+
+<ParamField body="notes" type="string">
+  Updated notes. Replaces the existing notes value.
+</ParamField>
+
+### Request
+
+```bash
+curl -X PATCH \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"targetTemperature": 19.0, "temperatureBand": 1.5}' \
+  http://<pi-ip>:3000/api/recipes/recipe-shiitake-fruiting
+```
+
+### Response `200 OK`
+
+Returns the updated recipe object.
+
+---
+
+## DELETE /api/recipes/:id
+
+Permanently deletes a recipe. Batches that referenced the deleted recipe will have their `recipeId` set to `null`.
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the recipe to delete.
+</ParamField>
+
+### Request
+
+```bash
+curl -X DELETE \
+  -H "Authorization: Bearer <your-token>" \
+  http://<pi-ip>:3000/api/recipes/recipe-shiitake-fruiting
+```
+
+### Response `200 OK`
+
+Returns an empty body or a confirmation object on successful deletion.

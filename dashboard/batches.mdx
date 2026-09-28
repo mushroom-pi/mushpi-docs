@@ -1,0 +1,57 @@
+---
+title: "Manage Cultivation Batches in Mushroom Pi"
+sidebarTitle: "Batches"
+description: "Create and track mushroom cultivation batches — record species, start dates, and link a recipe to automate your growing environment."
+---
+
+A batch in Mushroom Pi represents a single cultivation run — the full arc from inoculation through colonisation and fruiting all the way to harvest. Every grow you do gets its own batch record, giving you a permanent, searchable history of what species you grew, when you started, which environmental recipe you followed, and which Pico unit was managing the space. Over time your batch history becomes a practical log that helps you repeat successful grows and understand why others fell short.
+
+## What a batch contains
+
+Each batch stores the following information:
+
+| Field | Description |
+|---|---|
+| **Species / strain name** | A free-text label for what you are growing (e.g. "Pearl Oyster — WC-03"). |
+| **Start date** | The date the batch was inoculated or spawned. |
+| **Notes** | Any free-form observations — substrate formula, contamination events, flush notes. |
+| **Linked recipe** | An optional reference to a saved recipe that defines the temperature and humidity targets for this batch. |
+| **Pico unit** | The specific unit that controls the grow space for this batch. |
+
+## Create a new batch
+
+<Steps>
+  <Step title="Navigate to Batches">
+    Open the Mushroom Pi dashboard in your browser and click **Batches** in the left-hand navigation sidebar.
+  </Step>
+  <Step title="Click New Batch">
+    Click the **New Batch** button in the top-right corner of the Batches page. A creation form opens.
+  </Step>
+  <Step title="Fill in species, start date, and notes">
+    Enter the species or strain name in the **Species** field. Set the **Start Date** to the date you inoculated or spawned your substrate. Add any relevant notes in the **Notes** field — this is optional but recommended.
+  </Step>
+  <Step title="Link a recipe (optional)">
+    If you have already created a recipe for this species, select it from the **Recipe** dropdown. The targets defined in that recipe (temperature, humidity, hysteresis band) will be applied to the control loop for this batch's unit. You can leave this blank and link a recipe later.
+  </Step>
+  <Step title="Select the Pico unit">
+    Choose the Pico unit that is managing the grow space for this batch from the **Unit** dropdown. Each batch is associated with exactly one unit.
+  </Step>
+  <Step title="Save">
+    Click **Save**. The batch is now active and appears in your batch list. The dashboard will track environmental readings from the selected unit against this batch going forward.
+  </Step>
+</Steps>
+
+## Viewing batch history
+
+All completed and active batches are listed on the Batches page. The list shows the species name, start date, linked recipe, and associated unit for each batch at a glance. Click any batch to open its detail view, where you can:
+
+- Review the full notes history.
+- See which recipe was applied and when.
+- Browse environmental data recorded during the batch's lifetime.
+- Mark the batch as complete once you have finished harvesting.
+
+Completed batches remain in the database permanently, giving you a historical record you can refer back to when planning future grows.
+
+<Tip>
+  Link a recipe to your batch before you start the run. When a recipe is attached, the control loop on the Pico uses that recipe's temperature and humidity targets automatically — you do not need to dial in thresholds manually for each new grow. If you grow the same species repeatedly, a single saved recipe is all you need.
+</Tip>

@@ -1,0 +1,56 @@
+---
+title: "First Boot: Configure Your Mushroom Pi Server"
+sidebarTitle: "First Boot"
+description: "Complete the initial setup of your Mushroom Pi server — set your admin password, verify connectivity, and prepare for Pico unit registration."
+---
+
+The first time the Mushroom Pi container starts, it runs a one-time setup wizard that lets you create your admin account, configure your timezone, and verify that the dashboard is reachable on your network. Completing this wizard takes about two minutes and only happens once — subsequent restarts go straight to the login screen.
+
+<Steps>
+  <Step title="Open the dashboard in your browser">
+    On any device connected to the same network as your Raspberry Pi, navigate to:
+
+    ```
+    http://<pi-ip>:3000
+    ```
+
+    Replace `<pi-ip>` with the local IP address of your Pi. If you're unsure of the address, run `hostname -I` in a terminal on the Pi — it will print the IP as the first result.
+  </Step>
+
+  <Step title="Complete the setup wizard">
+    The wizard will prompt you to:
+
+    - **Create an admin account** — choose a username and a strong password. This is the only account with access to settings and Pico management, so store the credentials somewhere safe.
+    - **Set your timezone** — used to display sensor readings and batch timestamps in local time.
+
+    Submit the form when you're ready. The wizard runs exactly once; if you need to change these settings later, you can do so from the Settings page in the dashboard.
+  </Step>
+
+  <Step title="Verify the dashboard loads">
+    After the wizard completes, you'll be redirected to the main dashboard. Confirm that:
+
+    - The navigation loads without errors
+    - The **Units** page shows an empty list (no Pico units registered yet — that's expected)
+    - The **Batches** and **Settings** pages are accessible
+
+    If the page fails to load or returns an error, check that the container is still running with `docker ps` and review the logs with `docker logs mushpi`.
+  </Step>
+
+  <Step title="Note your server's local IP address">
+    Find and write down the local IP address of your Raspberry Pi — you'll enter it into the Pico firmware configuration in the next step so that each unit knows where to send its readings.
+
+    ```bash
+    hostname -I
+    ```
+
+    The server URL you'll use in the Pico config will be `http://<pi-ip>:3000`. Keep this handy for the registration step.
+  </Step>
+</Steps>
+
+<Info>
+Mushroom Pi stores all of its data — sensor readings, batch history, recipes, Pico metadata, and settings — in a SQLite database located inside the `mushpi-data` Docker volume. Because the database lives in the volume rather than inside the container, your data is fully preserved across container restarts, updates, and even a full container replacement. You do not need to do anything special to protect data during a normal restart.
+</Info>
+
+## Next steps
+
+Your server is configured and ready. Follow the [Pico Registration](/deployment/pico-registration) guide to connect your first Raspberry Pi Pico 2W unit to the server.

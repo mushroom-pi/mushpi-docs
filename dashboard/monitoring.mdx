@@ -1,0 +1,64 @@
+---
+title: "Monitor Temperature and Humidity in Real Time"
+sidebarTitle: "Monitoring"
+description: "View live sensor readings and relay states for each Pico unit, and browse historical temperature and humidity charts in the Mushroom Pi dashboard."
+---
+
+The monitoring view is the main screen of the Mushroom Pi dashboard — the first thing you see after opening the app in your browser. It surfaces everything that is happening inside your grow spaces right now: live temperature and humidity readings from each registered Pico unit, the current state of every relay, and a time-stamp showing when the unit last checked in. If conditions in any unit have drifted outside your targets, the monitoring view is where you will notice it first.
+
+## What the monitoring view shows
+
+For each registered Pico unit, the dashboard displays a card that contains:
+
+| Field | Description |
+|---|---|
+| **Current temperature** | The latest DHT11 reading in °C (or °F, depending on your display settings). |
+| **Current humidity** | The latest relative humidity reading as a percentage. |
+| **Humidifier relay** | Whether the humidifier is currently **on** or **off**. |
+| **Fan relay** | Whether the fan is currently **on** or **off**. |
+| **Heater relay** | Whether the heater is currently **on** or **off**. |
+| **Last seen** | The UTC timestamp of the most recent successful poll from the backend. |
+
+If a unit has not been polled recently — for example because it is offline or unreachable — the last-seen timestamp turns stale and a warning indicator appears on the card.
+
+## Historical charts
+
+Below the live readings, the monitoring view renders two interactive line charts powered by **Recharts**:
+
+- **Temperature over time** — a continuous line showing every recorded temperature reading stored in the SQLite database for the selected unit.
+- **Humidity over time** — the equivalent chart for relative humidity.
+
+You can zoom and pan both charts to inspect specific windows of time. Hover over any data point to see the exact value and timestamp. The charts are a practical way to correlate environmental changes — a humidity dip, a temperature spike — with events in your grow such as fruiting or contamination.
+
+## Polling cadence
+
+The backend polls each Pico unit on a **60-second cron interval**. Each poll fetches the latest sensor reading and relay states, writes them to the database, and makes them available to the dashboard. The dashboard itself uses **TanStack Query** to re-fetch this data automatically, so the cards refresh without you needing to reload the page.
+
+<Info>
+  The 60-second cadence is set on the backend, not in the browser. The dashboard will always reflect the most recent reading the backend has stored — it cannot receive readings faster than the backend collects them.
+</Info>
+
+## Manual relay control
+
+You can toggle any relay directly from the dashboard without waiting for the automatic control loop to act. Each relay (humidifier, fan, heater) has a toggle switch on its unit card.
+
+**To manually toggle a relay:**
+
+1. Locate the unit card for the grow space you want to adjust.
+2. Find the relay row — **Humidifier**, **Fan**, or **Heater**.
+3. Click the toggle switch next to the relay you want to change.
+4. The dashboard sends a control command to the backend, which proxies it to the Pico immediately.
+5. The relay state on the card updates to reflect the new position.
+
+<Info>
+  Manual relay overrides are **temporary**. The Pico runs a hysteresis control loop locally — once the loop's next evaluation runs, it will switch relays based on the current sensor reading and your configured targets. If you turn the humidifier on manually but the humidity is already above the target threshold, the control loop will turn it off again on its next cycle. Use manual control for brief interventions (rinsing substrate, inspecting the grow space) rather than as a replacement for setting appropriate targets.
+</Info>
+
+## Switching between units
+
+If you have more than one Pico unit registered, the monitoring view lists all of them. You can:
+
+- **Scroll** through all unit cards on the same page to get a quick at-a-glance overview of every grow space simultaneously.
+- **Select a specific unit** from the sidebar or unit picker to expand its historical charts and relay controls in full detail.
+
+Each unit maintains completely independent readings, relay states, and history. Changes you make to one unit's relays or targets have no effect on any other unit.

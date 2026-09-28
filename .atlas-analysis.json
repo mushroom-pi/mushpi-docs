@@ -1,13 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Mushroom Pi",
+  "projectType": "infrastructure",
+  "projectName": "Mushroom Pi",
+  "projectDescription": "An open-source, three-tier automated mushroom-growing control system built on a Raspberry Pi Pico 2W, a NestJS backend, and a React dashboard.",
   "theme": "palm",
-  "colors": {
-    "primary": "#10b981",
-    "light": "#d1fae5",
-    "dark": "#059669"
-  },
-  "favicon": "/favicon.svg",
+  "primaryColor": "#10b981",
+  "lightColor": "#d1fae5",
+  "darkColor": "#059669",
   "navigation": {
     "tabs": [
       {
@@ -95,10 +93,31 @@
       }
     ]
   },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/mushroom-pi"
-    }
-  }
+  "keyFeatures": [
+    "Automated temperature and humidity control via hysteresis loop on Raspberry Pi Pico 2W",
+    "60-second polling cycle from NestJS backend to each Pico unit",
+    "Real-time monitoring and control through a React web dashboard",
+    "Multi-unit support — each Pico 2W controls its own independent grow space",
+    "Cultivation batch and recipe management",
+    "Historical sensor data storage in SQLite with chart visualizations",
+    "Self-hostable container image (ghcr.io/mushroom-pi/mushpi) targeting Raspberry Pi 3",
+    "Optional Tailscale integration for remote access",
+    "OpenAPI spec with auto-generated dashboard client",
+    "Developer mock service (mushpi-mock) to simulate a Pico without hardware"
+  ],
+  "publicApiSurface": [
+    "GET /units — list registered Pico units",
+    "GET /units/:id — get a single unit with latest reading",
+    "POST /units/:id/control — send control command to a unit",
+    "GET /readings — query historical sensor readings",
+    "GET /batches — list cultivation batches",
+    "POST /batches — start a new batch",
+    "GET /recipes — list growing recipes",
+    "POST /recipes — create a recipe",
+    "GET /settings — retrieve system settings",
+    "PATCH /settings — update system settings",
+    "GET /announce (Pico) — unit self-announcement endpoint",
+    "GET /status (Pico) — current sensor reading and relay state",
+    "POST /control (Pico) — set relay states directly"
+  ]
 }

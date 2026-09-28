@@ -1,0 +1,66 @@
+---
+title: "Mushroom Pi REST API Reference Overview"
+sidebarTitle: "Overview"
+description: "The Mushroom Pi backend exposes a REST API at port 3000. Use it to query units, readings, batches, recipes, and settings programmatically."
+---
+
+The Mushroom Pi REST API lets you integrate your grow environment data into your own tools, scripts, and automations. Whether you are building a custom alerting pipeline, exporting readings to an external time-series database, or scripting bulk updates to your growing recipes, every capability available in the dashboard is also accessible over HTTP.
+
+## Base URL
+
+All API endpoints are served from the same port as the dashboard:
+
+```
+http://<your-pi-ip>:3000/api
+```
+
+Replace `<your-pi-ip>` with the local IP address or hostname of the Raspberry Pi running the Mushroom Pi stack (for example, `192.168.1.100` or `mushroom-pi.local`).
+
+The API follows standard REST conventions. All request and response bodies use JSON. Endpoint paths are resource-oriented, and HTTP verbs map to the expected semantics — `GET` to read, `POST` to create, `PATCH` to partially update, and `DELETE` to remove.
+
+<Note>
+  An interactive Swagger UI is available at `http://<your-pi-ip>:3000/api/docs`. It documents every endpoint, lets you try requests directly in the browser, and reflects the exact schema your installation serves — use it as the authoritative live reference alongside these pages.
+</Note>
+
+## Request and Response Format
+
+All endpoints accept and return `application/json`. Include a `Content-Type: application/json` header on any request that carries a body.
+
+```http
+Content-Type: application/json
+Accept: application/json
+```
+
+## Error Responses
+
+When a request cannot be fulfilled, the API returns a JSON error object with a machine-readable `statusCode`, a human-readable `message`, and an `error` string:
+
+```json
+{
+  "statusCode": 404,
+  "message": "Unit not found",
+  "error": "Not Found"
+}
+```
+
+## HTTP Status Codes
+
+| Code | Meaning | When you'll see it |
+|------|---------|--------------------|
+| `200 OK` | Request succeeded | Successful `GET`, `PATCH`, and `DELETE` responses |
+| `201 Created` | Resource created | Successful `POST` that creates a new resource |
+| `400 Bad Request` | Invalid input | Missing required fields, validation failures |
+| `404 Not Found` | Resource missing | Requested ID does not exist |
+| `500 Internal Server Error` | Server-side failure | Unexpected backend error |
+
+## Endpoints
+
+Detailed reference for each resource is available on the following pages:
+
+- [Units](/api/units) — list, retrieve, and send control commands to registered Pico units
+- [Readings](/api/readings) — query historical temperature and humidity readings
+- [Batches](/api/batches) — create and manage mushroom cultivation batches
+- [Recipes](/api/recipes) — define target conditions for each mushroom species
+- [Settings](/api/settings) — retrieve and update system-wide configuration
+
+For the Pico firmware's own HTTP API (port 5000), see the [Pico API Overview](/api/pico/overview).
