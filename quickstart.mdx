@@ -1,89 +1,65 @@
 ---
-title: "Set Up Mushroom Pi: Firmware, Server, and Dashboard"
+title: "Set Up Mushroom Pi: Firmware, Hub, and Dashboard"
 sidebarTitle: "Quickstart"
-description: "Flash the Pico firmware, pull the Mushroom Pi container, and open the dashboard. Your grow controller will be running in under an hour."
+description: "Flash the Pico firmware, start the hub with Docker Compose, and open the dashboard to register your first grow unit."
 ---
 
-This guide takes you from an empty workbench to a running Mushroom Pi system. You will flash the MicroPython firmware onto a Pico 2W, start the container on a Raspberry Pi 3, open the dashboard in your browser, and register your first grow unit — all in a single session.
+This guide walks you through one working end-to-end setup: flash the firmware onto a Pico 2W, start the hub on a single-board computer, open the dashboard in your browser, and register your first grow unit. Each step is the shortest path that works; the Build & Self-Host pages carry the depth behind it.
 
-<Note>
-  **Before you begin, you will need:**
-  - Raspberry Pi Pico 2W (with headers soldered or access to GPIO pins)
-  - Raspberry Pi 3 (1 GB RAM or more) with a fresh Raspberry Pi OS Lite installation
-  - MicroSD card (8 GB or larger) for the Raspberry Pi 3
-  - DHT11 temperature and humidity sensor
-  - 3-channel (or larger) relay module
-  - Docker installed on the Raspberry Pi 3 (`curl -fsSL https://get.docker.com | sh`)
-</Note>
+## Before you start
 
-<Steps>
-  <Step title="Flash the Pico firmware">
-    Download the latest `mushpi-grow` release from the [mushpi-grow repository](https://github.com/mushroom-pi/mushpi-grow) and copy it onto your Pico 2W.
+You need:
 
-    The fastest way is with **Thonny**: open Thonny, select *Run → Configure interpreter → MicroPython (Raspberry Pi Pico)*, then use *Tools → Manage files* to upload the project files to the Pico's filesystem.
+- A Raspberry Pi Pico 2W.
+- A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux. The maintainer tests on a Raspberry Pi 3B+ (1 GB), so that is a known-good starting point, not a requirement. The 64-bit OS is a hard requirement — the published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it.
+- Docker Engine with the Compose v2 plugin — the `docker compose` subcommand (with a space).
+- A DHT11 sensor and a relay module, wired to the Pico. See [Wiring](/hardware/wiring).
 
-    If you prefer the command line, use `mpremote`:
+## 1. Flash the Pico
 
-    ```bash
-    mpremote connect /dev/ttyACM0 fs cp -r src/. :
-    ```
+1. Flash MicroPython v1.26.0 onto the Pico: hold **BOOTSEL**, connect it over USB, and drag the `.uf2` file onto the `RPI-RP2` drive. [Download v1.26.0](https://micropython.org/resources/firmware/RPI_PICO2_W-20250809-v1.26.0.uf2).
+2. Get the firmware files from the [mushpi-grow repository](https://github.com/mushroom-pi/mushpi-grow).
+3. Edit `config.json` and set:
+   - `wifi.ssid` and `wifi.password` — your network.
+   - `hub_url` — `http://<hub-ip>:3000/v1/pico-units/announce`.
+   - `hub_secret` — must match the hub's `PICO_ANNOUNCE_SECRET` (step 2).
+   - `device_name` — a unique name for this unit; it becomes the unit's `handle` on the hub.
+4. Upload `main.py`, `config.json`, and the `app/` folder to the Pico, plus the two third-party libraries `lib/microdot.py` and `lib/urequests.py`. The repo's own tooling is the MicroPico VSCode extension, which uploads every `.py`, `.html`, and `config.json`; Thonny's file manager also works. The libraries are not tracked in the repo, so install them with `mip` or download them per the grow README.
 
-    Edit `config.py` on the Pico to set your Wi-Fi SSID, password, and the IP address of your Raspberry Pi 3 (the backend host). For full wiring instructions and pin assignments, see the [Pico firmware guide](/hardware/pico-firmware).
-  </Step>
+The full flashing walkthrough — wiring, pin map, and library setup — is on the [Pico firmware page](/hardware/pico-firmware). If you would rather not edit `config.json` at all, the Pico has an access-point provisioning mode: with no Wi-Fi configured it boots a form at `192.168.4.1` where you enter your network credentials. That flow is also covered on the Pico firmware page.
 
-  <Step title="Pull and run the container">
-    On your Raspberry Pi 3, pull the published image and start it as a background container:
+## 2. Start the hub
 
-    ```bash
-    docker run -d \
-      -p 3000:3000 \
-      --name mushpi \
-      --restart unless-stopped \
-      ghcr.io/mushroom-pi/mushpi
-    ```
+On the hub machine:
 
-    The container bundles both the NestJS backend and the React dashboard. Once it starts, the backend begins listening for Pico units to announce themselves, and the dashboard is available at port 3000.
+```bash
+git clone https://github.com/mushroom-pi/mushpi-ops.git mushpi-ops
+cd mushpi-ops
+cp .env.example .env
+```
 
-    To verify the container is running:
+Edit `.env` and set `PICO_ANNOUNCE_SECRET` to a value you choose. Pico units send it on every announce, and it must match `hub_secret` in their `config.json`.
 
-    ```bash
-    docker logs -f mushpi
-    ```
+```bash
+docker compose up -d
+```
 
-    You should see the NestJS bootstrap message and the scheduler confirming the 60-second polling job is active.
-  </Step>
+This pulls the published image `ghcr.io/mushroom-pi/mushpi` and starts one container that serves the backend and the dashboard together on port 3000 — you never build anything locally. To run a specific release, set `MUSHPI_IMAGE_TAG` in `.env` (it defaults to `latest`).
 
-  <Step title="Open the dashboard">
-    Find your Raspberry Pi 3's IP address:
+The full deployment walkthrough — SD-card provisioning, first boot, and the environment options — is on the [Self-hosting page](/deployment/self-hosting).
 
-    ```bash
-    hostname -I
-    ```
+## 3. Open the dashboard
 
-    Then open a browser on any device on the same network and navigate to:
+Open a browser on any device on the same network and go to `http://<hub-ip>:3000`. Find the hub's address with `hostname -I` on the hub. The dashboard loads with an empty unit list — that is expected.
 
-    ```
-    http://<your-pi-ip>:3000
-    ```
+## 4. Register your Pico unit
 
-    The Mushroom Pi dashboard loads. You will see an empty unit list — that is expected until you register your first Pico.
-  </Step>
+Power on the Pico. It connects to your Wi-Fi and announces itself to the `hub_url` you set in `config.json`. The hub registers it by its `handle` — the `device_name` from `config.json` — and it appears in the dashboard within a minute or two.
 
-  <Step title="Register your Pico unit">
-    Power on your Pico 2W. It connects to Wi-Fi and announces itself to the backend address you set in `config.py`. The backend registers it automatically on first contact.
+If it does not appear, check that `hub_secret` and `PICO_ANNOUNCE_SECRET` match, and that `hub_url` points at the hub's real address. The [Pico registration page](/deployment/pico-registration) covers the flow and its troubleshooting in detail.
 
-    Refresh the dashboard — your unit appears in the unit list with its current temperature, humidity, and relay states. If it does not appear within two minutes, check that the Pico's configured backend host IP matches your Raspberry Pi 3's address.
+## 5. Start monitoring
 
-    For a detailed walkthrough of the registration flow and troubleshooting steps, see [Pico Registration](/deployment/pico-registration).
-  </Step>
+Click your unit to open its detail view: live readings update every 60 seconds, alongside relay states and the temperature and humidity charts. To track a grow run, open **Batches**, create a batch, and set your target temperature and humidity ranges. Mushroom Pi holds those conditions from then on.
 
-  <Step title="Start monitoring">
-    Click your unit in the dashboard to open its detail view. You will see live sensor readings updating every 60 seconds, relay status indicators, and the historical temperature and humidity charts.
-
-    To start tracking a grow run, navigate to **Batches**, create a new batch, and optionally assign a recipe with your target temperature and humidity ranges. Mushroom Pi will hold those conditions automatically from this point on.
-  </Step>
-</Steps>
-
-<Tip>
-  You do not need physical hardware to explore the dashboard. The **mushpi-mock** service ([mushpi-mock repository](https://github.com/mushroom-pi/mushpi-mock)) is a FastAPI application that mirrors the Pico's REST API exactly. Run it on any machine on your network and the backend cannot tell the difference from a real unit — ideal for testing recipes, exploring the UI, or developing new features.
-</Tip>
+**No hardware handy?** The [mushpi-mock service](https://github.com/mushroom-pi/mushpi-mock) mirrors the Pico's REST API exactly, so the hub cannot tell it apart from a real unit — ideal for testing recipes or developing. See [Mock Pico](/development/mock-pico).

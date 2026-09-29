@@ -4,14 +4,14 @@ sidebarTitle: "Home"
 description: "Mushroom Pi is an open-source three-tier system for automated mushroom cultivation. Monitor temperature, humidity, and relays from your browser."
 ---
 
-Mushroom Pi puts automated environmental control within reach of every home cultivator. A Raspberry Pi Pico 2W reads your grow space's temperature and humidity, drives humidifier, fan, and heater relays through a hysteresis control loop, and reports back to a self-hosted server you run on a Raspberry Pi 3 — all visible and configurable from a web dashboard in your browser.
+Mushroom Pi puts automated environmental control within reach of every home cultivator. A Raspberry Pi Pico 2W reads your grow space's temperature and humidity, drives humidifier, fan, and heater relays through a hysteresis control loop, and reports back to a self-hosted server you run on your own hardware — all visible and configurable from a web dashboard in your browser.
 
 <CardGroup cols={2}>
   <Card title="Introduction" icon="seedling" href="/introduction">
     Learn what Mushroom Pi is, how the three tiers fit together, and what you can do with it.
   </Card>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Flash the firmware, pull the container, and open the dashboard in under an hour.
+    Flash the firmware, start the hub, and open the dashboard.
   </Card>
   <Card title="Hardware & Components" icon="microchip" href="/hardware/components">
     Everything you need to build a Pico sensor-and-relay unit for your grow space.
@@ -25,15 +25,15 @@ Mushroom Pi puts automated environmental control within reach of every home cult
 
 <Steps>
   <Step title="Flash the firmware">
-    Copy the MicroPython firmware onto your Raspberry Pi Pico 2W and configure it with your Wi-Fi credentials and the backend's address.
+    Copy the MicroPython firmware onto your Raspberry Pi Pico 2W and set your Wi-Fi credentials.
   </Step>
-  <Step title="Deploy the server">
-    Pull the `ghcr.io/mushroom-pi/mushpi` container and run it on your Raspberry Pi 3 — the backend and dashboard ship together on port 3000.
+  <Step title="Start the hub">
+    Clone `mushpi-ops` and run `docker compose up -d` — one container serves the backend and dashboard on port 3000.
   </Step>
   <Step title="Open the dashboard">
-    Navigate to `http://<your-pi-ip>:3000` in your browser, register your Pico unit, and set your target temperature and humidity ranges.
+    Navigate to `http://<hub-ip>:3000` in your browser and register your Pico unit.
   </Step>
   <Step title="Start growing">
-    Create a batch, assign a recipe, and let Mushroom Pi manage the environment while you watch the charts update in real time.
+    Create a batch, set your target temperature and humidity ranges, and let Mushroom Pi manage the environment.
   </Step>
 </Steps>

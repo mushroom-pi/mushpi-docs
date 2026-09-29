@@ -8,17 +8,11 @@ Mushroom Pi is made up of three cooperating components that each run on separate
 
 ## The three components
 
-<CardGroup cols={3}>
-  <Card title="Pico Firmware" icon="microchip">
-    Runs on a Raspberry Pi Pico 2W in your grow space. It reads temperature and humidity from a DHT11 sensor and drives humidifier, fan, and heater relays through a local hysteresis control loop. Relay control happens entirely on the Pico — if the server is temporarily unreachable, your environment stays regulated. The Pico also exposes a small REST API on port 5000 so the backend can read sensor data and push updated targets.
-  </Card>
-  <Card title="Backend Server" icon="server">
-    A NestJS 11 application running inside a Docker container on your Raspberry Pi 3. Every 60 seconds it polls every registered Pico unit, stores the readings in a local SQLite database, and makes them available through a full OpenAPI REST API. When you change a relay threshold or environmental target in the dashboard, the backend proxies that command to the correct Pico immediately.
-  </Card>
-  <Card title="Web Dashboard" icon="display">
-    A React 19 single-page application served by the same container as the backend. You open it in any browser on your local network — no app installation required. It consumes the backend's OpenAPI specification through an auto-generated client, so every endpoint the backend exposes is available in the UI. From here you monitor live conditions, browse charts, and manage batches and recipes.
-  </Card>
-</CardGroup>
+**Pico firmware** — runs on a Raspberry Pi Pico 2W in your grow space. It reads temperature and humidity from a DHT11 sensor and drives humidifier, fan, and heater relays through a local hysteresis control loop. Relay control happens entirely on the Pico, so if the hub is temporarily unreachable, your environment stays regulated. The Pico also exposes a small REST API on port 5000 so the backend can read sensor data and push updated targets.
+
+**Backend server** — a NestJS 11 application running inside a Docker container on the hub: any single-board computer that can run Docker (a Raspberry Pi 3B+ with a 64-bit OS is the tested reference). Every 60 seconds it polls every registered Pico unit, stores the readings in a local SQLite database, and makes them available through a full OpenAPI REST API. When you change a relay threshold or environmental target in the dashboard, the backend proxies that command to the correct Pico immediately.
+
+**Web dashboard** — a React 19 single-page application served by the same container as the backend. You open it in any browser on your local network — no app installation required. It consumes the backend's OpenAPI specification through an auto-generated client, so every endpoint the backend exposes is available in the UI. From here you monitor live conditions, browse charts, and manage batches and recipes.
 
 ## How polling works
 
@@ -32,16 +26,17 @@ When you issue a command from the dashboard — changing a target temperature, t
 
 You can deploy as many Pico 2W units as you need, each in its own grow space. Every unit registers with the same backend server and appears as a separate entry in the dashboard. Units are fully independent: each has its own sensor readings, its own relay configuration, and its own history. You can run different recipes on different units simultaneously — for example, colonisation conditions on one and fruiting conditions on another.
 
-The backend identifies each unit by the address it announces on first contact. Refer to the [Pico Registration guide](/deployment/pico-registration) for the full registration flow.
+The backend identifies each unit by its **`handle`** — the Pico's `device_name` in `config.json` — not by its network address. When a unit boots it announces its `handle` to the hub, which upserts the unit and records its current IP. Refer to the [Pico registration guide](/deployment/pico-registration) for the full flow.
 
 ## Repositories
 
-Every component lives in its own open-source repository. You only need to work with these directly if you are extending or contributing to Mushroom Pi — to run it, the published container image is the only entry point you need.
+Every component lives in its own open-source repository. You only need to touch these directly if you are extending or contributing to Mushroom Pi — to run it, clone `mushpi-ops` and `docker compose up -d`, and the compose file pulls the published image for you.
 
 | Repository | What it contains |
 |---|---|
 | [`mushpi-grow`](https://github.com/mushroom-pi/mushpi-grow) | MicroPython firmware for the Pico 2W — DHT11 sensor reading, relay control, hysteresis loop, REST API on port 5000 |
-| [`mushpi-server`](https://github.com/mushroom-pi/mushpi-server) | NestJS 11 backend — 60s cron polling, SQLite storage, control proxying, batches, recipes, OpenAPI spec |
+| [`mushpi-server`](https://github.com/mushroom-pi/mushpi-server) | NestJS 11 backend — 60-second polling, SQLite storage, control proxying, batches, recipes, OpenAPI spec |
 | [`mushpi-client`](https://github.com/mushroom-pi/mushpi-client) | React 19 dashboard — auto-generated OpenAPI client, MUI v7, TanStack Query, Recharts |
 | [`mushpi-mock`](https://github.com/mushroom-pi/mushpi-mock) | FastAPI mock Pico unit — mirrors the `mushpi-grow` REST API for demos and testing without hardware |
-| [`mushpi-ops`](https://github.com/mushroom-pi/mushpi-ops) | Self-hosting entry point — the published container image, Compose file, and deployment manifest |
+| [`mushpi-ops`](https://github.com/mushroom-pi/mushpi-ops) | The hub entry point — clone it and run `docker compose up -d` to pull `ghcr.io/mushroom-pi/mushpi` and start the backend and dashboard |
+| [`mushpi-docs`](https://github.com/mushroom-pi/mushpi-docs) | This documentation site |
