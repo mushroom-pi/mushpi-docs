@@ -28,7 +28,7 @@ The site is the **destination** of a migration. The pre-Mintlify tree still hold
 
 | Tree | Role |
 |---|---|
-| `mushpi-docs-deprecated/` (local-only, no remote) | The **frozen source archive**: C4 architecture, hardware component pages, schematics, the user guide, presentations, `versioning.md`, `diagram-theme.md`, the retired `roadmap/`. **Read it; never write to it** — it is the migration's trusted source, and it is denied in the docs agents' `edit` maps |
+| `mushpi-docs-deprecated/` (local-only, no remote) | The **pre-Mintlify migration source** — C4 architecture, hardware, the user guide, presentations, `versioning.md`, `diagram-theme.md`. Read-only while it exists, and **deleted when the migration completes**: content *moves* here → site, nothing is archived. Denied in the docs agents' `edit` maps |
 | workspace-root `docs/` (in `mushpi-orchestration`) | **Private** orchestration documentation — topology, model routing and history, tooling history. Never published here |
 
 Migrating a page is a **move, not a rewrite**: place the already-written content, convert `.md` → `.mdx`, add its path to `docs.json`. If the source needs new prose to make sense on the site, that is `mushpi-docs`'s call, not the bulk agent's.
