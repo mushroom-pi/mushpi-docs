@@ -178,13 +178,13 @@ The pin map can also be changed at runtime via the unit's `POST /setup` endpoint
 
 ### GPIO validation
 
-Pin assignments are validated by **mushpi-server** at `PUT /v1/pico-units/:id/control/setup`, not by the firmware. A violation returns **422**.
+Pin assignments are checked by **mushpi-server** when you send them to `PUT /v1/pico-units/:id/control/setup`, and then checked again by the unit's firmware when the server forwards them.
 
-- **Valid range:** integers only, and only pins in the set `0–22, 26, 27, 28`. GP23, GP24, GP25 and GP29 are reserved by the CYW43439 (Wi-Fi/Bluetooth) and are rejected.
-- **No duplicates:** two functions may not share a GPIO *within the same request*. This check compares only the pins you send — it does not compare against the unit's current mapping, so a partial update can still collide with a pin already assigned.
-- **GP0 is assignable.** The server accepts it; the firmware does not reserve it. But GP0 is read at boot as the force-provision input, so assigning it to a relay or the sensor silently breaks the force-provision switch — physically move the switch too.
+- **Valid range, server-side:** integers only, and only pins in the set `0–22, 26, 27, 28`. GP23, GP24, GP25 and GP29 are reserved by the CYW43439 (Wi-Fi/Bluetooth) and are rejected with **422**.
+- **GP0 cannot be assigned.** The firmware reads GP0 at boot to decide whether to enter provisioning mode, and it rejects pin 0 with **400** — which the server reports to you as **417 Expectation Failed**. Nothing is applied. This is deliberate, and it is why the force-provision switch is wired to GP0.
+- **No duplicates — with a gap.** Two functions may not share a GPIO **within the same request** (rejected with **422**). The check does **not** compare against the pins the unit is already using, so sending `{"pins": {"heater": 6}}` while `humidifier` is already on 6 will succeed and leave both functions on one pin. **Assign every pin you care about in one request**, or re-read the unit's mapping afterwards to confirm.
 
-Direct calls to the Pico bypass all of the above. The firmware itself enforces only `integer in 1..29`, returning **400** (`{"ok": false, "error": "pins.<fn> must be int in 1..29"}`); it never rejects a reserved or duplicated GPIO, and no fallback or clamping occurs.
+Direct calls to the Pico bypass the server's validation entirely. The firmware's own check is only `integer in 1..29`, returning **400**; it never rejects a reserved or duplicated GPIO, and no clamping or fallback occurs.
 
 ## After wiring
 
