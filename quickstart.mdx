@@ -11,7 +11,7 @@ This guide walks you through one working end-to-end setup: flash the firmware on
 You need:
 
 - A Raspberry Pi Pico 2W.
-- A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux. The maintainer tests on a Raspberry Pi 3B+ (1 GB), so that is a known-good starting point, not a requirement. The 64-bit OS is a hard requirement — the published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it.
+- A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux. The maintainer tests on a Raspberry Pi 3 Model B v1.2 (1 GB), so that is a known-good starting point, not a requirement. The 64-bit OS is a hard requirement — the published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it.
 - Docker Engine with the Compose v2 plugin — the `docker compose` subcommand (with a space).
 - A DHT11 sensor and a relay module, wired to the Pico. See [Wiring](/hardware/wiring).
 
