@@ -1,64 +1,69 @@
 ---
-title: "Live Sensor Monitoring in the Mushroom Pi Dashboard"
+title: "Monitor your grow"
 sidebarTitle: "Monitoring"
-description: "View live sensor readings and relay states for each Pico unit, and browse historical temperature and humidity charts in the Mushroom Pi dashboard."
+description: "Step 3 of a grow: read the Dashboard's warnings and widgets, browse the Readings charts, and know what healthy looks like."
 ---
 
-The monitoring view is the main screen of the Mushroom Pi dashboard — the first thing you see after opening the app in your browser. It surfaces everything that is happening inside your grow spaces right now: live temperature and humidity readings from each registered Pico unit, the current state of every relay, and a time-stamp showing when the unit last checked in. If conditions in any unit have drifted outside your targets, the monitoring view is where you will notice it first.
+This is step 3 of a grow. Once a batch is running, two screens show you how it is doing: the **Dashboard** (`/`), which gives you an at-a-glance view of everything, and the **Readings** page, which holds the historical charts.
 
-## What the monitoring view shows
+## The Dashboard's warnings
 
-For each registered Pico unit, the dashboard displays a card that contains:
+The Dashboard opens with a warnings banner when something needs your attention. It groups warnings into four kinds:
 
-| Field | Description |
+| Warning | What it means |
 |---|---|
-| **Current temperature** | The latest DHT11 reading in °C (or °F, depending on your display settings). |
-| **Current humidity** | The latest relative humidity reading as a percentage. |
-| **Humidifier relay** | Whether the humidifier is currently **on** or **off**. |
-| **Fan relay** | Whether the fan is currently **on** or **off**. |
-| **Heater relay** | Whether the heater is currently **on** or **off**. |
-| **Last seen** | The UTC timestamp of the most recent successful poll from the backend. |
+| **A unit is unreachable** | The server cannot reach the unit, so it is offline or off the network. The banner lists the unit by name. |
+| **A unit is deviating** | The unit is reporting normally, but its temperature or humidity has drifted outside the batch's target. The banner counts these units. |
+| **A unit is degraded** | The unit is reachable but reporting errors, such as repeated failed reads. |
+| **A unit has no readings** | The server can reach the unit, but its sensor is not returning a temperature or humidity value. |
 
-If a unit has not been polled recently — for example because it is offline or unreachable — the last-seen timestamp turns stale and a warning indicator appears on the card.
+Click a warning to jump to that unit's page.
 
-## Historical charts
+## The unit cards
 
-Below the live readings, the monitoring view renders two interactive line charts powered by **Recharts**:
+Below the warnings, one card per unit shows:
 
-- **Temperature over time** — a continuous line showing every recorded temperature reading for the selected unit.
-- **Humidity over time** — the equivalent chart for relative humidity.
+- **Health** — healthy, degraded, offline, or unmonitored.
+- **Last temperature and humidity** — the most recent reading.
+- **A firmware-compatibility badge** — shown when the unit's firmware reports a contract the server flags as incompatible.
+- **A control-loop chip** — whether the unit's control loop is currently enabled.
+- **The active batch, with days left** — the grow running on that unit and how long it has to run.
+- **Last seen** — how long ago the unit last reported, as a relative age.
 
-You can zoom and pan both charts to inspect specific windows of time. Hover over any data point to see the exact value and timestamp. The charts are a practical way to correlate environmental changes — a humidity dip, a temperature spike — with events in your grow such as fruiting or contamination.
+## The batch and recipe widgets
 
-## Polling cadence
+Below the cards, the Dashboard summarises the rest:
 
-The backend polls each Pico unit on a **60-second cron interval**. Each poll fetches the latest sensor reading and relay states, writes them to the database, and makes them available to the dashboard. The dashboard itself uses **TanStack Query** to re-fetch this data automatically, so the cards refresh without you needing to reload the page.
+- **Active batches** — the grows currently running.
+- **Approaching completion** — batches nearing their finish date.
+- **Recently finished** — batches that just ended.
+- **Most-used recipes** — the recipes you reach for most often.
 
-<Info>
-  The 60-second cadence is set on the backend, not in the browser. The dashboard will always reflect the most recent reading the backend has stored — it cannot receive readings faster than the backend collects them.
-</Info>
+A **stats row** at the top gives the totals at a glance: units (and how many are paused), active batches, total batches, and total readings.
 
-## Manual relay control
+## The Readings page
 
-You can toggle any relay directly from the dashboard without waiting for the automatic control loop to act. Each relay (humidifier, fan, heater) has a toggle switch on its unit card.
+Click **Readings** in the sidebar for the full history of a unit. The page has four controls:
 
-**To manually toggle a relay:**
+- **Unit select** — an in-page dropdown to choose which unit's readings to show.
+- **Time window** — the period to show, for example the last hour.
+- **Display points** — how many points the charts plot, or **Auto**.
+- **Export** — download the readings as a CSV file.
 
-1. Locate the unit card for the grow space you want to adjust.
-2. Find the relay row — **Humidifier**, **Fan**, or **Heater**.
-3. Click the toggle switch next to the relay you want to change.
-4. The dashboard sends a control command to the backend, which proxies it to the Pico immediately.
-5. The relay state on the card updates to reflect the new position.
+### The three chart tabs
 
-<Info>
-  Manual relay overrides are **temporary**. The Pico runs a hysteresis control loop locally — once the loop's next evaluation runs, it will switch relays based on the current sensor reading and your configured targets. If you turn the humidifier on manually but the humidity is already above the target threshold, the control loop will turn it off again on its next cycle. Use manual control for brief interventions (rinsing substrate, inspecting the grow space) rather than as a replacement for setting appropriate targets.
-</Info>
+| Tab | What it plots |
+|---|---|
+| **Temperature & humidity** | Temperature and humidity over time, with the batch's targets drawn against them |
+| **Devices** | Whether the humidifier, fan and heater were on or off |
+| **Control loop** | Whether the control loop was enabled or disabled |
 
-## Switching between units
+The batch detail screen shows the same three tabs, but clamped to that batch's dates.
 
-If you have more than one Pico unit registered, the monitoring view lists all of them. You can:
+## Reading what you see
 
-- **Scroll** through all unit cards on the same page to get a quick at-a-glance overview of every grow space simultaneously.
-- **Select a specific unit** from the sidebar or unit picker to expand its historical charts and relay controls in full detail.
+**What healthy looks like:** the unit's health is **healthy**, there are no warnings, and temperature and humidity track close to the targets — small, short dips and rises either side of the target line are normal, because that is the control loop doing its job.
 
-Each unit maintains completely independent readings, relay states, and history. Changes you make to one unit's relays or targets have no effect on any other unit.
+**What drift is worth acting on:** a reading that stays away from the target for an extended stretch, or a warning that keeps returning, is worth investigating. Check the unit first — power, sensor, and whether the devices are actually switching — before changing targets.
+
+**How the control loop responds to the targets:** the loop on the Pico reads the sensor and switches the heater, fan and humidifier to bring conditions back toward the targets you set on the batch. How far conditions may drift before it acts — the hysteresis band — is explained in [Hysteresis control](/configuration/hysteresis-control).

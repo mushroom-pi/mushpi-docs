@@ -1,69 +1,38 @@
 ---
-title: "Growing Recipes: Set Temperature and Humidity Targets"
+title: "Create a recipe"
 sidebarTitle: "Recipes"
-description: "Define and reuse growing recipes that set target temperature and humidity ranges for specific mushroom species in the Mushroom Pi dashboard."
+description: "Step 1 of a grow: create a recipe that sets the temperature and humidity targets for a species, so you can apply them to every batch."
 ---
 
-A recipe in Mushroom Pi encodes the ideal growing conditions for a particular mushroom species or strain — the temperature you want to maintain, the humidity level you are aiming for, and the hysteresis band that tells the control loop how far conditions can drift before it acts. Saving these parameters as a reusable recipe means you define them once and apply them to every batch of that species with a single selection, eliminating manual re-entry and keeping your grows consistent run after run.
+This is step 1 of a grow. A **recipe** stores the climate targets for a species — the temperature and humidity you want to hold — so you set them once and reuse them on every batch of that species. A recipe does nothing on its own; it takes effect when you attach it to a batch.
+
+Mushroom Pi ships with **no pre-loaded recipes**. Every recipe in your list is one you create, so the list stays relevant to what you actually grow.
 
 ## What a recipe contains
 
-| Field | Description |
+| Field | What it is |
 |---|---|
-| **Name** | A descriptive label for the recipe (e.g. "Oyster Mushrooms — Fruiting"). |
-| **Target temperature (°C)** | The ideal temperature the control loop will try to maintain. |
-| **Temperature hysteresis band** | How many degrees above and below the target are acceptable before the heater or fan activates. |
-| **Target humidity (%)** | The ideal relative humidity the control loop will try to maintain. |
-| **Humidity hysteresis band** | How many percentage points above and below the target are acceptable before the humidifier or fan activates. |
+| **Name** | A label so you can pick the recipe out of a list later |
+| **Species** | What the recipe is for |
+| **Temperature target (°C)** | The temperature the unit's control loop aims to hold |
+| **Humidity target (%)** | The relative humidity the loop aims to hold |
+| **Duration (days)** | How long a batch using this recipe should run |
+| **Notes** | Free text, optional |
+| **Image** | One optional photo |
 
-The hysteresis band prevents the relays from switching on and off too rapidly. For example, a target of 20 °C with a ±1 °C band means the heater turns on only when the temperature drops below 19 °C, and turns off once it rises back above 21 °C.
+The **temperature target** and **humidity target** are the values the Pico unit's control loop tries to maintain: the loop switches the heater, fan and humidifier on and off to keep conditions close to them. How tightly it holds them — how far conditions may drift before the loop acts — is explained in [Hysteresis control](/configuration/hysteresis-control).
 
-## Create a new recipe
+The **duration** matters when you start a batch: it is used to work out the batch's finish date.
 
-<Steps>
-  <Step title="Navigate to Recipes">
-    Open the Mushroom Pi dashboard and click **Recipes** in the left-hand navigation sidebar.
-  </Step>
-  <Step title="Click New Recipe">
-    Click the **New Recipe** button in the top-right corner of the Recipes page.
-  </Step>
-  <Step title="Set a name">
-    Enter a descriptive name in the **Name** field. Be specific — for example, `"Oyster Mushrooms"` or `"Shiitake — Colonisation"` — so you can identify the recipe quickly when linking it to a batch.
-  </Step>
-  <Step title="Set target temperature and acceptable range">
-    Enter your desired temperature in the **Target Temperature** field. Then set the **Temperature Hysteresis** value — a band of 1–2 °C is a reasonable starting point for most species. The control loop will keep the grow space within ± this value of your target.
-  </Step>
-  <Step title="Set target humidity and acceptable range">
-    Enter your desired relative humidity percentage in the **Target Humidity** field. Set the **Humidity Hysteresis** value — a band of 3–5 % RH works well for most fruiting environments.
-  </Step>
-  <Step title="Save the recipe">
-    Click **Save**. The recipe is now available in the **Recipe** dropdown whenever you create or edit a batch.
-  </Step>
-</Steps>
+## Create a recipe
 
-## Applying a recipe to a batch
+1. Click **Recipes** in the sidebar.
+2. Click **New Recipe** in the top-right of the page.
+3. Fill in **Name**, **Species**, **Temperature target (°C)**, **Humidity target (%)** and **Duration (days)**. Add **Notes** and an **Image** if you want them.
+4. Click **Save**.
 
-Recipes do nothing on their own — they take effect when you link one to an active batch. When a batch has a recipe attached, the backend communicates those targets to the Pico unit assigned to that batch, and the Pico's control loop uses them as its operating setpoints.
+The recipe now appears in the Recipes list, and in the **Recipe** dropdown when you create a batch.
 
-To apply a recipe:
+## Edit or delete a recipe
 
-1. Go to **Batches** and open the batch you want to update.
-2. In the **Recipe** field, select the recipe you want to apply.
-3. Save the batch. The new targets are sent to the Pico on the next poll cycle (within 60 seconds).
-
-You can swap a batch's recipe at any time during the run — for example, switching from a colonisation recipe to a fruiting recipe when you move the substrate to a fruiting chamber.
-
-## Built-in vs custom recipes
-
-Mushroom Pi ships without pre-loaded recipes — every recipe in your system is one you or your team created. This keeps the recipe list relevant to the species you actually grow rather than cluttered with defaults you never use. You are free to create as many recipes as you need.
-
-<Tip>
-  Here are well-established target ranges to use as starting points when creating your first recipes:
-
-  | Species | Temperature | Relative Humidity |
-  |---|---|---|
-  | **Oyster mushrooms** | 18–24 °C | 85–95 % RH |
-  | **Shiitake** | 15–21 °C | 80–90 % RH |
-
-  Start with the middle of each range as your target and a hysteresis band of ±1 °C / ±3 % RH. You can tighten the band once you have confirmed your sensor and relay setup is stable.
-</Tip>
+Open a recipe from the list to see its targets, its duration, and the batches that use it. From there you can **Edit** it or **Delete** it. Changing a recipe affects only that recipe — batches that were created from it keep their own copy of the targets, so an existing grow does not change underneath you.

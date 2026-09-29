@@ -1,0 +1,31 @@
+---
+title: "Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "What each warning state means — a unit offline, with no readings, deviated or degraded, or an empty dashboard — and where to check."
+---
+
+When something looks wrong, the Dashboard's warnings and the unit cards tell you which state a unit is in. This page explains what each state means and where to go next.
+
+## A unit is offline
+
+The server cannot reach the unit — it has stopped answering its polls, so no new readings arrive and the unit's **Last seen** age keeps growing. Check that the unit is powered and on the network.
+
+The unit's own LED shows its state at a glance — see [Status indicators](/hardware/status-indicators) for the LED table.
+
+If a unit never appears in the dashboard at all, it has not been registered yet — see [Registering a Pico unit](/deployment/pico-registration).
+
+## A unit has no readings
+
+The unit is reachable, but its sensor is not returning a temperature or humidity value, so there are no readings to plot even though the unit is online. This points at the sensor or its wiring rather than the network.
+
+## A unit is deviated
+
+The unit is healthy and reporting, but its temperature or humidity has drifted outside the batch's target. This is a conditions problem, not a hardware one. See [Monitor your grow](/dashboard/monitoring) for what drift is worth acting on.
+
+## A unit is degraded
+
+The unit is reachable but reporting errors — for example repeated failed reads. Treat it as a hardware or link problem on that unit, distinct from a drift in conditions.
+
+## An empty dashboard
+
+If the Dashboard shows "No Pico units connected yet", the server has no registered units to display. Click **Go to Pico Units** to connect one, or see [Registering a Pico unit](/deployment/pico-registration).

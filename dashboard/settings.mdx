@@ -1,57 +1,22 @@
 ---
-title: "Configure the Mushroom Pi Dashboard: Settings Guide"
+title: "Settings"
 sidebarTitle: "Settings"
-description: "Adjust settings in the Mushroom Pi dashboard — choose temperature units, manage registered Pico units, and configure data retention."
+description: "What the Settings page contains: the display timezone, and where the other dashboard preferences actually live."
 ---
 
-The Settings page is where you tailor the Mushroom Pi dashboard to match your setup and preferences. From here you can change how the dashboard displays readings, review the polling configuration, manage which Pico units are active, and control how long the system keeps historical data. Most changes take effect immediately; a small number require restarting the container.
+The Settings page has a single control: the **display timezone**.
 
-<Accordion title="General">
-  **General settings** control how the dashboard presents information to you.
+## The display timezone
 
-  | Setting | Description |
-  |---|---|
-  | **Display name** | A friendly name for this Mushroom Pi installation — shown in the browser tab and the top navigation bar. Useful if you run multiple instances. |
-  | **Temperature units** | Choose between **°C (Celsius)** and **°F (Fahrenheit)**. All temperature values in the dashboard — live readings, chart axes, recipe targets, and alerts — display in the unit you select here. The underlying database always stores values in Celsius; conversion is applied at display time. |
-</Accordion>
+The **Timezone** field sets how dates and times are shown across the dashboard — on the Dashboard's last-seen ages, the batches' start and finish dates, and the readings. It changes how things are displayed, not how they are stored. Choose your timezone and click **Save**.
 
-<Accordion title="Polling">
-  **Polling settings** show you how often the backend reaches out to each registered Pico unit.
+## Where the other things live
 
-  | Setting | Description |
-  |---|---|
-  | **Polling interval** | The interval at which the backend polls each Pico unit for a new sensor reading. The default is **60 seconds**. |
+Several things a grower might expect to find here are elsewhere — either on a unit's own page or in the server's configuration, not in the dashboard UI.
 
-  <Note>
-    The polling interval is informational — it shows you how fresh your readings are. This value is fixed at deployment time and is not adjustable through the dashboard UI. See [Environment Configuration](/configuration/environment) if you need to change it.
-  </Note>
-</Accordion>
-
-<Accordion title="Units Management">
-  **Units management** lets you organise the Pico units registered with your Mushroom Pi server.
-
-  | Action | Description |
-  |---|---|
-  | **Rename a unit** | Give each Pico unit a meaningful label (e.g. "Tent A — Oysters" or "Fruiting Chamber 2") so you can identify it at a glance on the monitoring view. |
-  | **Enable / disable a unit** | Temporarily disable a unit to stop the backend from polling it — for example, while the unit is offline for maintenance. Disabling a unit does not delete its historical readings; it simply pauses collection until you re-enable it. |
-
-  To rename or toggle a unit, locate it in the Units list on this page and use the inline controls next to its entry.
-</Accordion>
-
-<Accordion title="Data Retention">
-  **Data retention** controls how long the system keeps historical sensor readings.
-
-  | Setting | Description |
-  |---|---|
-  | **Retention period** | The number of days of sensor readings to keep. Readings older than this threshold are pruned automatically. The default is sufficient for most home growers, but you can extend it if you want longer-term trend analysis. |
-
-  Reducing the retention period frees disk space on your Raspberry Pi 3's SD card — an important consideration if you have many units or a small card. Increasing it lets you compare grows across longer windows of time.
-</Accordion>
-
-<Note>
-  Some settings require **restarting the container** to take effect. Changes made through the dashboard UI that require a restart will display a reminder banner until the container is cycled. You can restart the container from the host machine with `docker compose restart`. See [Self-Hosting](/deployment/self-hosting) for container management instructions.
-</Note>
-
-## Advanced configuration
-
-Some settings — such as the polling interval — cannot be changed through the dashboard UI and must be configured before the container starts. See [Environment Configuration](/configuration/environment) for a full reference of every available option and how to set it in your `compose.yml` or `.env` file.
+| You might be looking for | Where it actually is |
+|---|---|
+| Rename a unit, edit its description, face colour, or whether it is monitored | The unit's own page — open the unit from **Pico Units** and use **Edit** |
+| How long readings are kept | Server configuration: the `READINGS_RETENTION_MONTHS` environment variable, default six months. See [Environment configuration](/configuration/environment) |
+| How often units are polled | Fixed on the server at one reading per minute — it is not a dashboard setting |
+| How the control loop responds to targets | [Hysteresis control](/configuration/hysteresis-control) |

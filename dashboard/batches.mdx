@@ -1,57 +1,51 @@
 ---
-title: "Manage Cultivation Batches in Mushroom Pi Dashboard"
+title: "Start a batch"
 sidebarTitle: "Batches"
-description: "Create and track mushroom cultivation batches — record species, start dates, and link a recipe to automate your growing environment."
+description: "Step 2 of a grow: start a batch by choosing the unit and recipe, and understand the Planned, In Progress and Finished statuses."
 ---
 
-A batch in Mushroom Pi represents a single cultivation run — the full arc from inoculation through colonisation and fruiting all the way to harvest. Every grow you do gets its own batch record, giving you a permanent, searchable history of what species you grew, when you started, which environmental recipe you followed, and which Pico unit was managing the space. Over time your batch history becomes a practical log that helps you repeat successful grows and understand why others fell short.
+This is step 2 of a grow. A **batch** is one grow on one unit — from start date to finish date, on a single Pico unit. Every grow you run gets its own batch record.
 
-## What a batch contains
+## Start a batch
 
-Each batch stores the following information:
+1. Click **Batches** in the sidebar.
+2. Click **New Batch** in the top-right of the page.
+3. In the dialog, work through the fields:
 
-| Field | Description |
+| Field | What it is |
 |---|---|
-| **Species / strain name** | A free-text label for what you are growing (e.g. "Pearl Oyster — WC-03"). |
-| **Start date** | The date the batch was inoculated or spawned. |
-| **Notes** | Any free-form observations — substrate formula, contamination events, flush notes. |
-| **Linked recipe** | An optional reference to a saved recipe that defines the temperature and humidity targets for this batch. |
-| **Pico unit** | The specific unit that controls the grow space for this batch. |
+| **Unit** | The Pico unit that runs this grow |
+| **Recipe** | Optional — pre-fills the targets below |
+| **Description** | A short label for the batch |
+| **Start** | When the grow begins |
+| **Finish** | When it ends |
+| **Species** | What you are growing |
+| **Temperature Target (°C)** | The temperature to hold |
+| **Humidity Target (%)** | The humidity to hold |
+| **Notes** | Free text, optional |
 
-## Create a new batch
+4. Click **Save**.
 
-<Steps>
-  <Step title="Navigate to Batches">
-    Open the Mushroom Pi dashboard in your browser and click **Batches** in the left-hand navigation sidebar.
-  </Step>
-  <Step title="Click New Batch">
-    Click the **New Batch** button in the top-right corner of the Batches page. A creation form opens.
-  </Step>
-  <Step title="Fill in species, start date, and notes">
-    Enter the species or strain name in the **Species** field. Set the **Start Date** to the date you inoculated or spawned your substrate. Add any relevant notes in the **Notes** field — this is optional but recommended.
-  </Step>
-  <Step title="Link a recipe (optional)">
-    If you have already created a recipe for this species, select it from the **Recipe** dropdown. The targets defined in that recipe (temperature, humidity, hysteresis band) will be applied to the control loop for this batch's unit. You can leave this blank and link a recipe later.
-  </Step>
-  <Step title="Select the Pico unit">
-    Choose the Pico unit that is managing the grow space for this batch from the **Unit** dropdown. Each batch is associated with exactly one unit.
-  </Step>
-  <Step title="Save">
-    Click **Save**. The batch is now active and appears in your batch list. The dashboard will track environmental readings from the selected unit against this batch going forward.
-  </Step>
-</Steps>
+### Choosing the unit and recipe
 
-## Viewing batch history
+The **Unit** dropdown lists your monitored units. A unit runs one batch at a time: if the unit you pick already has an in-progress batch, the new batch can only start after that one finishes.
 
-All completed and active batches are listed on the Batches page. The list shows the species name, start date, linked recipe, and associated unit for each batch at a glance. Click any batch to open its detail view, where you can:
+When you select a **Recipe**, the dialog copies the recipe's species and temperature and humidity targets into the form, and sets the **Finish** date to the **Start** date plus the recipe's **Duration (days)**. You can then override any of them for this batch — changing them here does not change the recipe, and the batch keeps its own copy of the targets.
 
-- Review the full notes history.
-- See which recipe was applied and when.
-- Browse environmental data recorded during the batch's lifetime.
-- Mark the batch as complete once you have finished harvesting.
+### The finish date
 
-Completed batches are kept permanently, giving you a historical record you can refer back to when planning future grows.
+The **Finish** date is computed from the recipe's duration when you pick a recipe and a start date. You can edit it by hand afterwards. A batch's status is worked out from its dates, not stored by you.
 
-<Tip>
-  Link a recipe to your batch before you start the run. When a recipe is attached, the control loop on the Pico uses that recipe's temperature and humidity targets automatically — you do not need to dial in thresholds manually for each new grow. If you grow the same species repeatedly, a single saved recipe is all you need.
-</Tip>
+## Batch status
+
+| Status | When |
+|---|---|
+| **Planned** | The start date is still in the future |
+| **In Progress** | The batch has started and has not finished |
+| **Finished** | The finish date has passed |
+
+The Batches list has a **status filter** so you can show only Planned, In Progress, or Finished batches. It also shows the species, start date and unit for each batch at a glance.
+
+## Edit or delete a batch
+
+Open a batch from the list to see its unit, description, species, targets, start and finish dates, and the recipe it was created from (if any). From there you can **Edit** or **Delete** it. The recipe is chosen at creation only — editing a batch does not let you swap its recipe.

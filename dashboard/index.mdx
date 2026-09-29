@@ -1,0 +1,37 @@
+---
+title: "Start here"
+sidebarTitle: "Start here"
+description: "A grower's guide to Mushroom Pi: run a grow from your first recipe through to finishing a batch, using the dashboard as the instrument."
+---
+
+Mushroom Pi automates the two conditions that matter most to a grow: temperature and humidity. A **Pico unit** sits in each grow space and switches a humidifier, a fan and a heater on and off to hold the conditions you set. The **hub** runs `mushpi-server`, which stores every reading and drives the units. The **dashboard** is the website you open in a browser to run the whole thing.
+
+You do not need to understand the internals to run a grow. This guide walks the grow lifecycle in order, and each page points at the screen that step needs.
+
+## The grow lifecycle
+
+1. **Create a recipe** — set the temperature and humidity targets once, for a species. See [Create a recipe](/dashboard/recipes).
+2. **Start a batch** — pick the unit and the recipe for this grow. See [Start a batch](/dashboard/batches).
+3. **Monitor the grow** — read the Dashboard and Readings pages. See [Monitor your grow](/dashboard/monitoring).
+4. **Finish the batch** — set the finish date, then turn a good grow into a reusable recipe. See [Finish a batch](/dashboard/finishing-a-batch).
+
+Two pages sit outside the lifecycle and are there when you need them: [Settings](/dashboard/settings) for the one dashboard preference, and [Troubleshooting](/dashboard/troubleshooting) for when something looks wrong.
+
+## Which screen does what
+
+The dashboard has seven sidebar destinations and three detail screens. This table names each one and points at where it is documented.
+
+| Screen | What you do there | Documented in |
+|---|---|---|
+| **Dashboard** | The landing view: warnings, unit cards, and batch and recipe widgets | [Monitor your grow](/dashboard/monitoring) |
+| **Pico Units** | List your units and connect a new one | [Registering a Pico unit](/deployment/pico-registration) |
+| **Unit detail** | One unit's health, controls, devices and batches | [Troubleshooting](/dashboard/troubleshooting) |
+| **Batches** | Start and track your grows | [Start a batch](/dashboard/batches) |
+| **Batch detail** | One grow's targets, charts and finishing | [Finish a batch](/dashboard/finishing-a-batch) |
+| **Recipes** | Reusable climate targets | [Create a recipe](/dashboard/recipes) |
+| **Recipe detail** | One recipe's targets and the batches using it | [Create a recipe](/dashboard/recipes) |
+| **Readings** | Historical charts and CSV export | [Monitor your grow](/dashboard/monitoring) |
+| **Server** | The hub's health and environment | — |
+| **Settings** | The display timezone | [Settings](/dashboard/settings) |
+
+The **Server** screen is not part of the grow lifecycle; it shows the hub's own health, environment and database, and a button that opens the API documentation. The three detail screens (**Unit detail**, **Batch detail**, **Recipe detail**) are reached by clicking a unit, batch or recipe on its list page.
