@@ -1,33 +1,78 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+# Mushroom Pi — mushpi-docs (published Mintlify site)
 
-# Documentation project instructions
+The **public documentation site** for the Mushroom Pi three-tier system, built with Mintlify. Pages are MDX with YAML frontmatter; navigation, theme and branding live in `docs.json`. Mintlify syncs this repository through its GitHub app and deploys on every push to `main`.
 
-## About this project
+Three regressions this repo must not cause: publishing content that is not public, breaking the site's navigation by adding a page that `docs.json` does not list, and letting a page drift from the fact it describes. "Done" is defined under Verification.
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+## Map
 
-## Terminology
+| Path | What exists there |
+|---|---|
+| `index.mdx` | Landing page |
+| `introduction.mdx` · `quickstart.mdx` · `system-overview.mdx` | Getting Started: what Mushroom Pi is, the first-run path, the three-tier shape |
+| `hardware/` | Building the units: `components.mdx`, `wiring.mdx`, `pico-firmware.mdx` |
+| `deployment/` | Self-hosting: `self-hosting.mdx`, `first-boot.mdx`, `pico-registration.mdx`, `updates-and-backups.mdx` |
+| `dashboard/` | Using the dashboard: `monitoring.mdx`, `batches.mdx`, `recipes.mdx`, `settings.mdx` |
+| `configuration/` | `environment.mdx`, `hysteresis-control.mdx`, `remote-access.mdx` |
+| `development/` | Contributors: `mock-pico.mdx`, `contributing.mdx` |
+| `api/` | API Reference section — `overview.mdx`, `authentication.mdx`, `units.mdx`, `readings.mdx`, `batches.mdx`, `recipes.mdx`, `settings.mdx`, and `api/pico/{overview,endpoints}.mdx` |
+| `docs.json` | **The site's index**: navigation tabs/groups, theme colours, logo, navbar, and any OpenAPI spec references. A page not listed here is not published |
+| `logo/` · `favicon.svg` | Brand assets |
+| `.mintignore` | Files Mintlify must not render |
+| `.atlas-analysis.json` | Atlas code-generation artifact — see `REFERENCE.md` |
+| `AGENTS.md` · `REFERENCE.md` | Instruction files. **Not pages** — never add them to `docs.json` |
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+## Where the content comes from
 
-## Style preferences
+The site is the **destination** of a migration. The pre-Mintlify tree still holds material that has not moved yet.
 
-{/* Add any project-specific style rules below */}
+| Tree | Role |
+|---|---|
+| `mushpi-docs-deprecated/` (local-only, no remote) | The **frozen source archive**: C4 architecture, hardware component pages, schematics, the user guide, presentations, `versioning.md`, `diagram-theme.md`, the retired `roadmap/`. **Read it; never write to it** — it is the migration's trusted source, and it is denied in the docs agents' `edit` maps |
+| workspace-root `docs/` (in `mushpi-orchestration`) | **Private** orchestration documentation — topology, model routing and history, tooling history. Never published here |
 
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+Migrating a page is a **move, not a rewrite**: place the already-written content, convert `.md` → `.mdx`, add its path to `docs.json`. If the source needs new prose to make sense on the site, that is `mushpi-docs`'s call, not the bulk agent's.
 
-## Content boundaries
+## Canonical facts — name the owner, never copy the fact
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+| Fact | Owner |
+|---|---|
+| Server API shape | `mushpi-server/spec/openapi.json` (generated on pre-commit) |
+| Pico REST API shape | `mushpi-grow/spec/openapi.yaml` (hand-authored) |
+| Hardware BOM, pin map, power data | `mushpi-grow/HARDWARE.md` (electronics agent owns it — never edit) |
+| Packaging, release and deployment decisions | `mushpi-ops/MAINTAINING.md` (internals) · `mushpi-ops/DEPLOYMENT.md` (operator-facing) |
+| Version and release semantics | `mushpi-docs-deprecated/versioning.md` until it is ported |
+| Feature status, phase, priority, effort | The GitHub Project `mushroom-pi` #1 — read via `mushpi-product-owner` |
+| Diagram palette and emoji map | `mushpi-docs-deprecated/diagram-theme.md` |
+| Mermaid shape/legend conventions | The `mermaid-diagram-conventions` skill |
+| Per-repo coding rules | Each sub-repo's own `AGENTS.md` |
+
+## Hard gates
+
+1. **New gotcha → `REFERENCE.md`**, never this core.
+2. **Structural change → the index row in the same change.** A new, moved, renamed or deleted page updates its `docs.json` navigation entry (and any table above) in the same commit — as a row, not prose.
+
+## Content boundary — public only
+
+Never publish: any `AGENTS.md`/`REFERENCE.md`; anything from the workspace-root `docs/` folder (model routing and model history are private by policy); the archive's raw shop-page clippings (`mushpi-docs-deprecated/hardware/components/clippings/` — excluded from both licenses, copyright-risky, and not documentation); and any credential, token, local path or private hostname. When in doubt, ask the orchestrator rather than guessing — the site is public the moment it is pushed.
+
+## Authoring rules
+
+- **MDX with YAML frontmatter** (`title:`, `description:`) — set both; Mintlify uses them for nav, search and previews. Sentence case for headings; bold for UI elements; code formatting for files, commands, paths and identifiers.
+- **Portable-first.** Plain Markdown and tables are the default. Mintlify-specific components (`<CardGroup>`, `<Accordion>`, `<Steps>`) belong in landing and navigation-style pages, not spread through every page — vendor lock-in is mitigated by keeping the prose re-renderable.
+- **Cross-repo references are code-spans or absolute URLs, never relative links.** The sub-repos and this site are separate repositories; `../../mushpi-server/...` resolves nowhere on a published site. Same rule as the archive.
+- **Mermaid:** one `mermaid` fenced block per diagram; Mintlify renders it natively, so a diagram must be checked *in the preview*, not only parsed. Load the `mermaid-diagram-conventions` skill and use the project theme before touching any diagram.
+- **Never restate feature status.** Status lives in the tracker; a page that needs it links to the tracker.
+- **Link discipline:** relative links between site pages only; verify with `mint broken-links` before reporting done.
+
+## Verification ("done" for this repo)
+
+1. `mint validate` — passes (and validates any OpenAPI spec referenced from `docs.json`).
+2. `mint broken-links` — no broken internal link.
+3. A visual check in `mint dev --port 3001` for any page whose diagram, table or component you touched. **Never the default port**: `mint dev` binds 3000, which collides with `mushpi-server`.
+4. Every structural change has its `docs.json` navigation entry and its map row above.
+5. Facts come from the owner files in the table — never invented; docs↔code disagreement is flagged, never silently reconciled.
+
+## Instruction files are off-limits to the docs agents
+
+`AGENTS.md` and `REFERENCE.md` here are denied in the docs agents' `edit` permission maps and are owned by the orchestrator. Report a needed change instead of making it. Pages, `docs.json` and site assets are the docs agents' territory; `mushpi-docs-bulk` places supplied or migrated content, `mushpi-docs` writes prose.
