@@ -1,65 +1,31 @@
 ---
-title: "Register a Pico 2W Unit with Your Mushroom Pi Server"
+title: "Register a Pico Unit with the Hub"
 sidebarTitle: "Pico Registration"
-description: "Connect a flashed Raspberry Pi Pico 2W to your Mushroom Pi server so the unit appears in the dashboard and begins sending live sensor data."
+description: "How a Pico unit appears in the hub when it announces, how to confirm it, and what to check when it does not show up."
 ---
 
-When a flashed Pico 2W powers on, it connects to your Wi-Fi network and announces itself to the Mushroom Pi server by calling the backend's announce endpoint. The server registers the unit, assigns it an ID, and begins polling it every 60 seconds to collect temperature and humidity readings. From that point on, the unit appears in your dashboard and participates in any batch or recipe you assign to it.
+A Pico unit joins the hub on its own — you do not register it by hand. This page explains how the unit appears, how to confirm it, and what to check when it does not.
 
-## Prerequisites
+## How a unit appears
 
-- Your Pico 2W must already be flashed with the [mushpi-grow](https://github.com/mushroom-pi/mushpi-grow) firmware
-- The Pico and the Raspberry Pi server must be on the **same local network**
-- The Mushroom Pi server must be running and accessible at `http://<pi-ip>:3000`
+When a flashed Pico unit boots, it connects to your Wi-Fi network and announces itself to the hub at `POST /v1/pico-units/announce`, sending its shared secret in the `X-Pico-Secret` header.
 
-<Steps>
-  <Step title="Set the server URL in the Pico firmware config">
-    Before powering on the Pico, open its firmware configuration file (typically `config.py` in the mushpi-grow repo) and set the server URL to point at your Mushroom Pi server:
+The hub matches the announcement by the unit's `handle` — the `device_name` from the unit's `config.json` — and upserts the unit into its database. From then on the hub polls the unit every 60 seconds for temperature and humidity readings. You do not flash, configure, or wire anything in this step — that is covered on the [Pico firmware](/hardware/pico-firmware) and [Wiring](/hardware/wiring) pages.
 
-    ```python
-    SERVER_URL = "http://<pi-ip>:3000"
-    ```
+## Confirm the unit is registered
 
-    Replace `<pi-ip>` with the local IP address you noted during [first boot](/deployment/first-boot). Save the file and copy it to the Pico using `mpremote` (see the [mushpi-grow README](https://github.com/mushroom-pi/mushpi-grow) for full flashing instructions).
-  </Step>
+Power on the Pico. It connects to Wi-Fi and announces itself, and it appears in the dashboard within a minute or two.
 
-  <Step title="Power on the Pico">
-    Connect the Pico 2W to power via USB. On boot it will:
+Open the dashboard at `http://<hub-ip>:3000` and look at the monitoring view, which shows a card for each registered unit. The new unit's card appears with its `handle`, and its temperature and humidity readings start filling in after the hub's first poll — allow up to 60 seconds for the first reading.
 
-    1. Connect to the Wi-Fi network using the credentials in its config
-    2. Send an announce request to the Mushroom Pi server at `http://<pi-ip>:3000`
-    3. Start the DHT11 sensor loop and wait for the server to poll it
+## If the unit does not appear
 
-    The server processes the announce request and registers the unit automatically — you don't need to do anything on the server side.
-  </Step>
+Work through these checks in order:
 
-  <Step title="Verify the unit appears in the dashboard">
-    In your browser, open the Mushroom Pi dashboard at `http://<pi-ip>:3000` and navigate to the **Units** page. The newly registered Pico should appear in the list within a few seconds of powering on, showing its unique ID and the time it last announced itself.
-  </Step>
+**The shared secret.** The `hub_secret` in the unit's `config.json` must exactly match the hub's `PICO_ANNOUNCE_SECRET`. A mismatch means the hub rejects the announcement and the unit never appears.
 
-  <Step title="Confirm sensor readings are coming in">
-    Wait up to 60 seconds for the server's polling cycle to run. Refresh the **Units** page and select your unit — you should see live temperature and humidity readings from the DHT11 sensor. If readings are present, the unit is fully operational.
-  </Step>
-</Steps>
+**The hub address.** The `hub_url` in `config.json` must point at the hub's real address, including the path — `http://<hub-ip>:3000/v1/pico-units/announce`. If the hub's IP has changed, the unit is announcing to the wrong place.
 
-<Accordion title="Unit not appearing in the dashboard?">
-  If the Pico doesn't show up on the Units page within a minute or two, work through these checks:
+**The unit is on the network.** If the unit never reaches your Wi-Fi network, it cannot announce. The unit's onboard LED tells you where it is stuck — Wi-Fi not connected, Wi-Fi up but the hub unreachable, or fully operational. Compare the LED against the [Status indicators](/hardware/status-indicators) page. To change the Wi-Fi credentials, see [Provisioning](/hardware/provisioning).
 
-  **Check Wi-Fi connectivity**
-  - Confirm the Wi-Fi SSID and password in the Pico's config file are correct
-  - Make sure the Pico is within range of your router
-  - The Pico 2W only supports 2.4 GHz networks — verify your router is broadcasting on 2.4 GHz
-
-  **Verify the server URL in the firmware config**
-  - Double-check that `SERVER_URL` in `config.py` exactly matches `http://<pi-ip>:3000` with no trailing slash
-  - Confirm the Pi's IP address hasn't changed since you noted it (consider assigning a static IP or DHCP reservation to your Pi)
-
-  **Check Pico logs via serial**
-  - Connect the Pico to your computer via USB and open a serial terminal (e.g. `mpremote connect auto`) to view runtime output
-  - Look for connection errors, Wi-Fi failures, or HTTP error codes from the announce request
-
-  **Check the server logs**
-  - On the Raspberry Pi, run `docker logs mushpi` to see whether the server is receiving the announce request and whether any errors are logged
-</Accordion>
-
-You can register as many Pico 2W units as you need — each one controls its own independent grow space. All registered units are visible on the **Units** page, and each can be assigned to a separate batch with its own temperature and humidity targets.
+You can register as many units as you need — each one announces itself the same way, and each controls its own grow space.

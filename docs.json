@@ -38,10 +38,12 @@
               {
                 "group": "Deploy the hub",
                 "pages": [
+                  "deployment/sd-card-provisioning",
                   "deployment/self-hosting",
                   "deployment/first-boot",
                   "deployment/pico-registration",
-                  "deployment/updates-and-backups"
+                  "deployment/updates-and-backups",
+                  "deployment/host-wifi-recovery"
                 ]
               }
             ]

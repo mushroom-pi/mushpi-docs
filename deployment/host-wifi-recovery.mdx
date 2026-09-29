@@ -1,0 +1,91 @@
+---
+title: "Host Wi-Fi — Adding or Changing the Unit's Network"
+sidebarTitle: "Host Wi-Fi Recovery"
+description: "How to get the unit's host back online when its Wi-Fi network or password changes — three recovery methods plus troubleshooting, for Raspberry Pi OS Bookworm/Trixie or any Debian-family SBC on NetworkManager."
+---
+
+> **Scope:** For the person who set the unit up — the self-hoster or hobbyist who owns the machine running the growing unit. This is **not** part of the grower workflow: when the unit's network changes, this is how you get it back online. The steps are host-level and assume you have physical access to the Pi.
+
+## When this applies
+
+Do this when any of the following changed, or when the unit has moved:
+
+- The Wi-Fi **SSID** changed (a new network name).
+- The Wi-Fi **password** changed.
+- The unit moved to a **new router**, a different network, or a different building.
+
+If the SSID **and** password are unchanged — same network, same credentials — there is nothing to do. NetworkManager stores the profile and reconnects on its own after a router swap, a reboot, or a brief outage.
+
+## The constraint that shapes everything
+
+When Wi-Fi is down, there is **no remote route in**. Tailscale and its MagicDNS name, SSH, and the dashboard all ride on the Wi-Fi link — if the unit cannot associate with a network, none of them are reachable. Recovery is therefore **physical and out-of-band**: you need a cable, the SD card, or a monitor and keyboard on the unit itself.
+
+Keep that in mind before you try any trick that assumes you can already reach the box.
+
+## Method 1 — Wired recovery (preferred)
+
+The cleanest route is a temporary Ethernet connection. A cable gives you an in-band shell without touching the SD card or the Wi-Fi config first.
+
+1. Connect an **Ethernet cable** from the Pi to a LAN port on the router. The wired interface picks up a DHCP lease automatically — no configuration needed.
+
+2. **Find the host.** Either resolve it over mDNS with `ping <hostname>.local` (or `ssh <user>@<hostname>.local`), or look the Pi up in the **router's client list** and use its IP address. See the [official guide to finding the IP address](https://www.raspberrypi.com/documentation/computers/remote-access.html#ip-address).
+
+3. **SSH in** as your normal user.
+
+4. **Re-point Wi-Fi with NetworkManager:**
+
+   ```bash
+   sudo nmcli dev wifi list
+   ```
+
+   Confirm the target network is visible in the list. If it is not, see [Troubleshooting notes](#troubleshooting-notes) — a 5 GHz-only SSID on a 2.4 GHz-only board, or an unset country, will not appear.
+
+   ```bash
+   sudo nmcli --ask dev wifi connect "<SSID>"
+   ```
+
+   This connects and **saves a profile** for the network (`--ask` prompts for the password rather than putting it in your shell history).
+
+   ```bash
+   nmcli connection show
+   ip -brief addr
+   ```
+
+   `nmcli connection show` lists the saved profiles; `ip -brief addr` shows the interfaces and their addresses.
+
+5. **Verify it worked.** Confirm `wlan0` has an address in `ip -brief addr`, then unplug the cable and confirm the unit stays reachable over Wi-Fi — `ping` its `.local` name from another machine, or open the dashboard. Success looks like this: the unit associates to the new SSID, gets an address, and remains reachable after the Ethernet cable is removed.
+
+The previous profile is **kept** — this is additive and non-destructive. If more than one saved network is now in range, NetworkManager picks the highest-priority one; set priority per network with:
+
+```bash
+nmcli connection modify <name> connection.autoconnect-priority <n>
+```
+
+Higher numbers win. The official wireless-connection procedure is in the [Raspberry Pi configuration documentation](https://www.raspberrypi.com/documentation/computers/configuration.html#wireless-connection), and the authoritative command reference is the [nmcli documentation](https://networkmanager.dev/docs/api/latest/nmcli.html).
+
+## Method 2 — Edit the profile on the SD card
+
+No cable handy, but you have a Linux machine (or a second Pi): power the unit down, take out the SD card, and mount the **rootfs** partition. The Wi-Fi profile lives at `/etc/NetworkManager/system-connections/<ssid>.nmconnection`. Add or correct the profile, then set its ownership and permissions exactly — NetworkManager ignores profiles with loose permissions:
+
+```bash
+sudo chmod 600 /etc/NetworkManager/system-connections/<ssid>.nmconnection
+sudo chown root:root /etc/NetworkManager/system-connections/<ssid>.nmconnection
+```
+
+The practical caveat: the rootfs partition is **ext4**, which Windows and macOS cannot mount without extra software — this route effectively needs Linux or a second Pi. For a step-by-step walkthrough, see the [headless Bookworm Wi-Fi guide](https://www.zansara.dev/posts/2024-01-06-raspberrypi-headless-bookworm-wifi-config/) and the [Raspberry Pi OS Bookworm networking answer](https://raspberrypi.stackexchange.com/questions/145593/how-do-i-set-up-networking-on-raspberry-pi-os-bookworm-or-later).
+
+## Method 3 — Boot-partition script (last resort)
+
+No cable **and** no Linux machine: the FAT **bootfs** partition is readable anywhere, so a script can be placed there and run as root at boot by adding a `systemd.run=…` line to `cmdline.txt`. The script writes the NetworkManager profile, so the next boot comes up on the new network.
+
+> **Note:** This is a **community workaround, not an official Raspberry Pi procedure** — treat it as a last resort. The trick is documented in [this Stack Exchange thread](https://raspberrypi.stackexchange.com/questions/150081/connecting-to-new-wifi-on-raspberry-headless-bookworm-reg).
+
+## Troubleshooting notes
+
+- **2.4 GHz vs 5 GHz.** Older boards are **2.4 GHz-only**. A 5 GHz-only SSID — or a band-steered SSID that only advertises 5 GHz — simply will not appear in `nmcli dev wifi list`. Check the list before assuming the radio is broken.
+- **Country / regulatory domain.** The Wi-Fi country must be set for the radio to behave. If the unit was imaged with the wrong or unset country, channels may be missing or the interface may refuse to come up.
+- **Hidden SSIDs.** A hidden network needs `hidden yes` in its profile; otherwise NetworkManager will not associate, because it never sees the beacon.
+
+## Applicability
+
+These steps are written for **Raspberry Pi OS Bookworm/Trixie or later**, where NetworkManager is the default. The same `nmcli` steps apply on **other Debian-family SBCs using NetworkManager**. Older releases — Bullseye and earlier — used `dhcpcd` and `wpa_supplicant.conf` instead, and instructions written for those do **not** apply here. This page is hardware-generic and is not tied to a specific board model.

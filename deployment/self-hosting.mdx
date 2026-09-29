@@ -1,78 +1,98 @@
 ---
-title: "Deploy Mushroom Pi: Self-Hosting on Raspberry Pi 3"
+title: "Self-Host the Mushroom Pi Hub"
 sidebarTitle: "Self-Hosting"
-description: "Deploy the Mushroom Pi server and dashboard on a Raspberry Pi 3 using the official ghcr.io/mushroom-pi/mushpi container image — no build step required."
+description: "Run the Mushroom Pi hub — the dashboard and API together in one Docker image — on any Docker-capable single-board computer."
 ---
 
-Mushroom Pi ships as a single container image that bundles the NestJS backend and React dashboard together, serving both on port 3000. You pull one image, run one container, and your grow-control server is live — no build step required. This page walks you through getting that container running on a Raspberry Pi 3 using either a plain `docker run` command or a Compose file you can keep in version control.
+Mushroom Pi ships as a single container image that bundles the NestJS backend and the React dashboard together, serving both on port 3000. You pull one image, run one container, and your grow-control hub is live — there is no build step. This page tells you what you are deploying, what you need before you start, and how to run it.
 
-<Note>
-**Prerequisites before you begin:**
-- Raspberry Pi 3 with at least 1 GB RAM running a 64-bit OS (Raspberry Pi OS Lite recommended)
-- microSD card, 16 GB or larger
-- Docker installed and running on the Pi ([install guide](https://docs.docker.com/engine/install/raspberry-pi-os/))
-- The Pi connected to your local network (wired or Wi-Fi)
-</Note>
+## What you are deploying
 
-## Choose your deployment approach
+The hub is three things, and only three:
 
-<Tabs>
-  <Tab title="Docker Run (simple)">
-    The quickest way to get Mushroom Pi running is a single `docker run` command. Run this on your Raspberry Pi:
+- **One image.** You pull `ghcr.io/mushroom-pi/mushpi` from GitHub Container Registry. The package is public, so the pull needs no credentials and you never build it yourself.
+- **One port.** Port 3000 serves the built dashboard and the API together — production is same-origin, so there is no separate frontend to run.
+- **One data directory.** All persistent state lives in one host directory that you choose: the SQLite database at `/data/app.sqlite`, plus uploaded images and logs.
 
-    ```bash
-    docker run -d \
-      --restart unless-stopped \
-      -p 3000:3000 \
-      -v mushpi-data:/data \
-      --name mushpi \
-      ghcr.io/mushroom-pi/mushpi:latest
-    ```
+The hub runs on any Docker-capable single-board computer. A Raspberry Pi 3 Model B v1.2 (1 GB) is what the maintainer tests on, so that is a known-good starting point, not a requirement.
 
-    Docker will pull the image from GHCR on first run, create a named volume called `mushpi-data` to persist your SQLite database, and start the container in the background. The `--restart unless-stopped` flag means the server comes back up automatically after a reboot.
-  </Tab>
-  <Tab title="Docker Compose (recommended)">
-    A Compose file is easier to manage long-term — you can edit it, commit it to a repo, and redeploy with a single command. Create a file called `compose.yml` on your Pi:
+For access from outside your local network, you set up Tailscale — a private, encrypted mesh that needs no port forwarding and no TLS certificates. The [remote-access guide](/configuration/remote-access) covers it.
 
-    ```yaml
-    services:
-      mushpi:
-        image: ghcr.io/mushroom-pi/mushpi:latest
-        container_name: mushpi
-        restart: unless-stopped
-        ports:
-          - "3000:3000"
-        volumes:
-          - mushpi-data:/data
+## Prerequisites
 
-    volumes:
-      mushpi-data:
-    ```
+### Hardware and OS
 
-    Then bring it up:
+- A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux.
+- **The 64-bit OS is a hard requirement.** The published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it. If you are flashing Raspberry Pi OS, select the 64-bit image in Raspberry Pi Imager.
+- **Raspberry Pi Imager 2.0.6 or newer** is required to flash and customise a current Raspberry Pi OS image — older versions fail silently. Flashing the card is its own step; the SD-card provisioning page covers it.
 
-    ```bash
-    docker compose up -d
-    ```
+### Software
 
-    To stop the server at any time, run `docker compose down` from the same directory. Your data volume is preserved between stop/start cycles.
-  </Tab>
-</Tabs>
+- **Docker Engine with the Compose v2 plugin** — the `docker compose` subcommand (with a space).
+- A user account that can talk to the Docker daemon. On Raspberry Pi OS, add yourself to the `docker` group with `sudo usermod -aG docker $USER`, then log out and back in.
+- `git`, to clone the deployment repository.
 
-## Verify the server is running
+No registry login is needed — the image is public, so `docker compose pull` runs anonymously. Do not put a GitHub token on the hub.
 
-Once the container starts, open a browser on any device on the same network and navigate to:
+### Network
 
-```
-http://<pi-ip>:3000
+- Outbound HTTPS to `ghcr.io`, to pull the image.
+- LAN access between the hub and each Pico unit: the hub polls every unit over the local network, and each unit announces itself to the hub when it boots.
+- Browsers on your LAN reach the dashboard on the hub's port 3000.
+
+## Configure the environment
+
+The hub reads its configuration from a `.env` file beside the compose file. Copy the template and fill in the one required value:
+
+| Variable | Required | What it sets |
+|---|---|---|
+| `PICO_ANNOUNCE_SECRET` | **Yes** | The shared secret Pico units send in the `X-Pico-Secret` header when they announce. The server refuses to boot without it in production. Generate one with `openssl rand -hex 32`, and use the same value as `hub_secret` in every unit's `config.json`. |
+| `MUSHPI_DATA_DIR` | No | The host directory that holds all persistent state. Defaults to `./mushpi-data` beside the compose file. Point it somewhere you back up. |
+| `MUSHPI_IMAGE_TAG` | No | Which image tag to pull. Defaults to `latest`. |
+| `APP_HTTPS_ENABLED` | No | Set to `true` only when the dashboard is actually served over HTTPS with TLS terminated in front of it (for example behind Tailscale or a reverse proxy). Defaults to `false`, which is correct for a plain-HTTP LAN deployment. |
+| `MAX_REQUESTS` / `MAX_REQUESTS_TIME` | No, as a pair | Rate limiting, off by default. Set both together to enable it: `MAX_REQUESTS` is the request count per window and `MAX_REQUESTS_TIME` is the window length in milliseconds. A recommended starting point is `300` and `60000`. Setting only one is a configuration error. |
+| `APP_HOST` | No | The hostname used to build absolute image URLs. Defaults to `http://localhost:3000`; set it to the hub's LAN hostname so recipe and batch images load on other devices. |
+
+## Run it
+
+Clone the deployment repository and start the stack:
+
+```bash
+git clone https://github.com/mushroom-pi/mushpi-ops.git mushpi-ops
+cd mushpi-ops
+cp .env.example .env
 ```
 
-Replace `<pi-ip>` with your Raspberry Pi's local IP address (find it with `hostname -I` on the Pi). The Mushroom Pi dashboard should load within a few seconds of the container starting.
+Edit `.env` and set `PICO_ANNOUNCE_SECRET`. Then:
 
-<Tip>
-For production use, pin your deployment to a specific release tag instead of `latest` — for example, `ghcr.io/mushroom-pi/mushpi:v1.2.0`. This ensures you don't inadvertently pull a breaking change during a routine container restart. Check the [Mushroom Pi releases](https://github.com/mushroom-pi/mushpi-ops/releases) page for the latest stable tag.
-</Tip>
+```bash
+docker compose up -d
+```
+
+The first `up` pulls the published image and starts one container. There is nothing to build and no further setup on the host.
+
+## Verify it is up
+
+Open a browser on any device on the same network and go to:
+
+```
+http://<hub-ip>:3000
+```
+
+Replace `<hub-ip>` with the hub's address — find it with `hostname -I` on the hub. The dashboard should load within a few seconds of the container starting.
+
+If it does not load, check the container state:
+
+```bash
+docker compose ps
+docker compose logs mushpi
+```
+
+## Validation status
+
+This deployment path has been validated in a local build and smoke test. It has not yet been validated on the target hardware, so treat the first run on your own hub as a test.
 
 ## Next steps
 
-With the server running, head to [First Boot](/deployment/first-boot) to complete the initial setup wizard, set your admin credentials, and prepare your server to receive Pico units.
+- [First boot](/deployment/first-boot) — what happens the first time the container starts and what you configure.
+- [Pico registration](/deployment/pico-registration) — how a Pico unit appears in the hub.

@@ -1,109 +1,53 @@
 ---
-title: "Keep Mushroom Pi Updated and Back Up Your Grow Data"
+title: "Keep Mushroom Pi Updated and Back Up Your Data"
 sidebarTitle: "Updates & Backups"
-description: "Keep your Mushroom Pi server up to date and safeguard your grow history with regular backups of the SQLite database stored in the Docker volume."
+description: "Update the Mushroom Pi stack with Docker Compose and back up your data by copying the host data directory while the stack is stopped."
 ---
 
-Keeping your Mushroom Pi installation current and your data safe are two separate habits worth building early. Server updates take under two minutes and preserve all your data because the database lives in a Docker volume, not inside the container. Backups are a single `docker run` command you can schedule with cron. This page covers both.
+Updating Mushroom Pi is deliberately minimal: the deployment is one container pulled from GHCR, and the update is two Compose commands. Backups are the same story — all persistent state lives in one directory on the host, so a backup is a copy of that directory.
 
----
+## Update the stack
 
-## Updating the server
-
-<Steps>
-  <Step title="Pull the latest image">
-    SSH into your Raspberry Pi and pull the latest Mushroom Pi image from GHCR:
-
-    ```bash
-    docker pull ghcr.io/mushroom-pi/mushpi:latest
-    ```
-
-    Docker will download only the layers that have changed since your last pull. If you pinned to a specific tag (recommended), replace `latest` with the new tag — for example, `ghcr.io/mushroom-pi/mushpi:v1.3.0`.
-  </Step>
-
-  <Step title="Stop and remove the old container">
-    Bring down the running container. Your data volume is **not** affected by this step:
-
-    ```bash
-    docker stop mushpi && docker rm mushpi
-    ```
-  </Step>
-
-  <Step title="Start a new container from the updated image">
-    Re-run the same command you used during initial deployment. The `mushpi-data` volume is automatically re-attached, so your database, settings, and grow history are all intact:
-
-    ```bash
-    docker run -d \
-      --restart unless-stopped \
-      -p 3000:3000 \
-      -v mushpi-data:/data \
-      --name mushpi \
-      ghcr.io/mushroom-pi/mushpi:latest
-    ```
-
-    If you're using Docker Compose, run `docker compose pull` followed by `docker compose up -d` instead — Compose handles the stop/remove/recreate cycle for you.
-  </Step>
-</Steps>
-
----
-
-## Updating Pico firmware
-
-<Steps>
-  <Step title="Get the latest mushpi-grow firmware">
-    On your development machine, pull the latest firmware from the mushpi-grow repository:
-
-    ```bash
-    # If you already have a local clone:
-    git -C mushpi-grow pull
-
-    # Or clone it fresh:
-    git clone https://github.com/mushroom-pi/mushpi-grow.git
-    ```
-  </Step>
-
-  <Step title="Review and update the config if needed">
-    Open `config.py` and confirm the settings are still correct for your setup — in particular, verify that `SERVER_URL` still points to `http://<pi-ip>:3000`. Apply any changes before copying files to the Pico.
-  </Step>
-
-  <Step title="Copy the updated files to the Pico and reboot">
-    Connect the Pico 2W to your computer via USB and use `mpremote` to copy the updated firmware files across, then reboot:
-
-    ```bash
-    mpremote connect auto cp -r . :
-    mpremote connect auto reset
-    ```
-
-    The Pico will announce itself to the server again on reboot. Its registration record in the dashboard is preserved — no re-registration is needed.
-  </Step>
-</Steps>
-
----
-
-## Backing up your data
-
-All Mushroom Pi data lives in the `mushpi-data` Docker volume as a single SQLite file — `mushpi.db`. To back it up, spin up a temporary Alpine container that mounts both the data volume and your current directory, then copies the database out:
+**Back up first** (next section) — then, from the `mushpi-ops` checkout on the hub — the directory that holds `docker-compose.yml`:
 
 ```bash
-docker run --rm \
-  -v mushpi-data:/data \
-  -v $(pwd):/backup \
-  alpine \
-  cp /data/mushpi.db /backup/mushpi.db
+docker compose pull && docker compose up -d
 ```
 
-This places `mushpi.db` in your current working directory. Copy it to off-Pi storage (a USB drive, NAS, or remote host) to complete the backup.
+`docker compose pull` fetches the newest image, and `docker compose up -d` recreates the container on it. The update is a container recreate — that is the whole mechanism. Your data is not touched: the persistent state is a host directory bind-mounted into the container, not container storage.
 
-<Warning>
-For a consistent, uncorrupted backup, **stop the Mushroom Pi container before copying the database file**. SQLite can be in the middle of a write when the copy runs, which may produce a corrupt backup. Run `docker stop mushpi` first, take the backup, then `docker start mushpi`.
-</Warning>
+### Rolling back
 
-<Tip>
-Automate backups with a cron job on the Raspberry Pi. Open the crontab with `crontab -e` and add a line like the one below to create a timestamped backup every night at 2 AM:
+Pin the image tag the stack pulls by setting `MUSHPI_IMAGE_TAG` in `.env` to the older release tag (for example `MUSHPI_IMAGE_TAG=v0.8.0`), then bring the stack up again:
 
-```cron
-0 2 * * * docker stop mushpi && docker run --rm -v mushpi-data:/data -v /home/pi/backups:/backup alpine cp /data/mushpi.db /backup/mushpi-$(date +\%Y\%m\%d).db && docker start mushpi
+```bash
+docker compose up -d
 ```
 
-Pair this with a script that prunes backups older than 30 days to keep your storage usage in check.
-</Tip>
+By default the stack pulls `ghcr.io/mushroom-pi/mushpi:latest` — `MUSHPI_IMAGE_TAG` defaults to `latest` in `docker-compose.yml` and is documented (commented out) in `.env.example`. Removing the override and running `docker compose pull && docker compose up -d` returns you to the newest image.
+
+## What this page does not document
+
+The following are **not implemented today**, so they are not documented here — none of them is a step this deployment performs:
+
+- **Image pruning** — no cleanup of old images is part of the workflow.
+- **An explicit stop before pulling** — nothing stops the stack before `docker compose pull`; Compose recreates the container in one step.
+- **A post-update health check** — there is no documented verification step beyond the container running.
+
+## Back up the data directory
+
+All persistent state lives in **one directory on the host** — whatever `MUSHPI_DATA_DIR` points at in `.env` (default `./mushpi-data` next to the compose file). That directory holds the SQLite database (`app.sqlite`), the uploaded images and the logs.
+
+To back it up, **stop the stack, copy the directory, start the stack again**:
+
+```bash
+docker compose stop
+cp -a ./mushpi-data /path/to/backup/     # or: rsync -a ./mushpi-data /path/to/backup/
+docker compose start
+```
+
+Substitute your `MUSHPI_DATA_DIR` path if you set one. Copying the directory **while the stack runs is not the documented approach** — the SQLite database can be mid-write, which is exactly what stopping avoids.
+
+## Pico firmware updates
+
+Pico firmware updates are **USB-flash, not ops** — they are done from a computer over USB and are covered by the hardware pages, not by this deployment workflow. See [Pico firmware](/hardware/pico-firmware).

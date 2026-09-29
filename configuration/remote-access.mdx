@@ -1,69 +1,49 @@
 ---
 title: "Access Your Mushroom Pi Dashboard Remotely with Tailscale"
 sidebarTitle: "Remote Access"
-description: "Set up secure remote access to your Mushroom Pi dashboard from anywhere using Tailscale VPN, without opening firewall ports or configuring routers."
+description: "Reach your Mushroom Pi dashboard from any device on your tailnet with Tailscale — no port forwarding, no public exposure — and get HTTPS with tailscale serve."
 ---
 
-By default, your Mushroom Pi dashboard is only reachable from devices on the same local network as your Raspberry Pi. That's fine at home, but it means you can't check on your grow from your phone while you're out or monitor conditions from a remote location. [Tailscale](https://tailscale.com) solves this cleanly: it creates an encrypted peer-to-peer VPN between your devices without requiring you to open any firewall ports, configure port forwarding, or expose your Pi directly to the internet. Your dashboard stays private and accessible only to devices you authorize.
+By default, the Mushroom Pi dashboard is reachable only from devices on the same local network as the hub. The recommended way to reach it from anywhere else is **Tailscale** — a private mesh VPN built on WireGuard. Your devices connect directly to each other over an encrypted tunnel: no port forwarding, nothing exposed to the public internet, and the dashboard stays reachable only from devices on your tailnet. MagicDNS gives the hub a stable hostname you can reach from any of them.
+
+## The plain path: Tailscale on the hub
+
+1. **Install Tailscale on the hub.** Run the official install script on the Pi that hosts the Mushroom Pi container:
+
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   ```
+
+2. **Authenticate the hub to your tailnet.** Start Tailscale and follow the authentication link it prints:
+
+   ```bash
+   sudo tailscale up
+   ```
+
+   Open the URL in a browser, sign in, and authorize the device. The hub is now a member of your tailnet.
+
+3. **Reach the dashboard by hostname.** Install Tailscale on your phone, laptop, or any other device and sign in to the same tailnet. Then open:
+
+   ```
+   http://<magicdns-hostname>:3000
+   ```
+
+   The hostname is the MagicDNS name Tailscale assigns to the hub — something like `raspberrypi.tail1234.ts.net`. The dashboard loads exactly as it does on your LAN.
 
 <Note>
-Tailscale is **free for personal use** and supports up to 100 devices on a single account, which is far more than most home growers will ever need. No credit card is required.
+MagicDNS assigns a stable hostname to every device on the tailnet. It is enabled in the Tailscale admin console (on by default for new accounts), and each device's name is listed there.
 </Note>
 
-## Set Up Tailscale Access
+## HTTPS with `tailscale serve`
 
-<Steps>
-  <Step title="Install Tailscale on your Raspberry Pi">
-    Run the official Tailscale install script on the Pi that hosts your Mushroom Pi container:
+The plain path serves the dashboard over plain HTTP. The recommended way to get HTTPS is **`tailscale serve`**: it terminates TLS for the hub's tailnet hostname and proxies requests to the dashboard's port 3000, so the same MagicDNS name is reached over `https://`.
 
-    ```bash
-    curl -fsSL https://tailscale.com/install.sh | sh
-    ```
+When TLS is terminated upstream like this, tell the server about it: set `APP_HTTPS_ENABLED=true` in `.env` and recreate the stack with `docker compose up -d`. The flag does not configure TLS itself — it declares that the browser-facing deployment is genuinely served over HTTPS, which makes the server send the HSTS header and the CSP `upgrade-insecure-requests` directive.
 
-    Tailscale supports Raspberry Pi OS (32-bit and 64-bit) out of the box.
-  </Step>
+**It must stay `false` otherwise.** On a plain-HTTP deployment those directives make the browser rewrite the dashboard's own asset URLs to `https://`, which renders a blank page.
 
-  <Step title="Authenticate your Pi to your Tailnet">
-    Start Tailscale and follow the authentication link it prints:
+## Headscale — the self-hosted escape hatch
 
-    ```bash
-    sudo tailscale up
-    ```
+Tailscale's coordination service is hosted by Tailscale. For anyone who would rather not use that hosted service, [Headscale](https://github.com/juanfont/headscale) is an open-source, self-hosted implementation of the same control plane — your devices still form a WireGuard mesh, but the coordinator runs on a server you control. It is an alternative worth knowing about, not a supported Mushroom Pi setup path, and this guide does not cover installing it.
 
-    Open the URL shown in a browser, log in with your Tailscale account, and authorize the device. The Pi is now a member of your Tailnet.
-  </Step>
-
-  <Step title="Find your Pi's Tailscale IP address">
-    Retrieve the IPv4 address Tailscale assigned to the Pi:
-
-    ```bash
-    tailscale ip -4
-    ```
-
-    The output will be an address in the `100.x.y.z` range, for example `100.64.0.12`. Note this address — you'll use it to reach the dashboard.
-  </Step>
-
-  <Step title="Open the dashboard from any device on your Tailnet">
-    Install Tailscale on your phone, laptop, or any other device you want to use for remote access, and connect it to the same Tailscale account. Then open a browser and navigate to:
-
-    ```
-    http://<tailscale-ip>:3000
-    ```
-
-    Replace `<tailscale-ip>` with the address from the previous step — for example, `http://100.64.0.12:3000`. You'll see the Mushroom Pi dashboard exactly as if you were on your local network.
-  </Step>
-</Steps>
-
-<Tip>
-Enable **MagicDNS** in your Tailscale admin console (it's on by default for new accounts). MagicDNS assigns a stable hostname to each device — something like `raspberrypi.tail1234.ts.net` — so you can bookmark `http://raspberrypi.tail1234.ts.net:3000` and it will always resolve correctly, even if the Tailscale IP address changes.
-</Tip>
-
-## Alternative Approaches
-
-Tailscale is the recommended remote-access method for Mushroom Pi because it requires no port forwarding and no server-side configuration beyond installing the client. That said, two other approaches work if Tailscale isn't suitable for your situation:
-
-- **SSH tunnel** — If you have SSH access to your Pi, you can forward port 3000 to your local machine with `ssh -L 3000:localhost:3000 pi@<pi-hostname>`. This is fine for occasional access but requires an active SSH session and isn't convenient on mobile.
-
-- **Local reverse proxy** — Tools like [Caddy](https://caddyserver.com) or [nginx](https://nginx.org) can terminate TLS and proxy requests to the Mushroom Pi container. This makes sense if you're already running a reverse proxy on your network and want to serve the dashboard on a custom domain with HTTPS. You'll still need a way to reach the proxy from outside your network (Tailscale, a VPN, or careful firewall rules).
-
-For most growers, Tailscale's combination of simplicity, security, and zero-port-forwarding setup makes it the right default choice.
+Self-hosters may also choose a different remote-access approach entirely, or stay LAN-only.
