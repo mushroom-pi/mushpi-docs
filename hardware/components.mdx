@@ -1,47 +1,146 @@
 ---
 title: "Required Hardware Components for Mushroom Pi Builds"
 sidebarTitle: "Components"
-description: "Everything you need to build a Mushroom Pi grow unit: a Pico 2W, DHT11 sensor, three-channel relay module, and a server host to run the backend."
+description: "The parts to build a Mushroom Pi grow unit: a Pico 2W, a DHT11 sensor, a relay module, three 5 V actuators, and a Docker-capable hub — plus the capability requirements for substituting equivalents."
 ---
 
-To build one Mushroom Pi grow unit you need a small collection of off-the-shelf electronics: a Raspberry Pi Pico 2W as the brains, a DHT11 sensor to read the environment, and a three-channel relay module to switch your humidifier, fan, and heater. You also need a server host — a Raspberry Pi 3 is the recommended target, though any Linux machine with Docker will work. The sections below list everything, including optional items for prototyping.
+This page is the hardware reference for one Mushroom Pi grow unit. It lists what the **tested build** actually uses — labelled honestly as a reference implementation, not a mandatory shopping list — and, alongside it, what each part has to be able to do. A grower can substitute any equivalent part that meets the capability requirements without being told ours are the only ones that work.
 
-## Pico Unit Components
+## System orientation
 
-These components make up the physical grow controller that sits inside or beside each grow space.
+```mermaid
+flowchart LR
+    subgraph server["🖥️ mushpi-server Hub"]
+        api[/"REST API :3000<br/>(NestJS + SQLite)"/]
+    end
 
-| Component | Qty | Notes |
+    subgraph pico["🌱 Raspberry Pi Pico 2W"]
+        direction TB
+        wifi["WiFi<br/>(STA mode)"]
+        pgp0["GP0<br/>Force-Provision"]
+        pgp4["GP4"]
+        pgp6["GP6"]
+        pgp7["GP7"]
+        pgp8["GP8"]
+        pwrusb["USB / VSYS"]
+    end
+
+    subgraph dht["🌡️ DHT11 Sensor"]
+        dht_read["Temp + Humidity"]
+    end
+
+    subgraph relay["⚙️ 8-Channel Relay (SRD-05VDC)"]
+        rel_ch1["CH1"]
+        rel_ch2["CH2"]
+        rel_ch3["CH3"]
+    end
+
+    subgraph actuators["🔌 5V DC Actuators"]
+        hum["💧 Humidifier<br/>USB Mister"]
+        fan["🌀 Fan<br/>5V DC"]
+        heat["🔥 Heating Mat<br/>5V USB"]
+    end
+
+    subgraph power["⚡ Dedicated 5V DC PSU"]
+        psu[/"5V 2A+ barrel jack<br/>(mandatory)"/]
+    end
+
+    sw{{"🔘 Force-Provision<br/>Switch → GND"}}
+
+    %% === DATA FLOW (Pico reads DHT; drives relay inputs) ===
+    dht_read -->|"GP4<br/>Single-wire"| pgp4
+    pgp6 -->|"GP6"| rel_ch1
+    pgp7 -->|"GP7"| rel_ch2
+    pgp8 -->|"GP8"| rel_ch3
+
+    %% === WIFI ===
+    server <-->|"WiFi REST<br/>Poll + Control"| wifi
+
+    %% === RELAY → ACTUATORS (switched 5V rail) ===
+    rel_ch1 -->|"NO/COM"| hum
+    rel_ch2 -->|"NO/COM"| fan
+    rel_ch3 -->|"NO/COM"| heat
+
+    %% === POWER DISTRIBUTION (dedicated PSU; Pico's 3V3 does not power relays) ===
+    psu -->|"5V (coil rail)"| relay
+    psu -->|"5V → VSYS"| pwrusb
+
+    %% === FORCE-PROVISION ===
+    sw --- pgp0
+
+    %% === LEGEND ===
+    l_d["━ Data / Sensor"]:::dataStyle
+    l_r["━ Relay Output (NO/COM)"]:::relayOutStyle
+    l_w["━ WiFi / Network"]:::wifiStyle
+    l_p["━ Power (5V)"]:::powerStyle
+    l_f["━ Force-Provision (GP0)"]:::provStyle
+    l_d --- l_r --- l_w --- l_p --- l_f
+
+    %% === STYLES ===
+    classDef dataStyle fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    classDef relayOutStyle fill:#dcfce7,stroke:#16a34a,color:#166534
+    classDef wifiStyle fill:#f3e8ff,stroke:#7c3aed,color:#5b21b6
+    classDef powerStyle fill:#fee2e2,stroke:#dc2626,color:#991b1b
+    classDef provStyle fill:#ffedd5,stroke:#ea580c,color:#9a3412
+    classDef relayModuleStyle fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+
+    class dht_read,pgp4,pgp6,pgp7,pgp8 dataStyle
+    class hum,fan,heat relayOutStyle
+    class server,api,wifi wifiStyle
+    class power,psu,pwrusb powerStyle
+    class pgp0,sw provStyle
+    class relay,rel_ch1,rel_ch2,rel_ch3 relayModuleStyle
+```
+
+The diagram orients the parts before you buy them. The **hub** — `mushpi-server` running in Docker on any single-board computer — talks to each unit over Wi-Fi, polling readings and sending control commands. Inside the unit, a **Raspberry Pi Pico 2W** reads the **DHT11 sensor** on one GPIO pin and drives a **relay module** on three more. The relay module switches the three **5 V actuators** — humidifier, fan, and heating mat — on the 5 V rail, and a **dedicated 5 V supply** powers both the relay module and the Pico. A **force-provision switch** on GP0 is the only other input. The pin-level wiring is on the [Wiring](/hardware/wiring) page.
+
+## Reference implementation (the tested build)
+
+| Part | Model / variant | Notes |
 |---|---|---|
-| Raspberry Pi Pico 2W | 1 | The microcontroller — must be the **2W** variant for built-in Wi-Fi |
-| DHT11 temperature & humidity sensor | 1 | Reads ambient conditions inside the grow space |
-| 3-channel relay module (5 V coil) | 1 | Switches the humidifier (CH1), fan (CH2), and heater (CH3) |
-| Jumper wires (male–male and male–female) | 1 set | For connecting sensor and relay module to the Pico headers |
-| USB power supply — 5 V / 2.5 A minimum | 1 | Powers the Pico; a standard phone charger at 2.5 A or above is fine |
-| Micro-USB cable | 1 | Both for flashing firmware and for permanent power |
+| Microcontroller | Raspberry Pi Pico 2W | RP2350, dual-core, built-in Wi-Fi |
+| Temperature & humidity sensor | DHT11 (4-pin module) | Single-wire digital; chequered accuracy |
+| Relay module | 8-channel 5 V relay (SRD-05VDC) | Channels 1–3 used; 5 channels spare; active-low by default; optocoupler-isolated |
+| Humidifier | Ultrasonic mist maker (USB-powered) | Switched by relay channel 1 |
+| Fan | 30×30×10 mm 5 V DC brushless | Switched by relay channel 2; air circulation |
+| Heating mat | Low-wattage USB heating mat (5 V) | Switched by relay channel 3 |
+| Power supply | 5 V / 2 A+ DC (barrel jack) | Dedicated to the relay module and actuators — not run through the Pico's USB port |
 
-## Server Host Components
+The relay module has **eight channels; only three are used** (humidifier = channel 1, fan = channel 2, heater = channel 3). The remaining five channels stay spare.
 
-The backend and dashboard ship as a single container image. You need one host on your local network to run it.
+## Capability requirements (what you may substitute)
 
-| Component | Qty | Notes |
+Each role only needs to meet these requirements — the specific part above is what the maintainer happens to test, not what you must buy.
+
+| Role | Requirement |
+|---|---|
+| Microcontroller | Runs MicroPython, hosts Wi-Fi, and exposes the GPIO pins the firmware needs — the Pico 2W is the tested choice because it has Wi-Fi built in |
+| Temperature & humidity sensor | A DHT11-compatible single-wire sensor the firmware can read |
+| Switching | Low-voltage DC switching for the actuators, rated for the actuator current — the relay module switches the 5 V rail only, and never carries mains |
+| Each actuator (humidifier, fan, heater) | A 5 V DC load that does the environmental work: add moisture, move air, add heat |
+| Power supply | A supply with enough current headroom for the full load — see [Power](/hardware/power) for the load table and why 5 V / 2 A+ is the tested minimum |
+
+All of the Pico-side components are widely available from electronics distributors (Adafruit, SparkFun, Pimoroni, AliExpress, Amazon); search for "Raspberry Pi Pico 2W", "DHT11 module", and "5V 8-channel relay module".
+
+## Server host
+
+The hub runs the backend and dashboard in a single container. You need one host on your local network to run it.
+
+| Part | Qty | Notes |
 |---|---|---|
-| Raspberry Pi 3 (1 GB RAM) | 1 | Minimum recommended host; any Linux machine with Docker works too |
+| Docker-capable SBC or Linux host | 1 | Any Docker-capable single-board computer — the Raspberry Pi 3B+ (with a 64-bit OS) is the tested bare-minimum reference |
 | microSD card — 16 GB or larger | 1 | Stores the OS, container image, and SQLite database |
-| Power supply for the Pi 3 | 1 | Official Raspberry Pi 3 PSU (5 V / 2.5 A micro-USB) recommended |
-| Ethernet cable or 2.4 GHz Wi-Fi | — | The server host must be reachable on the same network as the Pico units |
+| Power supply for the host | 1 | e.g. the official Raspberry Pi 3 PSU (5 V / 2.5 A micro-USB) for a Pi 3B+ |
+| Ethernet or 2.4 GHz Wi-Fi | — | The hub must be reachable on the same network as the Pico units |
 
-## Optional Components
+## Optional components
 
 | Component | Notes |
 |---|---|
-| Half-size or full-size breadboard | Useful for prototyping before soldering or using a project enclosure |
-| Pin headers for Pico | Pre-soldered on some Pico variants; required if yours is headerless |
+| Half-size or full-size breadboard | Useful for prototyping before soldering or using an enclosure |
+| Pin headers for Pico | Pre-soldered on some variants; required if yours is headerless |
 | Enclosure / project box | Protects the electronics in a real grow environment |
 
-<Info>
-  All of the Pico-side components are widely available from electronics distributors such as Adafruit, SparkFun, Pimoroni, AliExpress, and Amazon. Search for "Raspberry Pi Pico 2W", "DHT11 module", and "5V 3-channel relay module". The Raspberry Pi 3 is available directly from the Raspberry Pi Foundation and its licensed resellers.
-</Info>
+## Server hosting alternatives
 
-## Server Hosting Alternatives
-
-The container image (`ghcr.io/mushroom-pi/mushpi`) targets a **Raspberry Pi 3 with 1 GB RAM** as its primary platform, but it runs on any Linux host that has Docker installed — an existing home server, a NUC, or a cloud VM all work. The Pico units communicate with the server over your local network (or via Tailscale for remote access), so the host just needs a stable IP or hostname on the same network as your Pico units.
+The container image (`ghcr.io/mushroom-pi/mushpi`) runs on any Linux host with Docker installed — an existing home server, a NUC, or a cloud VM all work. The Pico units reach the server over your local network (or via Tailscale for remote access), so the host only needs a stable address on the same network as the Pico units.

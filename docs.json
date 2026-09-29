@@ -29,7 +29,10 @@
                 "pages": [
                   "hardware/components",
                   "hardware/wiring",
-                  "hardware/pico-firmware"
+                  "hardware/power",
+                  "hardware/pico-firmware",
+                  "hardware/provisioning",
+                  "hardware/status-indicators"
                 ]
               },
               {

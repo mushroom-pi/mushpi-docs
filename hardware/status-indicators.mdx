@@ -1,0 +1,21 @@
+---
+title: "Pico Unit Status Indicators: Reading the LED"
+sidebarTitle: "Status Indicators"
+description: "The five LED patterns a Mushroom Pi Pico unit shows — OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, and CONFIG ERROR — and what each one means."
+---
+
+When a Mushroom Pi unit misbehaves, this is the reference to check before anything else: the Pico's onboard LED reports the unit's state directly, and each pattern maps to a specific condition in the firmware.
+
+## LED Patterns
+
+| Signal | Pattern | What it means |
+|---|---|---|
+| OFF | not lit | No Wi-Fi connection, or the link dropped and the unit is reconnecting. Check the SSID and password. |
+| SOLID | continuously lit | Wi-Fi is connected but the hub announcement is **in progress or failed** — a unit that reaches Wi-Fi but never the hub stays lit. |
+| HEARTBEAT | blinking, 800 ms period | Fully operational — Wi-Fi connected and the hub has acknowledged the unit. |
+| SLOW DOUBLE-BLINK | 200 ms on / 200 ms off / 200 ms on / 800 ms off | **Provisioning mode** — the unit is running its own access point, waiting for Wi-Fi credentials. |
+| CONFIG ERROR | 3 fast blinks, 1 s pause, repeating | `config.json` is malformed or has invalid values. **Terminal** — the unit starts no services. Check the serial console. |
+
+The unit also flashes the LED briefly at power-on, before Wi-Fi connecting begins.
+
+The slow double-blink means the unit is waiting for Wi-Fi credentials — see [Provisioning](/hardware/provisioning) for the full access-point provisioning flow.

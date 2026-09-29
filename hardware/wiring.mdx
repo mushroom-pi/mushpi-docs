@@ -1,64 +1,191 @@
 ---
-title: "Wiring Your Pico 2W: DHT11 Sensor and Relay Module"
+title: "Wiring Your Pico 2W: Sensor, Relays, Actuators, and Force-Provision"
 sidebarTitle: "Wiring"
-description: "Step-by-step wiring guide for connecting a DHT11 temperature and humidity sensor and a three-channel relay module to your Raspberry Pi Pico 2W."
+description: "Wire a DHT11 sensor, an eight-channel relay module, three 5 V actuators, and a force-provision switch to a Raspberry Pi Pico 2W — the defaults, how to remap the pins, and the low-voltage-only safety rule."
 ---
 
-Wiring a Mushroom Pi unit involves two connections: a DHT11 sensor that reports temperature and humidity back to the firmware, and a three-channel relay module that switches your humidifier, fan, and heater on and off. Both run at 3.3 V logic and draw minimal current, so the Pico's own power rails are sufficient for the control side. The relay module's output terminals are where mains-voltage appliances connect — read the safety warning below before you proceed.
+The pin map on this page is a **set of defaults, not a fixed wiring**. The firmware ships with the DHT11 on **GP4** and the relays on **GP6 / GP7 / GP8**, and those assignments are configurable — you can change them in `config.json` (see [Changing the pin assignments](#changing-the-pin-assignments)). The defaults are documented first, then how to change them.
 
-<Warning>
-  The **output side** of a relay module (the terminals labelled COM, NO, and NC) may carry mains voltage (110 V or 230 V AC) when you connect real appliances. Work on the wiring only when the appliances are **unplugged from the wall**. If you are not comfortable working with mains wiring, have a qualified electrician complete that portion. The Pico-side (input) wiring described in this guide is low-voltage and safe to handle at any time.
-</Warning>
+> **No mains voltage.** Every part in this build runs on 5 V DC or 3.3 V DC. The relay module switches the low-voltage side only — there is no 110 V / 230 V mains anywhere in the unit. Never connect mains to the relay module.
 
-## Wiring Steps
+## Wiring overview
 
-<Steps>
-  <Step title="Connect the DHT11 sensor">
-    The DHT11 has three pins (some breakout modules add a fourth pull-up resistor pin — check your board's silkscreen):
+```mermaid
+flowchart LR
+    subgraph pico["🌱 Raspberry Pi Pico 2W"]
+        direction TB
+        p3v3["3V3(OUT) Pin 36"]
+        pvsys["VSYS Pin 39"]
+        pvb_usb{{"USB<br/>(alt. power)"}}
+        pgnd["GND"]
+        pgp0["GP0 Pin 1"]
+        pgp4["GP4 Pin 6"]
+        pgp6["GP6 Pin 9"]
+        pgp7["GP7 Pin 10"]
+        pgp8["GP8 Pin 11"]
+    end
 
-    - **VCC → Pico pin 36 (3V3 OUT)** — provides 3.3 V power to the sensor
-    - **GND → any Pico GND pin** (e.g. pin 38)
-    - **DATA → a GPIO pin of your choice** — the default in the firmware config is GPIO 15 (pin 20), but you can change it
+    subgraph dht["🌡️ DHT11 Sensor"]
+        dvcc["VCC"]
+        ddata["DATA"]
+        dgnd["GND"]
+    end
 
-    If your DHT11 is a bare component (not a module), add a 10 kΩ pull-up resistor between DATA and VCC.
-  </Step>
+    subgraph relay["⚙️ 8-Channel Relay (SRD-05VDC)"]
+        rvcc["VCC"]
+        rgnd["GND"]
+        rin1["IN1 (CH1)"]
+        rin2["IN2 (CH2)"]
+        rin3["IN3 (CH3)"]
+    end
 
-  <Step title="Connect the relay module">
-    Most five-volt relay modules accept 3.3 V logic signals from the Pico's GPIO pins:
+    subgraph actuators["🔌 5V DC Actuators"]
+        hum["💧 Humidifier<br/>USB Mister"]
+        fan["🌀 Fan<br/>5V DC"]
+        heat["🔥 Heating Mat<br/>5V USB"]
+    end
 
-    - **VCC → Pico pin 36 (3V3 OUT)** or the module's own 5 V rail if it has an optocoupler that needs 5 V logic — check your module's datasheet
-    - **GND → any Pico GND pin**
-    - **IN1 (humidifier relay) → GPIO pin** — firmware default is GPIO 16 (pin 21)
-    - **IN2 (fan relay) → GPIO pin** — firmware default is GPIO 17 (pin 22)
-    - **IN3 (heater relay) → GPIO pin** — firmware default is GPIO 18 (pin 24)
+    subgraph supply["⚡ Dedicated 5V 2A+ PSU"]
+        psu[/"Barrel jack<br/>5V DC"/]
+    end
 
-    Most relay modules are **active-low**: the relay energises when the GPIO is pulled LOW. The firmware accounts for this; verify that your module matches.
-  </Step>
+    sw{{"🔘 Force-Provision<br/>Momentary switch"}}
 
-  <Step title="Power the Pico via USB">
-    Connect a 5 V / 2.5 A USB power supply to the Pico's micro-USB port. The Pico will boot immediately and, once the firmware is flashed, connect to your Wi-Fi network and start the REST API on port 5000.
+    %% === DATA & CONTROL (Blue) ===
+    pgp4 -->|"GP4 → DATA"| ddata
+    pgp6 -->|"GP6"| rin1
+    pgp7 -->|"GP7"| rin2
+    pgp8 -->|"GP8"| rin3
 
-    During development you can power the Pico from your computer's USB port and use the same cable for `mpremote` access.
-  </Step>
-</Steps>
+    %% === POWER (Red) — dedicated PSU; Pico's 3V3 only feeds the DHT11 ===
+    psu -->|"5V (coil rail)"| rvcc
+    psu -->|"5V → VSYS"| pvsys
+    pvb_usb -.->|"5V (alt. path)"| pvsys
+    p3v3 -->|"3.3V"| dvcc
 
-## Pin Mapping Reference
+    %% === GROUND (Black) ===
+    pgnd -->|"GND"| dgnd
+    pgnd -->|"GND"| rgnd
 
-| Component | Pico Physical Pin | GPIO | Notes |
+    %% === RELAY OUTPUTS (Green) — actuators switched on the 5V rail ===
+    rin1 -->|"CH1 NO/COM"| hum
+    rin2 -->|"CH2 NO/COM"| fan
+    rin3 -->|"CH3 NO/COM"| heat
+
+    %% === FORCE-PROVISION (Orange) — switch pulls GP0 to GND at boot ===
+    pgp0 --- sw
+    sw ---|"closed → GND"| pgnd
+
+    %% === LEGEND ===
+    l1["━ 5V Power (red)"]:::powerStyle
+    l2["━ Data / GPIO (blue)"]:::dataStyle
+    l3["━ Ground (black)"]:::gndStyle
+    l4["━ Relay Output (green)"]:::relayOutStyle
+    l5["━ Force-Provision (orange)"]:::provStyle
+    l1 --- l2 --- l3 --- l4 --- l5
+
+    %% === STYLES ===
+    classDef powerStyle fill:#fee2e2,stroke:#dc2626,color:#991b1b
+    classDef dataStyle fill:#dbeafe,stroke:#2563eb,color:#1e40af
+    classDef gndStyle fill:#e5e5e5,stroke:#1a1a1a,color:#1a1a1a
+    classDef relayOutStyle fill:#dcfce7,stroke:#16a34a,color:#166534
+    classDef provStyle fill:#ffedd5,stroke:#ea580c,color:#9a3412
+
+    class p3v3,pvsys,pvb_usb,dvcc,rvcc,psu powerStyle
+    class pgp4,pgp6,pgp7,pgp8,ddata,rin1,rin2,rin3 dataStyle
+    class pgnd,dgnd,rgnd gndStyle
+    class hum,fan,heat relayOutStyle
+    class pgp0,sw provStyle
+```
+
+The diagram shows the four kinds of connection, colour-coded by signal — **data/GPIO** (blue), **5 V power** (red), **ground** (black), **relay outputs** (green), and the **force-provision** input (orange):
+
+- The Pico's **GP4** carries the DHT11's single-wire data line; **GP6, GP7 and GP8** drive the relay inputs IN1, IN2 and IN3 (humidifier, fan, heater).
+- The **dedicated 5 V supply** feeds both the relay module's coil rail and the Pico's VSYS pin (39); the Pico's 3V3(OUT) pin powers only the DHT11, not the relays. USB is shown as an alternative power path for the Pico.
+- All devices share a common **ground**.
+- The relay channels switch the three actuators on the **5 V rail** — each relay's NO/COM contact pair sits between the 5 V supply and its actuator, not between the Pico and the actuator.
+- The **force-provision switch** is a momentary switch from GP0 to ground; closing it at boot pulls GP0 low and arms provisioning mode.
+
+## Wiring steps
+
+### 1. Connect the DHT11 sensor
+
+The DHT11 has three pins (some breakout modules add a fourth pull-up-resistor pin — check your board's silkscreen):
+
+- **VCC → Pico pin 36 (3V3 OUT)** — 3.3 V power for the sensor
+- **GND → any Pico GND pin** (e.g. pin 38)
+- **DATA → GPIO 4 (pin 6)** — the firmware default; the internal pull-up is used
+
+If your DHT11 is a bare component rather than a module, add a 10 kΩ pull-up resistor between DATA and VCC.
+
+### 2. Connect the relay module
+
+Most 5 V relay modules accept 3.3 V logic signals from the Pico's GPIO pins:
+
+- **VCC → the dedicated external 5 V supply** — the module's coils are 5 V components (~70 mA per active channel) and must not draw from the Pico's 3.3 V regulator
+- **GND → any Pico GND pin** (common ground with the 5 V supply)
+- **IN1 (humidifier relay) → GPIO 6 (pin 9)** — firmware default
+- **IN2 (fan relay) → GPIO 7 (pin 10)** — firmware default
+- **IN3 (heater relay) → GPIO 8 (pin 11)** — firmware default
+
+Most relay modules are **active-low**: the relay energises when the GPIO is pulled LOW. The firmware defaults to this (`active_high: false` in `config.json`); verify that your module matches.
+
+### 3. Connect the actuators to the relay contacts
+
+Each actuator is switched on the 5 V rail by its relay's normally-open (NO) and common (COM) contacts — the relay sits between the 5 V supply and the actuator, so the actuator only receives power when its relay is energised:
+
+- **Humidifier** — channel 1 (NO1/COM1)
+- **Fan** — channel 2 (NO2/COM2)
+- **Heating mat** — channel 3 (NO3/COM3)
+
+For the USB-powered actuators (humidifier, heating mat), the 5 V line of the USB cable is cut and interrupted by the relay's NO/COM pair; the ground passes through. The fan is a bare 5 V DC motor wired the same way. All three remain 5 V DC — no part of an actuator connects to mains.
+
+### 4. Connect the force-provision switch
+
+A **momentary switch between GP0 (pin 1) and GND** arms provisioning mode: hold it closed during boot to force the unit into its access-point setup flow, even when Wi-Fi credentials are already configured. GP0 has an internal pull-up (33 kΩ–60 kΩ), so the switch alone is enough — closing it pulls the pin low. The full flow is on the [Provisioning](/hardware/provisioning) page.
+
+### 5. Connect the dedicated 5 V supply
+
+Power the relay module's VCC and the actuator circuits from a **dedicated 5 V / 2 A+ DC supply** — their combined draw exceeds what the Pico's USB port can provide, so the supply is mandatory and is not run through the Pico's USB port. The Pico itself can be powered via USB or its VSYS pin (39). During development you can power the Pico from your computer's USB port and use the same cable for flashing and serial-console access. The supply requirement and load table are on the [Power](/hardware/power) page.
+
+## Pin mapping reference (defaults)
+
+| Component | Pico physical pin | GPIO | Notes |
 |---|---|---|---|
+| Force-provision input | 1 | GP0 | Internal pull-up; held LOW at boot to force AP provisioning |
 | DHT11 VCC | 36 | — | 3V3 OUT rail |
 | DHT11 GND | 38 | — | Any GND pin works |
-| DHT11 DATA | 20 | GPIO 15 | Default; configurable in firmware config |
-| Relay VCC | 36 | — | 3V3 OUT (or external 5 V if module requires it) |
-| Relay GND | 38 | — | Any GND pin works |
-| Relay IN1 — Humidifier | 21 | GPIO 16 | Default; configurable in firmware config |
-| Relay IN2 — Fan | 22 | GPIO 17 | Default; configurable in firmware config |
-| Relay IN3 — Heater | 24 | GPIO 18 | Default; configurable in firmware config |
+| DHT11 DATA | 6 | GP4 | Firmware default; internal pull-up used |
+| Relay VCC | — | — | External 5 V from the dedicated supply — never the Pico's 3V3 pin |
+| Relay GND | 38 | — | Common ground — any GND pin works |
+| Relay IN1 — humidifier | 9 | GP6 | Active-low by default |
+| Relay IN2 — fan | 10 | GP7 | Active-low by default |
+| Relay IN3 — heater | 11 | GP8 | Active-low by default |
 
-<Note>
-  The GPIO numbers in the table above are the firmware defaults. You can remap all of them in the firmware's config file — see [Pico Firmware](/hardware/pico-firmware) for details. The physical pin numbers follow the standard Raspberry Pi Pico 2W pinout diagram.
-</Note>
+## Changing the pin assignments
 
-## After Wiring
+The four GPIO numbers above live in `config.json` on the unit, under the `pins` key:
 
-Once all the connections are secure, flash the MicroPython firmware (see [Pico Firmware](/hardware/pico-firmware)). After a successful boot, the Pico will expose a REST API on **port 5000**. You can verify connectivity from any device on the same network by visiting `http://<pico-ip>:5000/status` in a browser or with `curl`.
+```json
+"pins": { "dht": 4, "humidifier": 6, "fan": 7, "heater": 8 }
+```
+
+Edit these values (then redeploy `config.json`) to move a device to a different pin, and keep your physical wiring in step.
+
+- `active_high` (a sibling key) flips relay polarity; `false` is active-low, the default.
+
+The pin map can also be changed at runtime via the unit's `POST /setup` endpoint, which persists to `config.json` so the change survives a reboot.
+
+### GPIO validation
+
+Pin assignments are validated by **mushpi-server** at `PUT /v1/pico-units/:id/control/setup`, not by the firmware. A violation returns **422**.
+
+- **Valid range:** integers only, and only pins in the set `0–22, 26, 27, 28`. GP23, GP24, GP25 and GP29 are reserved by the CYW43439 (Wi-Fi/Bluetooth) and are rejected.
+- **No duplicates:** two functions may not share a GPIO *within the same request*. This check compares only the pins you send — it does not compare against the unit's current mapping, so a partial update can still collide with a pin already assigned.
+- **GP0 is assignable.** The server accepts it; the firmware does not reserve it. But GP0 is read at boot as the force-provision input, so assigning it to a relay or the sensor silently breaks the force-provision switch — physically move the switch too.
+
+Direct calls to the Pico bypass all of the above. The firmware itself enforces only `integer in 1..29`, returning **400** (`{"ok": false, "error": "pins.<fn> must be int in 1..29"}`); it never rejects a reserved or duplicated GPIO, and no fallback or clamping occurs.
+
+## After wiring
+
+Once all the connections are secure, flash the MicroPython firmware — see [Pico Firmware](/hardware/pico-firmware). After a successful boot the Pico exposes its REST API on **port 5000**; you can confirm it is reachable from any device on the same network at `http://<pico-ip>:5000/health`.

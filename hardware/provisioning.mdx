@@ -1,0 +1,35 @@
+---
+title: "Provisioning a Pico Unit's Wi-Fi Credentials"
+sidebarTitle: "Provisioning"
+description: "How a Mushroom Pi Pico unit enters AP provisioning mode, how to send it Wi-Fi credentials from the mushpi-provision access point, and what to know about relays, mDNS, and security in that mode."
+---
+
+When a Mushroom Pi unit has no Wi-Fi credentials yet — or cannot reach the network it was given — it enters **AP provisioning mode**: the unit runs its own open access point and serves a small web form where you enter your Wi-Fi network name and password.
+
+## When the Unit Enters Provisioning Mode
+
+The unit enters provisioning mode when any of the following is true:
+
+1. **No Wi-Fi configured** — `wifi.ssid` in `config.json` is empty (the factory default; the normal path for a fresh unit).
+2. **GP0 held LOW at boot** — the force-provision input (see below).
+3. **Wi-Fi connection failed** after all connection attempts.
+
+## What You See
+
+1. The LED starts a **slow double-blink** (200 ms on / 200 ms off / 200 ms on / 800 ms off) — see [Status Indicators](/hardware/status-indicators).
+2. The Pico creates its own **open Wi-Fi network: `mushpi-provision-XXXX`**, where `XXXX` is the last 4 hex digits of the access point's MAC address — no password.
+3. Connect to that network from any phone, laptop, or tablet, and open **`http://192.168.4.1:5000`** in a browser.
+4. Enter your Wi-Fi network name (SSID) and password in the form. The unit saves the credentials to `config.json`, reboots, and connects to your network.
+
+## Force-Provision Switch on GP0
+
+Hold **GP0 to GND** during boot to force provisioning mode, even if Wi-Fi credentials are already configured — useful for changing networks or recovering from bad credentials. GP0 has an internal pull-up (33 kΩ–60 kΩ), so a momentary switch to GND is all that is needed.
+
+## Behaviours Worth Knowing
+
+- **Relays are off in provisioning mode.** The control loop is not started, so the humidifier, fan, and heater relays remain OFF until the unit is provisioned and boots normally.
+- **mDNS does not resolve in provisioning mode.** The `<device_name>.local` name only works in normal (station) mode — in AP mode, use the IP address (`192.168.4.1`) directly.
+
+## Security Note
+
+The provisioning network is open — it has no password — and the form it serves accepts submissions without authentication. More generally, the Pico's HTTP API does not implement authentication; access control relies entirely on your network configuration. Provision the unit on a network you trust.

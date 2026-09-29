@@ -1,101 +1,121 @@
 ---
 title: "Flash and Configure Your Pico 2W MicroPython Firmware"
 sidebarTitle: "Pico Firmware"
-description: "How to install MicroPython on your Raspberry Pi Pico 2W and deploy the mushpi-grow firmware to enable sensor reading, relay control, and the REST API."
+description: "Flash MicroPython onto a Raspberry Pi Pico 2W, install the two libraries, set config.json, and deploy the mushpi-grow firmware — then what the unit does after boot and how it self-heals."
 ---
 
-The grow-unit firmware lives in the **[mushpi-grow](https://github.com/mushroom-pi/mushpi-grow)** repository. It is written in MicroPython and uses [Microdot](https://github.com/miguelgrinberg/microdot) to serve a lightweight REST API on port 5000 — the same API the NestJS backend polls every 60 seconds to collect sensor readings and issue relay commands. Getting it running takes five steps: flash MicroPython onto the Pico, clone the repo, edit the config, copy the files across, and reboot.
+The grow-unit firmware lives in the [mushpi-grow](https://github.com/mushroom-pi/mushpi-grow) repository. It is MicroPython, serving a lightweight REST API on **port 5000** with [Microdot](https://github.com/miguelgrinberg/microdot) — the same API the hub polls every 60 seconds for readings and relay commands.
 
-<Note>
-  **Prerequisites before you start:**
-  - Python 3.8 or later installed on your computer
-  - `mpremote` (`pip install mpremote`) **or** [Thonny IDE](https://thonny.org) — either tool can copy files to the Pico
-  - A micro-USB cable that carries data (not charge-only)
-  - The Pico 2W physically wired up as described in [Wiring](/hardware/wiring)
-</Note>
+**Prerequisites:** Python 3.8+ on your computer, the **MicroPico** VSCode extension (`paulober.pico-w-go`) or [Thonny IDE](https://thonny.org), a data-capable micro-USB cable, and the unit wired as described in [Wiring](/hardware/wiring).
 
-## Flashing Steps
+## What is on the device
 
-<Steps>
-  <Step title="Download and flash MicroPython">
-    Download the latest **Raspberry Pi Pico 2W** UF2 image from the official MicroPython downloads page at [micropython.org/download/RPI_PICO2_W](https://micropython.org/download/RPI_PICO2_W/).
+After you deploy, the Pico's flash holds this layout:
 
-    To enter bootloader mode:
-
-    1. Hold the **BOOTSEL** button on the Pico.
-    2. While holding BOOTSEL, connect the Pico to your computer via USB.
-    3. Release BOOTSEL — the Pico mounts as a USB drive called **RPI-RP2**.
-    4. Drag and drop the `.uf2` file onto the **RPI-RP2** drive.
-
-    The Pico reboots automatically and is now running MicroPython. The USB drive disappears and the Pico re-enumerates as a serial device.
-  </Step>
-
-  <Step title="Clone the mushpi-grow repository">
-    On your computer, clone the firmware repository:
-
-    ```bash
-    git clone https://github.com/mushroom-pi/mushpi-grow.git
-    cd mushpi-grow
-    ```
-  </Step>
-
-  <Step title="Edit the firmware config file">
-    Open the config file (typically `src/config.py`) in your editor and set the following values for your environment:
-
-    | Setting | Description |
-    |---|---|
-    | `WIFI_SSID` | Your Wi-Fi network name |
-    | `WIFI_PASSWORD` | Your Wi-Fi password |
-    | `DHT_PIN` | GPIO number for the DHT11 DATA line (default `15`) |
-    | `RELAY_HUMIDIFIER_PIN` | GPIO number for humidifier relay IN1 (default `16`) |
-    | `RELAY_FAN_PIN` | GPIO number for fan relay IN2 (default `17`) |
-    | `RELAY_HEATER_PIN` | GPIO number for heater relay IN3 (default `18`) |
-    | `BACKEND_URL` | Full URL of your NestJS backend, e.g. `http://192.168.1.100:3000` |
-
-    Make sure the GPIO values here match your physical wiring from the [Wiring guide](/hardware/wiring).
-  </Step>
-
-  <Step title="Copy firmware files to the Pico using mpremote">
-    With the Pico connected via USB (and MicroPython already flashed), copy the entire `src/` directory to the Pico's root filesystem:
-
-    ```bash
-    mpremote cp -r src/. :
-    ```
-
-    This transfers `main.py`, `config.py`, and all other firmware modules. The `:` refers to the root of the Pico's filesystem. If `mpremote` cannot find the device automatically, specify the port explicitly:
-
-    ```bash
-    # Linux / macOS
-    mpremote connect /dev/ttyACM0 cp -r src/. :
-
-    # Windows
-    mpremote connect COM3 cp -r src/. :
-    ```
-
-    Alternatively, you can use **Thonny**: open each file from `src/`, then use *File → Save as…* and choose *MicroPython device* as the destination.
-  </Step>
-
-  <Step title="Reboot the Pico">
-    Press **Ctrl-D** in an open `mpremote` REPL session, or physically disconnect and reconnect the USB cable. The Pico will:
-
-    1. Run `main.py` on boot.
-    2. Connect to your Wi-Fi network (the onboard LED blinks during connection).
-    3. Start the Microdot REST API on **port 5000**.
-
-    The backend will discover the Pico on its next 60-second poll cycle — or you can register it manually through the dashboard.
-  </Step>
-</Steps>
-
-<Tip>
-  If you don't have physical hardware yet, use **[mushpi-mock](https://github.com/mushroom-pi/mushpi-mock)** during development. It is a FastAPI service that mirrors the mushpi-grow REST API exactly — the backend cannot tell the difference. Run `mushpi-mock` on your development machine and point the backend at it to develop and test the full stack without any Pico or sensors.
-</Tip>
-
-## Verify the Pico Is Running
-
-Once the Pico has booted and joined your network, confirm that the REST API is reachable. Find the Pico's IP address from your router's DHCP table (or from the `mpremote` REPL with `import network; print(network.WLAN(network.STA_IF).ifconfig())`), then run:
-
-```bash
-curl http://<pico-ip>:5000/status
+```
+/                         # flash root
+├── main.py               # entry point — the boot sequence
+├── config.json           # Wi-Fi, hub URL, device name, pins, control (gitignored)
+├── app/                  # firmware modules (state, control, api, wifi, …)
+│   └── provision.html    # the AP provisioning form
+└── lib/                  # third-party libraries (not tracked in git)
+    ├── microdot.py
+    └── urequests.py
 ```
 
-You should receive a JSON response with the current sensor readings and relay states. If the request times out, check that the Pico's LED is solid (indicating a successful Wi-Fi connection), re-verify your `WIFI_SSID` and `WIFI_PASSWORD` in `config.py`, and re-deploy the files.
+## 1. Flash MicroPython
+
+Download the **Raspberry Pi Pico 2W** UF2 image from [micropython.org/download/RPI_PICO2_W](https://micropython.org/download/RPI_PICO2_W/). **v1.26.0 or newer** is the recommended minimum (see [mDNS caveats](#mdns-caveats)).
+
+1. Hold **BOOTSEL**.
+2. Connect the Pico to your computer via USB while holding it.
+3. Release BOOTSEL — the Pico mounts as a USB drive called **RPI-RP2**.
+4. Drag the `.uf2` file onto **RPI-RP2**.
+
+The Pico reboots into MicroPython; the drive disappears and the Pico re-enumerates as a serial device.
+
+## 2. Get the firmware and its libraries
+
+Clone the repository:
+
+```bash
+git clone https://github.com/mushroom-pi/mushpi-grow.git
+cd mushpi-grow
+```
+
+The firmware needs two third-party libraries on the device in `lib/`: `microdot.py` and `urequests.py`. They are **not tracked in the repo**, so install them one of two ways:
+
+- **With `mip`** (MicroPython's package manager), from a REPL:
+
+  ```python
+  >>> import mip
+  >>> mip.install("urequests")
+  >>> mip.install("microdot")
+  ```
+
+- **Manually** — download each single file into the device's `lib/` folder, as the [grow README](https://github.com/mushroom-pi/mushpi-grow) describes.
+
+## 3. Configure `config.json`
+
+`config.json` is gitignored, so create it at the repo root if it is not already present. Its real keys:
+
+| Key | What it sets |
+|---|---|
+| `wifi.ssid` / `wifi.password` | Your Wi-Fi network name and password |
+| `wifi.networks` | Optional fallback networks, tried in order |
+| `hub_url` | The hub's announce URL, including the `/v1/` path — e.g. `http://<hub-ip>:3000/v1/pico-units/announce` |
+| `hub_secret` | Must match the hub's `PICO_ANNOUNCE_SECRET` |
+| `device_name` | The unit's name — becomes its `handle` on the hub |
+| `api_port` | The REST API port (default `5000`) |
+| `control` | Hysteresis and control-loop parameters (period, deadbands, minimum runtime) |
+| `reboot` | Optional daily scheduled reboot (disabled by default) |
+| `pins` | GPIO map — defaults `dht` 4, `humidifier` 6, `fan` 7, `heater` 8 |
+| `active_high` | Relay polarity — `false` (default) for active-low modules |
+
+Make the GPIO values match your physical wiring (see [Wiring](/hardware/wiring)). If you would rather not edit `config.json` at all, the unit can be provisioned through its access-point setup flow instead — see [Provisioning](/hardware/provisioning).
+
+## 4. Deploy the files
+
+With the Pico connected via USB and MicroPython flashed, deploy the firmware with the **MicroPico** VSCode extension: it uploads every `.py` file, `app/provision.html`, and `config.json` to the flash. Thonny's file manager (File → Save as… → MicroPython device) also works. Make sure the two libraries from step 2 landed in `lib/`.
+
+## 5. Reboot and watch it start
+
+Press **Ctrl-D** in a serial console (Thonny or MicroPico), or unplug and reconnect the USB cable. `main.py` runs on boot, and the unit:
+
+1. Connects to your Wi-Fi network (the onboard LED stays off until it does).
+2. Announces itself to the hub at `hub_url` — if the first attempt fails it retries once, 60 seconds later.
+3. Starts the control loop — reading the sensor and driving the relays every `control.period_s` seconds (default 10) — and serves the REST API on port 5000. The hub then polls it every 60 seconds.
+
+Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard.
+
+## Recovery and resilience
+
+The firmware is designed to self-heal without human intervention:
+
+- **Wi-Fi reconnect backoff.** A watchdog monitors the link every 5 seconds. On a drop it reconnects with increasing delays — 5 s → 10 s → 30 s → 60 s, then staying at 60 s until the link returns — trying each configured network in order. Relay control continues throughout the outage; only the connection is affected. When the link returns, the unit re-announces so the hub learns its (possibly new) IP.
+- **Watchdog timer.** A hardware watchdog reboots the Pico if the control loop freezes for more than 8 seconds. After the reboot it reconnects and re-announces.
+- **Scheduled soft reboot.** You can configure a daily soft reboot for memory hygiene via the `reboot` key in `config.json` (disabled by default). It turns the relays off, disconnects Wi-Fi, and soft-resets at the configured hour — but unlike a watchdog or power-cycle reboot it preserves cumulative uptime.
+
+## mDNS caveats
+
+The unit can be reached at `http://<device_name>.local:5000` without knowing its IP, but only when all of these hold:
+
+- **Firmware ≥ v1.26.0** — the mDNS fix landed in v1.25.0 stable, but v1.25.0 pre-release builds do not have it. v1.26.0 is the recommended minimum and the confirmed-working version.
+- **Station (normal) mode only** — mDNS does not resolve while the unit is in AP provisioning mode; use the IP (`192.168.4.1`) there.
+- **Same subnet** — mDNS is link-local. A unit on a different VLAN or subnet needs an mDNS reflector on the router.
+
+## Verify it is running
+
+Find the Pico's IP (your router's DHCP table, or a REPL) and request:
+
+```bash
+curl http://<pico-ip>:5000/health
+```
+
+A JSON response with RAM, storage, Wi-Fi signal, and uptime means the API is up. If the request times out, check the onboard LED — a **solid** LED means Wi-Fi is connected and the unit is waiting on its first hub announcement — then re-check `wifi.ssid` and `wifi.password` in `config.json` and redeploy. The full LED reference is on the [Status indicators](/hardware/status-indicators) page.
+
+## Further reading
+
+- [Provisioning](/hardware/provisioning) — the access-point flow for first-time setup and Wi-Fi recovery, and the force-provision switch.
+- [Status indicators](/hardware/status-indicators) — the LED pattern table.
+- [Power](/hardware/power) — the supply requirement and load table.

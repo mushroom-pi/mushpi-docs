@@ -1,0 +1,130 @@
+---
+title: "Powering a Grow Unit: Loads, Supply Requirement, and Protection"
+sidebarTitle: "Power"
+description: "Power analysis for a Mushroom Pi grow unit: the tested build's load table, why a dedicated 5 V 2 A+ supply is mandatory, VSYS versus USB, protection components, thermal notes, and a proposed unified distribution upgrade."
+---
+
+The figures on this page are from the **tested Mushroom Pi build**. They are the loads the supply must carry as a minimum — not the only acceptable arrangement: any supply and distribution that comfortably covers them will do.
+
+## Loads in the Tested Build
+
+| Load | Voltage | Current (est.) | Power | Notes |
+|------|---------|---------------|-------|-------|
+| Pico 2W (WiFi active) | 5V / 3.3V | ~100mA | 0.5W | Idle ~25mA, WiFi TX spikes ~120mA |
+| DHT11 | 3.3V | ~2.5mA | 0.008W | Measuring; ~0.1mA standby |
+| Relay module (3 channels active) | 5V | ~210mA | 1.05W | ~70mA per energized coil |
+| Fan (30mm 5V) | 5V | ~100mA | 0.5W | Estimate for small DC fan |
+| Humidifier (mist maker) | 5V USB | ~300mA | 1.5W | Estimate for ultrasonic module |
+| Heating mat | 5V USB | ~400–1000mA | 2–5W | Via relay CH3 |
+| **Total 5V/3.3V draw** | — | **~1.1–1.7A** | **~5.5–8.5W** | All actuators on 5V rail |
+
+## Why a USB Port Is Not Enough
+
+A standard USB 2.0 port supplies **500mA**. The system draws up to ~1.7A at peak (all relays active, fan ON, humidifier ON, heating mat ON, WiFi transmitting). This far exceeds USB spec — a dedicated 5V PSU is mandatory.
+
+A USB 3.0 port or dedicated 5V wall adapter (typically 1A–2.4A) can handle this. On the 3.3V side, the Pico 2 W's onboard Richtek RT6150B buck-boost regulator is rated for 800 mA, but that is not the constraint: the Pico 2 W datasheet recommends keeping external loads on the 3V3(OUT) header pin under 300 mA (it already covers the RP2350, USB PHY, ADC reference, flash, and headroom), so ~300 mA is the effective budget for 3.3V peripherals.
+
+> Verified figures and sources for these MCU-level limits live in `mushpi-grow/HARDWARE.md` §MCU Power Budget Limits — not duplicated here.
+
+## Power Supply Requirement
+
+A **dedicated 5V 2A+ DC power supply is mandatory** when all three actuators (fan, humidifier, heating mat) are in use. In the tested build, the supply feeds a single 5V rail serving the Pico (via VSYS, pin 39), the relay module's VCC, and the three actuators — each switched through its relay channel. 2A provides headroom; **2.5A+ is recommended** for margin with all three actuators running.
+
+## Pico Power Input: VSYS Instead of USB
+
+- VSYS (pin 39) bypasses the USB connector's 500mA polyfuse.
+- It still goes through the Pico's onboard buck-boost regulator (acceptable for 5V input).
+- It provides a clean single power input point.
+- The USB port remains available for programming (power from the PSU during normal operation).
+
+## Supply and Protection Components
+
+| Component | Spec | Purpose |
+|-----------|------|---------|
+| PSU | 5V DC, 2A+, barrel jack (5.5×2.1mm) | Powers all 5V loads. 2A provides headroom; 2.5A+ recommended for margin with all three actuators. |
+| DC barrel jack socket | Panel-mount, 5.5×2.1mm | Mains input to enclosure |
+| Polyfuse | 500mA (e.g., MF-R050) | Protects Pico VSYS input |
+| Electrolytic capacitor | 100µF, 16V | Suppresses relay coil transients on 5V rail |
+| Ceramic capacitor | 100nF | High-frequency decoupling near relay VCC |
+| Schottky diode | 1N5819 | Reverse polarity protection on Pico VSYS |
+
+On the Pico's branch, the 1N5819 diode sits between the supply and the 500mA polyfuse, which feeds Pico VSYS (pin 39) — giving reverse-polarity protection and current limiting on that input. The polyfuse belongs on the Pico's VSYS line, not the shared 5V rail — the rail's current draw is far above 500mA. The 100µF electrolytic and 100nF ceramic capacitors sit across the relay module's VCC and GND for coil-transient suppression and high-frequency decoupling. All devices share a common ground.
+
+## Thermal Considerations
+
+| Component | Heat | Concern |
+|-----------|------|---------|
+| Pico 2W voltage regulator | ~0.5W dissipated | Warm but within spec. Adequate ventilation needed. |
+| Relay coils (3 active) | ~1W dissipated | Moderate. Ventilate the relay enclosure. |
+| Heating mat | 2–5W | By design. Low-voltage USB operation — no mains in the grow chamber, eliminating fire/shock risks present with the original 220V AC plan. |
+
+## Expansion Headroom
+
+With a 2A PSU, the tested build has ~0.3–0.9A of headroom for additional components (varies with heating mat draw). A 2.5A+ PSU is recommended for comfortable expansion:
+
+| Possible addition | Estimated draw |
+|-------------------|---------------|
+| CO2 sensor (MH-Z19) | ~40mA (5V) |
+| I2C OLED display | ~20mA (3.3V) |
+| Additional fan (40mm) | ~150mA (5V) |
+| LED grow light strip | ~300mA (5V) per 30cm |
+| Float switch (water level) | Negligible |
+
+## Proposed Upgrade: Unified Power Distribution
+
+> **Status: proposed, not built.** The current setup (individual USB cables into a USB hub) remains active. This section is a future reference for when the upgrade is undertaken. Full details, including build order and beginner-friendly notes, are in the canonical hardware reference: `mushpi-grow/HARDWARE.md`.
+
+The current setup uses four individual USB cables (Pico 2W, fan, humidifier, heating mat) plugged into a USB hub. While functional, this has drawbacks: USB connectors can corrode in humid grow chambers, the hub may share current across ports, and there's no per-device overcurrent protection.
+
+The proposed architecture replaces them with a **5V 2.5A+ DC PSU** feeding a **barrel jack socket** and a **WAGO 221 distribution block**, with each device individually fused.
+
+### Shopping List (Summary)
+
+| Item | Spec | Approx. Price |
+|------|------|---------------|
+| 5V DC power supply | 2.5A+, barrel jack 5.5×2.1mm | €8–12 |
+| DC barrel jack socket | Panel-mount, screw terminals | €1–2 |
+| WAGO 221 lever connectors (×2) | 5-way (1 in, 4 out) | €4–6 |
+| Inline fuse holders (×5) | 5×20mm, screw terminals | €3–5 |
+| Glass fuses (×5) | 1A fast-blow, 5×20mm | €2–3 |
+| Polyfuse | 500mA (Pico VSYS only) | €1 |
+| Schottky diode | 1N5819 (Pico reverse-polarity protection) | €0.50 |
+| Silicone wire + heat shrink | 18–22 AWG, red/black, ~2m each | €8–13 |
+| **Total** | | **€28–42** |
+
+### Power Budget (Unified)
+
+Same loads, cleaner delivery:
+
+| Load | Voltage | Current | Protection |
+|------|---------|---------|------------|
+| Pico 2W (WiFi active) | 5V via VSYS | ~100mA | Polyfuse 500mA + 1N5819 diode |
+| Relay module (3 channels) | 5V | ~210mA | Glass fuse 1A |
+| Fan (30mm 5V) | 5V | ~100mA | Glass fuse 1A |
+| Humidifier (mist maker) | 5V | ~300mA | Glass fuse 1A |
+| Heating mat | 5V | ~400–1000mA | Glass fuse 1A |
+| **Total** | **5V** | **~1.1–1.7A** | PSU rated 2.5A for margin |
+
+### Key Safety Improvements Over the Current Setup
+
+| What | Added | Why |
+|------|-------|-----|
+| Per-device fusing | Individual 1A glass fuses on every positive leg | One short doesn't take down the whole system |
+| Pico polyfuse | 500mA self-resetting fuse on VSYS | Extra protection that resets automatically |
+| Reverse polarity protection | 1N5819 Schottky diode on Pico VSYS | Prevents damage from accidental +/- swap |
+| Sealed connections | Heat shrink + conformal coating | Moisture protection in the grow chamber |
+| Single cable entry | Barrel jack vs. 4 USB cables | Fewer failure points, tidier enclosure |
+
+### Firmware Impact
+
+**None.** The Pico draws 5V from VSYS (pin 39) instead of VBUS (pin 40) via USB. All GPIO assignments, control loop logic, and REST API endpoints are identical. Zero code changes required.
+
+### Visual Comparison
+
+| What | Current (USB Hub) | Proposed (Unified PSU) |
+|------|-------------------|------------------------|
+| Power cables in enclosure | 4 USB cables | 1 DC barrel jack cable |
+| Connectors exposed to humidity | USB plugs (not sealed) | Screw/lever terminals inside enclosure |
+| Per-device overcurrent protection | USB hub only | Individual fuse per device + polyfuse on Pico |
+| Reverse polarity protection | USB is keyed | Schottky diode on Pico line |
+| Expandability | Limited by USB ports | Add WAGO slot + fuse |
