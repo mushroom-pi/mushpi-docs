@@ -1,0 +1,54 @@
+---
+title: "Your units"
+sidebarTitle: "Pico Units"
+description: "The Pico Units screen: list your units, connect a new Pico, and on a unit's own page read its health, set targets, switch devices by hand, remap pins and see its batches."
+---
+
+The **Pico Units** screen is where you manage the units themselves — one Pico per grow space. It has two levels: the list, which shows every unit, and a unit's own page, reached by clicking a unit.
+
+## The units list
+
+The list shows one card per unit, in a grid, with pagination when you have enough of them. Each card shows:
+
+- The unit's **name** and **handle**, and its **face colour**.
+- A **health badge** — healthy, degraded, offline, or unmonitored.
+- **Last seen** — when the unit last reported.
+- Its **host** address, and a **firmware / API-generation** caption.
+- A **monitored** switch (display only — you change it on the unit's own page).
+
+A **Refresh** icon on each card re-reads that unit, and the list itself can be refetched. A unit that is offline is dimmed, and its card shows a **Reconnect** button, which re-runs the connect flow for that unit.
+
+## Connect a new Pico
+
+**Connect new Pico** opens a four-step wizard that discovers and provisions a unit: **Diagnose**, **Connect**, **Setup**, **Finish**. You read the unit's LED to pick the right path, join the `mushpi-provision-…` Wi-Fi network the unit broadcasts, open the provisioning page, and the wizard then watches for the new unit to appear in the list.
+
+If the wizard cannot find the unit, you can **Register Manually** instead, which asks only for the unit's **handle**. The handle is how a unit identifies itself when it announces to the hub — the mechanics are covered in [Register a Pico unit](/deployment/pico-registration), and the Wi-Fi provisioning the wizard walks you through is covered in [Provisioning a Pico unit](/hardware/provisioning).
+
+## A unit's own page
+
+Click a unit to open its page. The top shows the unit's **name**, its health badge, its **handle**, its description, and a **firmware-compatibility badge** — the last of which appears only when the server flags the unit's API contract as incompatible.
+
+From here you can:
+
+- **Edit** the unit's **name**, **description**, **face colour**, and whether it is **monitored**. When monitoring is off, the server stops collecting readings for that unit — the Pico itself keeps running its control loop.
+- **Reboot** the unit — a soft reboot (faster, keeps cumulative uptime) or a hard reboot (a full power-cycle).
+- **Reconnect** the unit — shown only when it is offline.
+- **Delete** the unit — permanent, and it removes the unit's readings and configuration too.
+
+Below the header, the page lays out the unit's details in cards.
+
+### Controls
+
+The **Controls** card shows, and its dialog edits, the **target temperature**, the **target humidity**, and the **control-loop on/off toggle**. These targets are the numbers the control loop works toward — what the loop does with a target is explained in [How the control loop works](/configuration/hysteresis-control). With the loop on, the unit switches devices automatically to meet the targets; with it off, the devices have to be switched by hand.
+
+### Devices
+
+The **Devices** card shows whether the **humidifier**, **fan** and **heater** are currently on or off. Its dialog lets you switch them by hand, but only while the control loop is **off** — while the loop is on, the unit controls them and the switches are locked. A manual override is temporary: the moment you turn the loop back on, it takes over again on its own schedule and your hand-set positions no longer apply.
+
+### PIN mapping
+
+The mapping card shows which **GPIO pin** each device uses — the DHT11 sensor, humidifier, fan and heater. The **PIN Mapping** dialog lets you change those assignments, behind a caution and a confirmation that you have verified your wiring, since a wrong pin can drive the wrong device.
+
+### Batches
+
+The unit's own **Batches** card lists the batches that have run on this unit, with the active one marked, and a button to start a new batch directly on it.

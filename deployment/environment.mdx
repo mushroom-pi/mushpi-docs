@@ -1,0 +1,41 @@
+---
+title: "Server Environment Variables"
+sidebarTitle: "Environment"
+description: "The environment variables the Mushroom Pi hub reads, how they are supplied, and where the full generated reference lives."
+---
+
+The hub's server reads all of its runtime configuration from environment variables, validated at boot against a Joi schema — there is no config file to edit inside the image. In the self-hosted deployment you supply them through the `.env` file beside the compose file, which Compose passes into the container's environment; you can also set them as ordinary container environment.
+
+The table below lists the key variables an operator actually touches — it is not the exhaustive list. The complete, canonical reference is **generated from the server's validation schema** and published in the server repository: [mushpi-server/docs/ENVIRONMENT.md](https://github.com/mushroom-pi/mushpi-server/blob/dev/docs/ENVIRONMENT.md). It is regenerated with `yarn docs:env` in `mushpi-server`, so it always reflects the schema.
+
+## Key variables
+
+| Variable | Default | What it does |
+|---|---|---|
+| `PICO_ANNOUNCE_SECRET` | — | The shared secret Pico units send in the `X-Pico-Secret` header when they announce. **Required in production** — the server refuses to boot without it. Use the same value as `hub_secret` in every unit's `config.json`. |
+| `APP_HOST` | `localhost` | Server host. Set it to the hub's LAN hostname so recipe and batch image URLs resolve on other devices. |
+| `APP_PORT` | — | Server port. The published container serves the dashboard and the API together on port 3000. |
+| `SQLITE_PATH` | `data/app.sqlite` | Path to the SQLite database file. Inside the published container this is `/data/app.sqlite`, under the persistent data volume. |
+| `UPLOAD_DIR` | `data` | Directory where uploaded batch and recipe images are stored. |
+| `LOGS_LEVEL` | `info` | Log verbosity. Allowed values: `info`, `trace`, `silent`, `debug`, `error`, `fatal`, `warn`. |
+| `LOGS_PATH` | `data/logs` | Directory where log files are written. |
+| `LOGS_LIFE_DAYS` | `7` | Log retention in days. |
+| `READINGS_RETENTION_MONTHS` | `6` | Months of sensor readings to keep. Minimum `1`. |
+| `APP_HTTPS_ENABLED` | `false` | Declares that the browser-facing deployment is reached over HTTPS (TLS terminated upstream or directly). Does **not** configure TLS in the app — it only gates the HTTPS-only security headers: Helmet HSTS and the CSP `upgrade-insecure-requests` directive. |
+| `MAX_REQUESTS` / `MAX_REQUESTS_TIME` | — | Opt-in rate limiting. `MAX_REQUESTS` is the maximum number of requests per window; `MAX_REQUESTS_TIME` is the window length in milliseconds. They must be set **together** — if either is absent, no throttling is applied and no `X-RateLimit-*` headers are emitted. |
+
+## Full reference
+
+The full variable list — including `NODE_ENV`, `APP_SECRET`, `CLIENT_URL`, the Swagger docs variables and the remaining logging switches — lives in the server repository:
+
+**[https://github.com/mushroom-pi/mushpi-server/blob/dev/docs/ENVIRONMENT.md](https://github.com/mushroom-pi/mushpi-server/blob/dev/docs/ENVIRONMENT.md)**
+
+The file is generated from the server's Joi validation schema (`yarn docs:env`) and is the canonical list; this page intentionally covers only the operator-facing subset.
+
+## Not server environment variables
+
+Two variables you set in the deployment `.env` are **not** read by the server: `MUSHPI_DATA_DIR` (the host directory holding all persistent state) and `MUSHPI_IMAGE_TAG` (which image tag to pull). They are interpolation variables consumed by the compose file in the deployment repository, and are documented in [Self-hosting](/deployment/self-hosting).
+
+## Not server settings either
+
+The hysteresis control loop — its deadbands, the control period and the minimum output runtime — is configured in each unit's `config.json`, not through server environment variables. That behaviour is owned by the firmware and covered in [Hysteresis control](/configuration/hysteresis-control).

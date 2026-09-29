@@ -40,6 +40,7 @@
                 "pages": [
                   "deployment/sd-card-provisioning",
                   "deployment/self-hosting",
+                  "deployment/environment",
                   "deployment/first-boot",
                   "deployment/pico-registration",
                   "deployment/updates-and-backups",
@@ -52,10 +53,12 @@
             "group": "Using Mushroom Pi",
             "pages": [
               "dashboard/index",
+              "dashboard/pico-units",
               "dashboard/recipes",
               "dashboard/batches",
               "dashboard/monitoring",
               "dashboard/finishing-a-batch",
+              "dashboard/server",
               "dashboard/settings",
               "dashboard/troubleshooting"
             ]
@@ -63,7 +66,6 @@
           {
             "group": "Configuration",
             "pages": [
-              "configuration/environment",
               "configuration/hysteresis-control",
               "configuration/remote-access"
             ]
@@ -113,6 +115,12 @@
       }
     ]
   },
+  "redirects": [
+    {
+      "source": "/configuration/environment",
+      "destination": "/deployment/environment"
+    }
+  ],
   "navbar": {
     "primary": {
       "type": "github",

@@ -49,9 +49,8 @@ The hub reads its configuration from a `.env` file beside the compose file. Copy
 | `PICO_ANNOUNCE_SECRET` | **Yes** | The shared secret Pico units send in the `X-Pico-Secret` header when they announce. The server refuses to boot without it in production. Generate one with `openssl rand -hex 32`, and use the same value as `hub_secret` in every unit's `config.json`. |
 | `MUSHPI_DATA_DIR` | No | The host directory that holds all persistent state. Defaults to `./mushpi-data` beside the compose file. Point it somewhere you back up. |
 | `MUSHPI_IMAGE_TAG` | No | Which image tag to pull. Defaults to `latest`. |
-| `APP_HTTPS_ENABLED` | No | Set to `true` only when the dashboard is actually served over HTTPS with TLS terminated in front of it (for example behind Tailscale or a reverse proxy). Defaults to `false`, which is correct for a plain-HTTP LAN deployment. |
-| `MAX_REQUESTS` / `MAX_REQUESTS_TIME` | No, as a pair | Rate limiting, off by default. Set both together to enable it: `MAX_REQUESTS` is the request count per window and `MAX_REQUESTS_TIME` is the window length in milliseconds. A recommended starting point is `300` and `60000`. Setting only one is a configuration error. |
-| `APP_HOST` | No | The hostname used to build absolute image URLs. Defaults to `http://localhost:3000`; set it to the hub's LAN hostname so recipe and batch images load on other devices. |
+
+These are the compose interpolation variables plus the one required server variable. The server's remaining settings — `APP_HTTPS_ENABLED`, the opt-in `MAX_REQUESTS`/`MAX_REQUESTS_TIME` rate-limiting pair, `APP_HOST`, logging and reading retention — are covered in [Server environment variables](/deployment/environment).
 
 ## Run it
 

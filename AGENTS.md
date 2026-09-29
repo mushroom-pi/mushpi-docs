@@ -11,9 +11,9 @@ Three regressions this repo must not cause: publishing content that is not publi
 | `index.mdx` | Landing page |
 | `introduction.mdx` · `quickstart.mdx` · `system-overview.mdx` | Getting Started: what Mushroom Pi is, the first-run path, the three-tier shape |
 | `hardware/` | Building the units: `components.mdx`, `wiring.mdx`, `pico-firmware.mdx` |
-| `deployment/` | Deploying the hub: `sd-card-provisioning.mdx`, `self-hosting.mdx`, `first-boot.mdx`, `pico-registration.mdx`, `updates-and-backups.mdx`, `host-wifi-recovery.mdx` |
-| `dashboard/` | Using the dashboard: `monitoring.mdx`, `batches.mdx`, `recipes.mdx`, `settings.mdx` |
-| `configuration/` | `environment.mdx`, `hysteresis-control.mdx`, `remote-access.mdx` |
+| `deployment/` | Deploying the hub: `sd-card-provisioning.mdx`, `self-hosting.mdx`, `environment.mdx`, `first-boot.mdx`, `pico-registration.mdx`, `updates-and-backups.mdx`, `host-wifi-recovery.mdx` |
+| `dashboard/` | Using Mushroom Pi — the grower guide: `index.mdx`, `pico-units.mdx`, `recipes.mdx`, `batches.mdx`, `monitoring.mdx`, `finishing-a-batch.mdx`, `server.mdx`, `settings.mdx`, `troubleshooting.mdx` |
+| `configuration/` | `hysteresis-control.mdx` (the firmware control loop), `remote-access.mdx` |
 | `development/` | Contributors: `mock-pico.mdx`, `contributing.mdx` |
 | `api/` | API Reference section — `overview.mdx`, `authentication.mdx`, `units.mdx`, `readings.mdx`, `batches.mdx`, `recipes.mdx`, `settings.mdx`, and `api/pico/{overview,endpoints}.mdx` |
 | `docs.json` | **The site's index**: navigation tabs/groups, theme colours, logo, navbar, and any OpenAPI spec references. A page not listed here is not published |

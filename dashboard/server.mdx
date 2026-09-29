@@ -1,0 +1,27 @@
+---
+title: "The Server screen"
+sidebarTitle: "Server"
+description: "What the Server screen shows: the hub's health and environment, its overview, resources and database, and the button that opens the API documentation."
+---
+
+The **Server** screen reports on the hub itself — the machine running `mushpi-server` and serving the dashboard. It is a page you visit when something seems wrong with the hub, not one you use day to day.
+
+At the top, a **health chip** reads **Healthy** or **Unhealthy**, next to the **environment** the server reports it is running in (for example production or development).
+
+Three cards fill in the detail.
+
+## Overview
+
+The **Overview** card is the identity of the hub: the **app version**, the **client build version**, the **Node.js** version, and the **OS** — platform and architecture — along with its **hostname** and **CPU** model and core count.
+
+## Resources
+
+The **Resources** card shows how hard the hub is working: **app uptime** and **system uptime**, the **load average** over one, five and fifteen minutes, and how much **memory** and **disk** are in use.
+
+## Database
+
+The **Database** card reports on the SQLite store that holds your readings, batches and recipes: its **total size**, a **read** and **write** check, and the largest tables by size.
+
+## API Docs
+
+The **API Docs** button opens the server's own interactive API documentation in a new tab. The same API is also documented here on this site — see the [API overview](/api/overview).
