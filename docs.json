@@ -22,24 +22,29 @@
             ]
           },
           {
-            "group": "Hardware Setup",
+            "group": "Build & Self-Host",
             "pages": [
-              "hardware/components",
-              "hardware/wiring",
-              "hardware/pico-firmware"
+              {
+                "group": "Build the units",
+                "pages": [
+                  "hardware/components",
+                  "hardware/wiring",
+                  "hardware/pico-firmware"
+                ]
+              },
+              {
+                "group": "Deploy the hub",
+                "pages": [
+                  "deployment/self-hosting",
+                  "deployment/first-boot",
+                  "deployment/pico-registration",
+                  "deployment/updates-and-backups"
+                ]
+              }
             ]
           },
           {
-            "group": "Deployment",
-            "pages": [
-              "deployment/self-hosting",
-              "deployment/first-boot",
-              "deployment/pico-registration",
-              "deployment/updates-and-backups"
-            ]
-          },
-          {
-            "group": "Using the Dashboard",
+            "group": "Using Mushroom Pi",
             "pages": [
               "dashboard/monitoring",
               "dashboard/batches",
@@ -56,10 +61,15 @@
             ]
           },
           {
-            "group": "Development",
+            "group": "Contributing",
             "pages": [
-              "development/mock-pico",
-              "development/contributing"
+              {
+                "group": "Development",
+                "pages": [
+                  "development/mock-pico",
+                  "development/contributing"
+                ]
+              }
             ]
           }
         ]
