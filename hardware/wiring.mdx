@@ -182,9 +182,10 @@ Pin assignments are checked by **mushpi-server** when you send them to `PUT /v1/
 
 - **Valid range, server-side:** integers only, and only pins in the set `0–22, 26, 27, 28`. GP23, GP24, GP25 and GP29 are reserved by the CYW43439 (Wi-Fi/Bluetooth) and are rejected with **422**.
 - **GP0 cannot be assigned.** The firmware reads GP0 at boot to decide whether to enter provisioning mode, and it rejects pin 0 with **400** — which the server reports to you as **417 Expectation Failed**. Nothing is applied. This is deliberate, and it is why the force-provision switch is wired to GP0.
-- **No duplicates — with a gap.** Two functions may not share a GPIO **within the same request** (rejected with **422**). The check does **not** compare against the pins the unit is already using, so sending `{"pins": {"heater": 6}}` while `humidifier` is already on 6 will succeed and leave both functions on one pin. **Assign every pin you care about in one request**, or re-read the unit's mapping afterwards to confirm.
+- **No duplicates — a merged-view rule.** Duplicate detection overlays the pins in your request on the unit's current mapping and checks the combined result, so a conflict with a pin the unit already uses is caught — not just two pins inside one request. **The server checks first:** it reads the unit's live mapping and rejects a conflict with **422** before forwarding anything to the device. **The firmware checks too**, rejecting directly with **400** — so does the mock, which mirrors the firmware's behaviour for development. The rule set is deliberately identical in all three layers; the duplication is on purpose, not an accident.
+- **What the merged view allows** — the cases a grower actually hits: re-assigning a device to the pin it already holds is fine (an idempotent re-send), and a pin freed by another device *within the same request* is fine (a swap). Only a conflict the request creates or keeps alive is rejected.
 
-Direct calls to the Pico bypass the server's validation entirely. The firmware's own check is only `integer in 1..29`, returning **400**; it never rejects a reserved or duplicated GPIO, and no clamping or fallback occurs.
+Direct calls to the Pico bypass the server's validation entirely. The firmware's own checks are `integer in 1..29` and the same merged-view duplicate rule, both returning **400**; it never rejects a reserved GPIO (GP23, GP24, GP25 and GP29 pass the range check), and no clamping or fallback occurs.
 
 ## After wiring
 
