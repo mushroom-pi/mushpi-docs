@@ -10,7 +10,7 @@ description: "Run mushpi-mock, a FastAPI service that simulates a Raspberry Pi P
 
 Before you start, make sure you have the following installed:
 
-- **Python 3.11 or later**
+- **Python 3.12 or later**
 - **[uv](https://docs.astral.sh/uv/)** — the fast Python package and project manager used by `mushpi-mock`
 
 ## Run the Mock
@@ -31,13 +31,13 @@ Before you start, make sure you have the following installed:
   </Step>
 
   <Step title="Start the mock service">
-    Launch `mushpi-mock` using `uv run` so it runs inside the managed environment:
+    Launch the `mushpi-mock` CLI through `uv` so it runs inside the managed environment:
 
     ```bash
-    uv run python main.py
+    uv run mushpi-mock start
     ```
 
-    The mock starts on **port 5000** by default and prints a confirmation once it's ready to accept requests.
+    This starts one mock unit, `mock-tent-1`, on **port 5000** and prints a confirmation once it's ready to accept requests. The Mushroom Pi server must be running on `http://localhost:3000` — the mock's default `server_url`; override it with a config file passed via `--config` if your server runs elsewhere. Each mock unit announces itself to the server on startup with `POST /v1/pico-units/announce` — the same mechanism as the real firmware.
   </Step>
 
   <Step title="Register the mock as a unit in the Mushroom Pi backend">
@@ -51,33 +51,101 @@ Before you start, make sure you have the following installed:
   </Step>
 
   <Step title="Develop against the mock">
-    The mock responds to all standard endpoints — announce, status, and relay control — just like a real Pico. Sensor readings are randomized within realistic ranges on each poll, and relay state changes are tracked in memory so control commands round-trip correctly. Work on your feature, watch the dashboard update, and iterate without touching any hardware.
+    The mock responds to all standard endpoints — announce, status, and relay control — just like a real Pico. Sensor readings follow the firmware's hysteresis control loop rather than random noise (see *What the Mock Simulates* below), and relay state changes are tracked in memory so control commands round-trip correctly. Work on your feature, watch the dashboard update, and iterate without touching any hardware.
   </Step>
 </Steps>
 
-## What mushpi-mock Simulates
+## What the Mock Simulates
 
-| Capability | Details |
+The mock does **not** produce random noise. It simulates the same simplified threshold-based control loop that runs on the real Pico firmware:
+
+- **Humidity**: drifts down → when `humidity ≤ setpoint`, humidifier ON, fan OFF (chases the target upward aggressively) → when `humidity > setpoint + hyst_hum`, fan ON, humidifier OFF (corrects overshoot) → deadband between `setpoint` and `setpoint + hyst_hum` where both are OFF (natural drift). Humidifier and fan are mutually exclusive.
+- **Temperature**: drifts down → when `temperature ≤ setpoint`, heater ON → when `temperature > setpoint`, heater OFF. No explicit hysteresis band — thermal lag in the drift rates produces natural oscillation around the setpoint.
+
+This produces the characteristic sawtooth oscillation that makes dashboards and charts look realistic and meaningful. Relay states are tracked in memory for every unit, and the REST API surface mirrors `mushpi-grow/spec/openapi.yaml` exactly, so the server uses the same code paths for mock and real units.
+
+## CLI Flags and Multiple Units
+
+Every option of the `start` command is available as a CLI flag; a flag overrides the config-file value when both are given.
+
+| Flag | Purpose |
 |---|---|
-| **Sensor readings** | Temperature and humidity values randomized within realistic mushroom-grow ranges on every poll, keeping the dashboard graphs lively |
-| **Relay state management** | Tracks humidifier, fan, and heater relay states in memory; control commands from the backend flip the state as expected |
-| **Announce endpoint** | Responds to the server's discovery handshake with the same metadata structure a real Pico sends on boot |
-| **REST API surface** | Full parity with the `mushpi-grow` REST API — the server uses the same code paths for mock and real units |
+| `--count` / `-n` | How many mock units to run (default: one `mock-tent-1` on port 5000) |
+| `--handles` / `-H` | Comma-separated unit handles, e.g. `grow-left,grow-center,grow-right` |
+| `--base-port` / `-p` | Port for the first unit; additional units take the consecutive ports |
+| `--seed-days` | Days of backdated readings to seed on startup (requires `--db-path`) |
+| `--db-path` / `-d` | Path to the server's SQLite database — required for `--seed-days` |
+| `--announce-ip` | IPv4 announced as the unit's `ip` (default: `127.0.0.1`) |
+| `--config` / `-c` | Path to a config JSON file overriding the defaults |
 
-## Running Multiple Mock Units
-
-You can run several instances of `mushpi-mock` simultaneously to simulate a multi-unit grow operation. Start each instance on a different port:
+To simulate a multi-unit grow operation, start several units in one command:
 
 ```bash
-# Terminal 1 — unit A
-PORT=5000 uv run python main.py
-
-# Terminal 2 — unit B
-PORT=5001 uv run python main.py
+# Three units with custom handles
+uv run mushpi-mock start --count 3 --handles grow-left,grow-center,grow-right
 ```
 
-Register each address as a separate unit in the dashboard and you'll have a fully simulated multi-chamber environment to develop against.
+Each unit takes the consecutive port after `--base-port` (default 5000), announces itself to the server, and appears as its own unit — register each address in the dashboard and you have a fully simulated multi-chamber environment to develop against.
+
+## Backdated Seeding
+
+For instant demo readiness, `--seed-days` populates the server's database with days or weeks of historical readings, written directly to the server's SQLite database — so charts show history the moment you open the dashboard:
+
+```bash
+# Seed 14 days of backdated data for three units
+uv run mushpi-mock start --count 3 --seed-days 14 --db-path /path/to/app.sqlite
+```
+
+Seeding requires `--db-path` pointing at the server's SQLite file — on a self-hosted hub it lives in the bind-mounted data directory as `app.sqlite`.
+
+## Project Structure
+
+```
+mushpi-mock/
+├── pyproject.toml        # Dependencies, scripts, build config
+├── uv.lock               # Lockfile (like yarn.lock)
+├── config.example.json   # Example config with defaults
+├── README.md             # Standalone usage guide
+├── LICENSE               # MIT
+├── .python-version       # Python version pin
+├── scripts/
+│   └── check-version-alignment.sh  # grow ⇔ mock version check (run manually)
+└── src/mushpi_mock/
+    ├── __init__.py       # Package docstring + the mock's own __version__
+    ├── VERSION           # Represented firmware version (must match grow)
+    ├── main.py           # FastAPI app factory + click CLI
+    ├── config.py         # Pydantic config models
+    ├── state.py          # In-memory unit state
+    ├── router.py         # All Pico API endpoints + mock-only GET /version
+    ├── simulation.py     # Hysteresis control-loop sensor data generator
+    ├── seed.py           # Direct SQLite bulk seeding for --seed-days
+    └── announce.py       # Server announce + retry logic
+```
+
+## Version Alignment
+
+The mock carries **two represented versions plus its own**, and the represented ones must always match the firmware they represent:
+
+| Version identity | Lives in | Must match | Surfaces in |
+|---|---|---|---|
+| Represented firmware version | `src/mushpi_mock/VERSION` + `state.py::_SOFTWARE_VERSION` | `mushpi-grow/app/state.py::_SOFTWARE_VERSION` | `GET /system`, `GET /`, the announce payload |
+| Represented API contract version | `state.py::_API_VERSION` | `mushpi-grow/app/state.py::_API_VERSION` | `GET /`'s `api_version` key, the announce payload |
+| The mock's own service version | `pyproject.toml` `version` | nothing — independent SemVer | mock-only `GET /version` (`mock_version`) |
+
+The server displays the reported version, so a mock that drifted from the firmware it represents would silently mask a real incompatibility — when `mushpi-grow` bumps its firmware version or its Pico↔Server API contract version, the mock's `VERSION` file and `state.py` constants are updated in the same pass. Check alignment at any time with:
+
+```bash
+./scripts/check-version-alignment.sh
+```
+
+`GET /version` is a mock-only route — not part of the mirrored Pico API — and returns all three versions: `mock_version`, `represented_firmware_version`, and `represented_api_version`.
+
+## Screenshots for the Dashboard Guide
+
+The dashboard guide on this site is illustrated with annotated screenshots showing real-looking data — unit health statuses, active batches, sensor charts, and warnings. These screenshots are captured with the mock running, connected to a local server with seeded historical data. The guide describes the production system from the grower's perspective and never mentions the mock — but the mock is the tool that makes those screenshots possible.
 
 <Note>
 `mushpi-mock` is a development and testing tool only — it does not interface with any GPIO pins, relays, or sensors. Running it in a production deployment alongside real Pico units is harmless but pointless; it will never control real hardware.
 </Note>
+
+The standalone quick-start guide lives in `mushpi-mock/README.md` in the mock repository.
