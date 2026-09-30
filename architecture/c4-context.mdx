@@ -1,0 +1,43 @@
+---
+title: "System Context (C4 Level 1)"
+description: "C4 Level 1 view of Mushroom Pi: the grower, the automated climate-control system, and the physical growing environment it senses and actuates."
+---
+
+```mermaid
+flowchart TB
+    GROWER("👤 Grower<br/><i>Human operator — monitors and manages<br/>mushroom cultivation</i>")
+
+    subgraph MUSHROOM_PI["🍄 Mushroom Pi System"]
+        direction LR
+        SYSTEM["Automated humidity & temperature<br/>control for mushroom growing"]
+    end
+
+    ENVIRONMENT{{"🌿 Growing Environment<br/><i>Physical grow space with<br/>temperature & humidity conditions</i>"}}
+
+    GROWER -->|"Views data, sets targets,<br/>manages batches via web dashboard"| SYSTEM
+    SYSTEM -->|"Controls humidifier, fan,<br/>heater via relay-driven actuators"| ENVIRONMENT
+    ENVIRONMENT -->|"Provides temperature & humidity<br/>readings via DHT11 sensor"| SYSTEM
+
+    classDef user fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef ext fill:#ef4444,stroke:#dc2626,color:#fff
+    classDef system fill:#3b82f6,stroke:#1d4ed8,color:#fff
+
+    class GROWER user
+    class ENVIRONMENT ext
+    class SYSTEM system
+
+    style MUSHROOM_PI fill:#1e293b,stroke:#475569,color:#e2e8f0
+```
+
+## Narrative
+
+The Mushroom Pi system automates climate control for mushroom cultivation. A **grower** interacts through a web dashboard to monitor conditions, set temperature/humidity targets, and manage cultivation batches.
+
+The system reads environmental data (temperature, humidity) from a DHT11 sensor and controls three actuators — a humidifier, a fan, and a heating mat — via relay switches running a hysteresis-based control loop.
+
+Multiple Pico 2W units can be deployed, each controlling its own growing environment. The central server polls each unit, stores historical readings, and serves the data to the dashboard.
+
+### External systems
+
+- **Growing Environment**: The physical space. Not a software system — it's the real-world conditions the sensors measure and the actuators affect.
+- **Grower**: The human operator. No direct system integration — interacts solely through the web dashboard.

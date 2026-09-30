@@ -74,6 +74,17 @@
             "group": "Contributing",
             "pages": [
               {
+                "group": "Architecture",
+                "pages": [
+                  "architecture/c4-context",
+                  "architecture/c4-container",
+                  "architecture/c4-component-server",
+                  "architecture/c4-component-grow",
+                  "architecture/c4-component-client",
+                  "architecture/release-pipeline"
+                ]
+              },
+              {
                 "group": "Development",
                 "pages": [
                   "development/mock-pico",
