@@ -1,0 +1,30 @@
+img.nav-logo {
+    height: 2.5rem !important;
+    width: auto !important;
+}
+
+@media (min-width: 1024px) {
+    img.nav-logo {
+        height: 6.5rem !important;
+        width: auto !important;
+    }
+
+    #navbar .h-16 {
+        /* the logo bar: 64px → 128px */
+        height: auto;
+        min-height: calc(6.5rem + 1.5rem);
+    }
+
+    :root {
+        /* header = bar 8rem + nav-tabs 3rem */
+        --mintlify-slot-header-height: calc(6.5rem + 1.5rem + 3rem);
+    }
+
+    [class*="top-[9.5rem]"] {
+        top: calc(var(--mintlify-slot-header-height) + 2.5rem) !important;
+    }
+
+    [class*="h-[calc(100vh-9.5rem)]"] {
+        height: calc(100vh - var(--mintlify-slot-header-height) - 2.5rem) !important;
+    }
+}

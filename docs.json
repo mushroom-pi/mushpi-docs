@@ -3,9 +3,25 @@
   "name": "Mushroom Pi",
   "theme": "palm",
   "colors": {
-    "primary": "#10b981",
-    "light": "#d1fae5",
-    "dark": "#059669"
+    "primary": "#2F7349",
+    "light": "#C66F2F",
+    "dark": "#C66F2F"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "color": {
+      "dark": "#0f1720"
+    },
+    "decoration": "gradient"
+  },
+  "fonts": {
+    "family": "Inter"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
   },
   "favicon": "/favicon.svg",
   "navigation": {

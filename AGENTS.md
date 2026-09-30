@@ -1,4 +1,4 @@
-# Mushroom Pi — mushpi-docs (published Mintlify site)
+# 🍄 Mushroom Pi 🍓 — mushpi-docs (published Mintlify site)
 
 The **public documentation site** for the Mushroom Pi three-tier system, built with Mintlify. Pages are MDX with YAML frontmatter; navigation, theme and branding live in `docs.json`. Mintlify syncs this repository through its GitHub app and deploys on every push to `main`.
 
@@ -16,8 +16,9 @@ Three regressions this repo must not cause: publishing content that is not publi
 | `configuration/` | `hysteresis-control.mdx` (the firmware control loop), `remote-access.mdx` |
 | `development/` | Contributors: `mock-pico.mdx`, `contributing.mdx` |
 | `api/` | API Reference section — `overview.mdx` only. The endpoint pages are **generated** by Mintlify from the two OpenAPI specifications, referenced by raw URL in `docs.json`: the server spec and the Pico spec, each in its own group. There is no hand-written endpoint page |
-| `docs.json` | **The site's index**: navigation tabs/groups, theme colours, logo, navbar, and any OpenAPI spec references. A page not listed here is not published |
+| `docs.json` | **The site's index**: navigation tabs/groups, branding (`colors`, `appearance`, `background`, `fonts`, `logo`, `favicon`), navbar, and any OpenAPI spec references. A page not listed here is not published |
 | `logo/` · `favicon.svg` | Brand assets |
+| `style.css` | Global stylesheet Mintlify injects into every page — navbar logo sizing and the desktop header/TOC geometry that follows from it |
 | `.mintignore` | Files Mintlify must not render |
 | `.atlas-analysis.json` | Atlas code-generation artifact — see `REFERENCE.md` |
 | `AGENTS.md` · `REFERENCE.md` | Instruction files. **Not pages** — never add them to `docs.json` |
