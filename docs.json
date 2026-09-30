@@ -119,7 +119,10 @@
           {
             "group": "Mushpi Server API",
             "openapi": {
-              "source": "https://raw.githubusercontent.com/mushroom-pi/mushpi-server/dev/spec/openapi.json"
+              "source": "https://raw.githubusercontent.com/mushroom-pi/mushpi-server/dev/spec/openapi.json",
+              "overlays": [
+                "overlays/server-authentication.yaml"
+              ]
             }
           },
           {

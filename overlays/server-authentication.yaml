@@ -1,0 +1,34 @@
+# Authentication overlay for the Mushpi Server API reference.
+#
+# The server's committed OpenAPI specification declares the `secret` bearer
+# scheme but attaches no security requirement to any operation, so the generated
+# reference renders every endpoint as unauthenticated. The requirement is real
+# but conditional on the deployment's APP_SECRET, and the committed specification
+# is regenerated into the client's generated API layer — so the requirement is
+# declared here, in an overlay, changing only what Mintlify renders.
+overlay: 1.1.0
+info:
+  title: Mushpi Server API authentication overlay
+  version: 1.0.0
+extends: https://raw.githubusercontent.com/mushroom-pi/mushpi-server/dev/spec/openapi.json
+actions:
+  - target: $.components.securitySchemes.secret
+    description: Document the conditional bearer check on the scheme the specification already declares.
+    update:
+      description: >-
+        App secret bearer token, sent as `Authorization: Bearer <APP_SECRET>`. Applied only
+        when the deployment sets `APP_SECRET`: with it set, a request without the header —
+        or with the wrong value — is rejected with `426 Upgrade Required`. When `APP_SECRET`
+        is unset, no bearer check is made and requests pass unauthenticated.
+  - target: $.components.securitySchemes.secret
+    description: Prefill the playground token field with a placeholder — never a real secret.
+    update:
+      x-default: your-app-secret
+  - target: "$"
+    description: >-
+      Add the security requirement at the document root so every operation shows it. Targeted
+      at the root and merged in: the specification has no root `security` key, and `update`
+      merges objects rather than creating a missing path.
+    update:
+      security:
+        - secret: []

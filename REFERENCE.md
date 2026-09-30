@@ -21,7 +21,7 @@ What it does **not** include, and therefore changes how we work:
 - `mint index --opencode` installs Mintlify's docs-search MCP into OpenCode.
 - Node 20.17+ is required (v24.15.0 on the maintainer's machine).
 - If `docs.json` is missing, pages resolve to 404 — a dev-server "not running" symptom is usually a wrong working directory.
-- **Overlays**: an OpenAPI overlay is a separate JSON/YAML file that transforms a specification without editing it, applied **after parsing and before validation**. It is the tool for bending a spec maintained elsewhere — renaming paths, replacing server URLs, hiding endpoints — and it is referenced from `docs.json` next to the spec.
+- **Overlays**: an OpenAPI overlay is a separate JSON/YAML file that transforms a specification without editing it, applied **after parsing and before validation**. It is the tool for bending a spec maintained elsewhere — renaming paths, replacing server URLs, hiding endpoints — and it is referenced from `docs.json` next to the spec. **A target that matches nothing fails silently**, not loudly: malformed overlay syntax fails `mint validate`, but a mistyped JSONPath target passes validation and simply changes nothing. Check a new overlay's targets against the fetched specification rather than trusting a green validate. The server API's conditional bearer declaration lives this way, in `overlays/server-authentication.yaml`, deliberately **not** in the committed specification — the client regenerates its API layer from that spec, so a document-wide security requirement there could change generated call signatures and break the app's build to improve a docs page.
 
 ## What Mintlify ignores automatically
 
