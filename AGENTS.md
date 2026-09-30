@@ -41,7 +41,7 @@ Migrating a page is a **move, not a rewrite**: place the already-written content
 | Pico REST API shape | `mushpi-grow/spec/openapi.yaml` (hand-authored) |
 | Hardware BOM, pin map, power data | `mushpi-grow/HARDWARE.md` (electronics agent owns it — never edit) |
 | Packaging, release and deployment decisions | `mushpi-ops/MAINTAINING.md` (internals) · `mushpi-ops/DEPLOYMENT.md` (operator-facing) |
-| Version and release semantics | `mushpi-docs-deprecated/versioning.md` until it is ported |
+| Version and release semantics | `releases.mdx` for what a release number means to a reader; the **normative** rules live in `mushpi-ops/MAINTAINING.md` §Version & Release Semantics |
 | Feature status, phase, priority, effort | The GitHub Project `mushroom-pi` #1 — read via `mushpi-product-owner` |
 | Diagram palette and emoji map | `mushpi-docs-deprecated/diagram-theme.md` |
 | Mermaid shape/legend conventions | The `mermaid-diagram-conventions` skill |

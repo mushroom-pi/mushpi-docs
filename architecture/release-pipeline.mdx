@@ -14,7 +14,7 @@ How the Mushroom Pi system is turned from a handful of sibling git repos into a 
 - the **release manifest** (`release.json`),
 - the **publish workflows** — `.github/workflows/publish.yml` (pushes to `main` and `v*` tags) and `.github/workflows/publish-dev.yml` (manual dispatch only, never moves `latest`) — sharing the composite build action `.github/actions/build-image/action.yml`.
 
-The product of this layer is one artifact: a single image, `ghcr.io/mushroom-pi/mushpi`, that bundles the NestJS server API **and** the built React dashboard on one port (3000). Because the SPA is shipped inside the same image as the server it was generated against, a client↔server mismatch is physically impossible to ship — see `versioning.md` §5 for the build-time-lockstep reasoning; this page documents how the image gets built and where it comes from.
+The product of this layer is one artifact: a single image, `ghcr.io/mushroom-pi/mushpi`, that bundles the NestJS server API **and** the built React dashboard on one port (3000). Because the SPA is shipped inside the same image as the server it was generated against, a client↔server mismatch is physically impossible to ship — see `mushpi-ops/MAINTAINING.md` §Version & Release Semantics for the build-time-lockstep reasoning; this page documents how the image gets built and where it comes from.
 
 The operational halves live in `mushpi-ops/MAINTAINING.md` (how a release is cut and shipped) and `mushpi-ops/DEPLOYMENT.md` (how an operator runs it). This page is the architecture-level view: what the pieces are, how they connect, and what each protects against — it does not restate the mechanics.
 
@@ -130,11 +130,11 @@ The workspace is one orchestration root plus six repos. The orchestration root a
 
 **The image is named for the product, not the publishing repo.** The image is `ghcr.io/mushroom-pi/mushpi`, published *by* `mushroom-pi/mushpi-ops`. The name is pinned as `${{ github.repository_owner }}/mushpi` — the owner interpolates, but the image name (`mushpi`) is a deliberate product decision, not a side effect of the repo name. Renaming the repo would not rename the image.
 
-**The manifest/tag pairing.** A release is two things kept in lockstep: a git tag `vX.Y.Z` and a committed `release.json` at the repo root, changed in one commit. `release.json` records the five fields — `release` (equals the tag without the `v`), `server`, `client`, `firmware`, and integer `api_version` — that pin the exact component combination tested together. The tag pins only `mushpi-ops`'s own files; the sub-repos always build at default-branch HEAD, which is why their release commits must be pushed before the tag. Semantics live in `versioning.md` §3; the mechanical release procedure lives in `mushpi-ops/MAINTAINING.md`.
+**The manifest/tag pairing.** A release is two things kept in lockstep: a git tag `vX.Y.Z` and a committed `release.json` at the repo root, changed in one commit. `release.json` records the five fields — `release` (equals the tag without the `v`), `server`, `client`, `firmware`, and integer `api_version` — that pin the exact component combination tested together. The tag pins only `mushpi-ops`'s own files; the sub-repos always build at default-branch HEAD, which is why their release commits must be pushed before the tag. Semantics live on the [Releases](/releases) page; the normative rules and the mechanical release procedure live in `mushpi-ops/MAINTAINING.md` (§ Version & Release Semantics).
 
 ## Related reading
 
-- `versioning.md` — what a version means, the manifest schema, and the client↔server lockstep.
+- [Releases](/releases) — what a version means (reader-facing); the normative semantics — the manifest schema and the client↔server lockstep — live in `mushpi-ops/MAINTAINING.md` §Version & Release Semantics.
 - `mushpi-ops/MAINTAINING.md` — how to cut and ship a release (mechanics).
 - `mushpi-ops/DEPLOYMENT.md` — how to run the system (operators).
 - [Container view](/architecture/c4-container) — the three runtime containers this layer packages.
