@@ -15,7 +15,7 @@ Three regressions this repo must not cause: publishing content that is not publi
 | `dashboard/` | Using Mushroom Pi — the grower guide: `index.mdx`, `pico-units.mdx`, `recipes.mdx`, `batches.mdx`, `monitoring.mdx`, `finishing-a-batch.mdx`, `server.mdx`, `settings.mdx`, `troubleshooting.mdx` |
 | `configuration/` | `hysteresis-control.mdx` (the firmware control loop), `remote-access.mdx` |
 | `development/` | Contributors: `mock-pico.mdx`, `contributing.mdx` |
-| `api/` | API Reference section — `overview.mdx`, `authentication.mdx`, `units.mdx`, `readings.mdx`, `batches.mdx`, `recipes.mdx`, `settings.mdx`, and `api/pico/{overview,endpoints}.mdx` |
+| `api/` | API Reference section — `overview.mdx` only. The endpoint pages are **generated** by Mintlify from the two OpenAPI specifications, referenced by raw URL in `docs.json`: the server spec and the Pico spec, each in its own group. There is no hand-written endpoint page |
 | `docs.json` | **The site's index**: navigation tabs/groups, theme colours, logo, navbar, and any OpenAPI spec references. A page not listed here is not published |
 | `logo/` · `favicon.svg` | Brand assets |
 | `.mintignore` | Files Mintlify must not render |

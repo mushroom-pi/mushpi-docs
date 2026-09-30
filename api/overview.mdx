@@ -1,66 +1,43 @@
 ---
-title: "Mushroom Pi REST API — Reference and Overview Guide"
+title: "API overview"
 sidebarTitle: "Overview"
-description: "The Mushroom Pi backend exposes a REST API on port 3000. Query units, sensor readings, batches, recipes, and settings from any HTTP client."
+description: "Mushroom Pi exposes two REST APIs — the hub server on port 3000 and each Pico unit on port 5000. This reference is generated directly from their OpenAPI specifications."
 ---
 
-The Mushroom Pi REST API lets you integrate your grow environment data into your own tools, scripts, and automations. Whether you are building a custom alerting pipeline, exporting readings to an external time-series database, or scripting bulk updates to your growing recipes, every capability available in the dashboard is also accessible over HTTP.
+Mushroom Pi exposes two REST APIs, and the reference pages in this section are **generated directly from their OpenAPI specifications** — every endpoint, parameter, schema and response documented here comes from the committed spec, so it matches what the code serves.
 
-## Base URL
+- **Mushpi Server API** — the Raspberry Pi hub (`mushpi-server`, NestJS). Units, readings, batches, recipes, control proxies, dashboard summary and settings. Canonical spec: `spec/openapi.json` in the `mushpi-server` repository.
+- **Pico REST API** — every Pico 2W unit (`mushpi-grow`, MicroPython). Sensors, setpoints, outputs, wiring setup, manual control and provisioning. The hub polls each unit on this API every 60 seconds. Canonical spec: `spec/openapi.yaml` in the `mushpi-grow` repository.
 
-All API endpoints are served from the same port as the dashboard:
+## Base URLs
 
-```
-http://<your-pi-ip>:3000/api
-```
+| API | Base URL |
+|---|---|
+| Server (hub) | `http://<your-pi-ip>:3000` |
+| Pico unit | `http://<pico-ip>:5000` |
 
-Replace `<your-pi-ip>` with the local IP address or hostname of the Raspberry Pi running the Mushroom Pi stack (for example, `192.168.1.100` or `mushroom-pi.local`).
+Replace the placeholders with the device's local IP address or hostname. All request and response bodies use JSON.
 
-The API follows standard REST conventions. All request and response bodies use JSON. Endpoint paths are resource-oriented, and HTTP verbs map to the expected semantics — `GET` to read, `POST` to create, `PATCH` to partially update, and `DELETE` to remove.
+## Versioning
+
+The server API is URI-versioned: all functional endpoints live under `/v1/` (for example `/v1/pico-units`). Only the infrastructure probes `GET /ping` and `GET /health` sit outside the version prefix. The Pico API is unversioned.
+
+## Authentication
+
+Neither API requires authentication by default — what protection exists depends on your deployment:
+
+- **Server — optional app secret.** If the server runs with `APP_SECRET` configured, every request must carry `Authorization: Bearer <APP_SECRET>`; requests without it (or with the wrong value) are rejected with `426 Upgrade Required`. The server specification declares this as its `secret` bearer scheme. Without `APP_SECRET`, no bearer check is made.
+- **Server — announce secret.** `POST /v1/pico-units/announce` is a hardware-facing route: Pico units present themselves with a shared secret in the `X-Pico-Secret` header (`PICO_ANNOUNCE_SECRET` on the server, matching each unit's `hub_secret`). See [environment variables](/deployment/environment). Browser and script callers never need this header.
+- **Pico units — none.** The firmware API deliberately implements no authentication. Access control is network-level: keep port 5000 inside your LAN and never expose it through your router or firewall.
+
+## CORS
+
+The server enables CORS with credentials for the origins it knows: the dashboard (`CLIENT_URL`) and, when enabled, its own docs UI. Browser applications on other origins will be blocked; server-side scripts and `curl` are unaffected. The Pico API is meant for local-network callers and applies no CORS rules.
+
+## Interactive docs
+
+When the server's docs endpoint is enabled (`DOCS_ENDPOINT`), it serves the machine-readable OpenAPI document at `/<DOCS_ENDPOINT>-json` together with an interactive UI. The docs variables — like every environment variable mentioned here — are listed in [environment variables](/deployment/environment).
 
 <Note>
-  An interactive Swagger UI is available at `http://<your-pi-ip>:3000/api/docs`. It documents every endpoint, lets you try requests directly in the browser, and reflects the exact schema your installation serves — use it as the authoritative live reference alongside these pages.
+  Direct calls to a Pico unit bypass the backend and are subject to the unit's local hysteresis control loop, which may reverse a manual relay change at its next evaluation. See [hysteresis control](/configuration/hysteresis-control).
 </Note>
-
-## Request and Response Format
-
-All endpoints accept and return `application/json`. Include a `Content-Type: application/json` header on any request that carries a body.
-
-```http
-Content-Type: application/json
-Accept: application/json
-```
-
-## Error Responses
-
-When a request cannot be fulfilled, the API returns a JSON error object with a machine-readable `statusCode`, a human-readable `message`, and an `error` string:
-
-```json
-{
-  "statusCode": 404,
-  "message": "Unit not found",
-  "error": "Not Found"
-}
-```
-
-## HTTP Status Codes
-
-| Code | Meaning | When you'll see it |
-|------|---------|--------------------|
-| `200 OK` | Request succeeded | Successful `GET`, `PATCH`, and `DELETE` responses |
-| `201 Created` | Resource created | Successful `POST` that creates a new resource |
-| `400 Bad Request` | Invalid input | Missing required fields, validation failures |
-| `404 Not Found` | Resource missing | Requested ID does not exist |
-| `500 Internal Server Error` | Server-side failure | Unexpected backend error |
-
-## Endpoints
-
-Detailed reference for each resource is available on the following pages:
-
-- [Units](/api/units) — list, retrieve, and send control commands to registered Pico units
-- [Readings](/api/readings) — query historical temperature and humidity readings
-- [Batches](/api/batches) — create and manage mushroom cultivation batches
-- [Recipes](/api/recipes) — define target conditions for each mushroom species
-- [Settings](/api/settings) — retrieve and update system-wide configuration
-
-For the Pico firmware's own HTTP API (port 5000), see the [Pico API Overview](/api/pico/overview).

@@ -1,55 +1,49 @@
-# Mintlify Starter Kit
+# Mushroom Pi — Documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+This repository is the **published Mushroom Pi documentation site**, built with [Mintlify](https://mintlify.com) and rendered from the Markdown/MDX in this repo. Mintlify syncs it through its GitHub app and deploys on every push to `main`.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+A reader finds here: a grower's guide to running a grow, the build and self-hosting instructions, the contributor architecture, and a generated API reference for the server and the Pico.
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+## Where to read it
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+The rendered site is the Mushroom Pi project's documentation site. (It is not this `README.md` — Mintlify does not render this file, and it is not a page on the site.)
 
-## AI-assisted writing
+## Working on it locally
 
-Set up your AI coding tool to work with Mintlify:
+Pages are MDX with YAML frontmatter; navigation, theme and branding live in `docs.json`.
 
 ```bash
-npx skills add https://mintlify.com/docs
+mint dev --port 3001   # preview — never the default port: 3000 collides with mushpi-server
 ```
 
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
+Before a change is done, it must pass:
 
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
-npm i -g mint
+```bash
+mint validate        # validates the site, including the referenced OpenAPI specs
+mint broken-links    # no broken internal link
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+## How the content is organised
 
-```
-mint dev
-```
+| Area | What lives there |
+| --- | --- |
+| Getting Started | What Mushroom Pi is, the first-run path, the three-tier shape |
+| Build & Self-Host | Building the units and deploying the hub |
+| Using Mushroom Pi | The grower guide to the dashboard |
+| Configuration | The firmware control loop and remote access |
+| Contributing | Architecture (C4) and Development |
+| License | Which licence covers which material |
+| Releases | What a release number means to a reader |
+| API Reference | The server and Pico endpoints, generated from their OpenAPI specs |
 
-View your local preview at `http://localhost:3000`.
+## Writing for the site
 
-## Publishing changes
+The conventions live in `AGENTS.md` — page anatomy, the navigation gate (`docs.json`), and the public-content boundary — so they are not restated here. That file also carries agent-facing instructions; it is not a page and is never added to `docs.json`.
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+## API Reference
 
-## Need help?
+The endpoint pages are **generated** by Mintlify from the server's and the Pico's OpenAPI specifications, referenced by URL from `docs.json`. Nothing about them is written by hand: a change to an endpoint belongs in the relevant specification, not in this repository.
 
-### Troubleshooting
+## Licensing
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+The site publishes material under several licences: documentation prose and diagrams under **CC BY-SA 4.0**, and hardware material under **CERN-OHL-S 2.0** — both scoped in this repository. The application code and firmware described here carry their own licences in their own repositories. See the site's License page for the detailed statement, and `LICENSE-docs` / `LICENSE-hardware` in this repository for the texts.

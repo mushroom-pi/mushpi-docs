@@ -113,26 +113,20 @@
           {
             "group": "Overview",
             "pages": [
-              "api/overview",
-              "api/authentication"
+              "api/overview"
             ]
           },
           {
-            "group": "Endpoints",
-            "pages": [
-              "api/units",
-              "api/readings",
-              "api/batches",
-              "api/recipes",
-              "api/settings"
-            ]
+            "group": "Mushpi Server API",
+            "openapi": {
+              "source": "https://raw.githubusercontent.com/mushroom-pi/mushpi-server/dev/spec/openapi.json"
+            }
           },
           {
             "group": "Pico REST API",
-            "pages": [
-              "api/pico/overview",
-              "api/pico/endpoints"
-            ]
+            "openapi": {
+              "source": "https://raw.githubusercontent.com/mushroom-pi/mushpi-grow/dev/spec/openapi.yaml"
+            }
           }
         ]
       }
@@ -142,6 +136,38 @@
     {
       "source": "/configuration/environment",
       "destination": "/deployment/environment"
+    },
+    {
+      "source": "/api/authentication",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/units",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/readings",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/batches",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/recipes",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/settings",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/pico/overview",
+      "destination": "/api/overview"
+    },
+    {
+      "source": "/api/pico/endpoints",
+      "destination": "/api/overview"
     }
   ],
   "navbar": {
