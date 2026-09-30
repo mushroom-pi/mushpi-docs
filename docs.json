@@ -92,6 +92,18 @@
                 ]
               }
             ]
+          },
+          {
+            "group": "License",
+            "pages": [
+              "license"
+            ]
+          },
+          {
+            "group": "Releases",
+            "pages": [
+              "releases"
+            ]
           }
         ]
       },

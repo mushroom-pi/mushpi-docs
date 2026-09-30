@@ -1,0 +1,42 @@
+---
+title: "License"
+description: "Which licence covers which part of Mushroom Pi, so you can tell what you may reuse."
+---
+
+Mushroom Pi publishes its work under several different licences, one per kind of material. This page maps each licence to what it covers, so you can answer "may I use this?" for whatever page you are looking at.
+
+## Which licence covers what
+
+| Material | Licence | Where it is declared |
+| --- | --- | --- |
+| Documentation prose, diagrams, presentations | CC BY-SA 4.0 | `LICENSE-docs` in this repository |
+| Hardware artifacts — wiring, power, schematics | CERN-OHL-S 2.0 | `LICENSE-hardware` in this repository |
+| Pico firmware | GPL-3.0 | `mushpi-grow`'s own `LICENSE` |
+| Server, dashboard, mock, and the release/packaging layer | MIT | each repository's own `LICENSE` |
+| The API reference material | CC BY-SA 4.0, as documentation prose | `LICENSE-docs` |
+
+The API reference is prose, not code: it is covered by the same licence as the rest of the documentation, not by the MIT licence that covers the server whose API it describes.
+
+## The licences
+
+### Documentation — CC BY-SA 4.0
+
+The prose, diagrams and presentations are released under **Creative Commons Attribution-ShareAlike 4.0 International** ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)). You may share and adapt this material on two conditions: you must give **attribution** — credit the author, note the licence, and indicate any changes you made — and anything you build from it must be shared under the same licence (**ShareAlike**).
+
+The `LICENSE-docs` file carries the licence text and does not itself name a specific copyright holder, so attribute the Mushroom Pi project as the author.
+
+### Hardware — CERN-OHL-S 2.0
+
+The hardware artifacts — the wiring guides, power analysis and schematics — are released under the **CERN Open Hardware Licence Version 2 – Strongly Reciprocal** ([CERN-OHL-S 2.0](https://cern-ohl.web.cern.ch/)). This is a reciprocal hardware licence: you may use, study, modify, share and distribute the designs, and hardware you make from modified designs carries the same licence.
+
+### Firmware — GPL-3.0
+
+The Pico firmware (`mushpi-grow`) is released under the **GNU General Public License, Version 3, 29 June 2007** ([GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.html)), as stated in that repository's `LICENSE` file.
+
+### Software — MIT
+
+The server, dashboard, mock service, and the release/packaging layer are each released under the **MIT License** ([MIT](https://opensource.org/license/mit)), declared in each repository's own `LICENSE` file.
+
+## Not licensed
+
+One kind of source material is excluded from every licence above: raw shop-page clippings used as drafting notes for some of the hardware pages. They are third-party copyright material, not Mushroom Pi documentation, and they are not published on this site — everything you can actually see here is covered by the table above.

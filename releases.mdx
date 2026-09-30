@@ -1,0 +1,46 @@
+---
+title: "Releases"
+description: "What a Mushroom Pi version number means, and what has been released."
+---
+
+Mushroom Pi versions three things independently, then bundles them. This page explains what each number means so you can read a version and know what it promises.
+
+## Three version axes
+
+Three orthogonal version axes exist, and conflating them is the most common source of confusion:
+
+1. **Per-component SemVer** — the Pico firmware, the server, and the dashboard each carry their own `MAJOR.MINOR.PATCH` version, in their own place.
+2. **The release bundle** — a separate counter over a specific, tested-together set of component versions.
+3. **`api_version`** — a plain integer marking the generation of the Pico↔Server contract.
+
+## Per-component versions
+
+Each component's `MAJOR.MINOR.PATCH` version records its own evolution, and a bump means "this may require the consumer to react." What kind of reaction depends on who consumes the component:
+
+| Bump | What it means |
+| --- | --- |
+| **MAJOR** | A breaking change: the consumer must change to keep working. |
+| **MINOR** | A backwards-compatible addition: a new endpoint, field, feature, or capability. |
+| **PATCH** | A bug fix or internal change with no observable API change. |
+
+The consumer relationships are what decide the bump size. The firmware's only API consumer is the server, at runtime. The server serves the dashboard at build time and consumes the Pico at runtime. The dashboard has no machine consumers at all — it is the terminal of the chain. A bump is always judged against those relationships, never in isolation.
+
+## The release bundle
+
+A **release** is a statement that a specific set of component versions are tested to work together. It is expressed in the release repository (`mushpi-ops`) as a git tag `vX.Y.Z` together with a committed `release.json` manifest recording the component versions and the `api_version` that release was tested against.
+
+The bundle's counter is a **release counter, not a SemVer promise**: it does not describe API compatibility the way a component's SemVer does — it simply records which release this is. It is independent of every component version, is not required to exceed any of them, and moves on its own schedule. Once shipped, a bundle version is never moved backward.
+
+## `api_version`
+
+`api_version` is the **contract generation** of the Pico↔Server REST contract. It is a plain integer, bumped only when that contract breaks — an endpoint removed or renamed, an incompatible request or response shape, or a changed meaning an old unit would silently misbehave under. Additive changes and bug fixes do not bump it.
+
+It is **judged, not enforced**: the server reads the value a unit reports, stores it, and flags the unit `compatible`, `incompatible`, or `unknown` against its supported range. Out-of-range values are accepted and flagged, never rejected, so a unit is never lost.
+
+It is deliberately **unlike the server's `/v1/` URI prefix**. That prefix versions the server↔dashboard HTTP API; `api_version` versions the Pico↔Server contract. The two currently carry the same number but are distinct types and distinct contracts, and they can diverge.
+
+## What has been released
+
+Nothing, yet. No repository has any tag or release, no container image has ever been published, and the versioning path described above has not been exercised. The version numbers visible in the code are simply where each version field currently sits — not a statement that any combination has been tested to work together.
+
+Current values live in the release manifest, `release.json` in `mushpi-ops`, which is the authority for the numbers; this page deliberately does not restate them because they change.
