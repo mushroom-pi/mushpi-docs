@@ -16,6 +16,16 @@ When you run `docker compose up -d` for the first time, the container does the p
 
 Every later start reuses the same directory, so your data survives restarts and updates. Do not prepare the directory by hand — the container does it on every start.
 
+### If the container exits reporting a `chown` failure
+
+The automatic ownership fix needs to run `chown` inside the container, which some filesystems refuse — NFS with `root_squash` is the classic case. Only in that case — the container's own error message names it — prepare the directory on the host yourself, then start the stack again:
+
+```bash
+sudo mkdir -p <MUSHPI_DATA_DIR> && sudo chown -R 1000:1000 <MUSHPI_DATA_DIR>
+```
+
+No other situation requires manual directory preparation.
+
 ## Find the hub's address
 
 The dashboard is served on port 3000. To open it, find the hub's local address:

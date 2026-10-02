@@ -25,6 +25,8 @@ Each component's `MAJOR.MINOR.PATCH` version records its own evolution, and a bu
 
 The consumer relationships are what decide the bump size. The firmware's only API consumer is the server, at runtime. The server serves the dashboard at build time and consumes the Pico at runtime. The dashboard has no machine consumers at all — it is the terminal of the chain. A bump is always judged against those relationships, never in isolation.
 
+One rule applies to every version string: it must be a strict `MAJOR.MINOR.PATCH` — no pre-release suffixes (`-alpha`, `-beta`, `-rc`) and no build metadata (`+build`). Pre-release identifiers are deliberately out of scope; prototype status is conveyed in words, not in the version string.
+
 ## The release bundle
 
 A **release** is a statement that a specific set of component versions are tested to work together. It is expressed in the release repository (`mushpi-ops`) as a git tag `vX.Y.Z` together with a committed `release.json` manifest recording the component versions and the `api_version` that release was tested against.

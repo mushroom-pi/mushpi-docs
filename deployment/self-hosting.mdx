@@ -25,6 +25,7 @@ For access from outside your local network, you set up Tailscale — a private, 
 - A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux.
 - **The 64-bit OS is a hard requirement.** The published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it. If you are flashing Raspberry Pi OS, select the 64-bit image in Raspberry Pi Imager.
 - **Raspberry Pi Imager 2.0.6 or newer** is required to flash and customise a current Raspberry Pi OS image — older versions fail silently. Flashing the card is its own step; the SD-card provisioning page covers it.
+- **Headroom.** The tested reference board (1 GB of RAM) is the bare minimum that has been verified, not a requirement: 1 GB is enough for this stack but leaves little headroom, so avoid running other services alongside Mushroom Pi on a board that small.
 
 ### Software
 
@@ -68,7 +69,7 @@ Edit `.env` and set `PICO_ANNOUNCE_SECRET`. Then:
 docker compose up -d
 ```
 
-The first `up` pulls the published image and starts one container. There is nothing to build and no further setup on the host.
+The first `up` pulls the published image and starts one container. There is nothing to build and no further setup on the host. The repository's local build toggle (`docker-compose.override.yml`) is untracked by design, so it never ships in a clone — a plain `docker compose up -d` like the one above always **pulls** the published image and never builds one.
 
 ## Verify it is up
 

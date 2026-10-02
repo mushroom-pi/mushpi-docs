@@ -22,7 +22,24 @@ The table below lists the key variables an operator actually touches — it is n
 | `LOGS_LIFE_DAYS` | `7` | Log retention in days. |
 | `READINGS_RETENTION_MONTHS` | `6` | Months of sensor readings to keep. Minimum `1`. |
 | `APP_HTTPS_ENABLED` | `false` | Declares that the browser-facing deployment is reached over HTTPS (TLS terminated upstream or directly). Does **not** configure TLS in the app — it only gates the HTTPS-only security headers: Helmet HSTS and the CSP `upgrade-insecure-requests` directive. |
-| `MAX_REQUESTS` / `MAX_REQUESTS_TIME` | — | Opt-in rate limiting. `MAX_REQUESTS` is the maximum number of requests per window; `MAX_REQUESTS_TIME` is the window length in milliseconds. They must be set **together** — if either is absent, no throttling is applied and no `X-RateLimit-*` headers are emitted. |
+| `MAX_REQUESTS` / `MAX_REQUESTS_TIME` | — | Opt-in rate limiting. `MAX_REQUESTS` is the maximum number of requests per window; `MAX_REQUESTS_TIME` is the window length in milliseconds. They must be set **together** — setting only one is a configuration error and the container **refuses to boot**. See [Rate limiting](#rate-limiting). |
+
+## Rate limiting
+
+By default the server applies no request throttling. To enable it, set **both** `MAX_REQUESTS` (requests per window) and `MAX_REQUESTS_TIME` (window length in milliseconds) in the deployment `.env` — uncomment the pair in `.env.example`. The pair must be set **whole**: one without the other is a validation error and the server does not start.
+
+For a LAN or Tailscale deployment, the recommended starting point is `MAX_REQUESTS=300` / `MAX_REQUESTS_TIME=60000` — about 5 requests per second per client IP.
+
+When the limit is enabled:
+
+- A client that exceeds the limit receives `429` responses carrying `X-RateLimit-*` headers.
+- `/health` is always exempt, so the container health check is unaffected.
+- The counters are **in-memory, per container** — restarting the container resets them.
+- The server does not trust reverse-proxy headers: behind a proxy such as Tailscale Serve, all clients share one bucket. Leave the pair **unset** behind a proxy unless a shared budget is intended.
+
+## A note on `docker exec`
+
+To fix data-directory ownership the image starts as root and then drops privileges, so `docker exec <container> …` now lands as root rather than the `node` user; PID 1 still runs as `node`. Use `docker exec --user node <container> …` to run a command as the `node` user, as the image used to.
 
 ## Full reference
 
