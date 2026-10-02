@@ -51,7 +51,7 @@ The hub reads its configuration from a `.env` file beside the compose file. Copy
 | `MUSHPI_DATA_DIR` | No | The host directory that holds all persistent state. Defaults to `./mushpi-data` beside the compose file. Point it somewhere you back up. |
 | `MUSHPI_IMAGE_TAG` | No | Which image tag to pull. Defaults to `latest`. |
 
-These are the compose interpolation variables plus the one required server variable. The server's remaining settings — `APP_HTTPS_ENABLED`, the opt-in `MAX_REQUESTS`/`MAX_REQUESTS_TIME` rate-limiting pair, `APP_HOST`, logging and reading retention — are covered in [Server environment variables](/deployment/environment).
+These are the compose interpolation variables plus the one required server variable. The server's remaining settings — `APP_HTTPS_ENABLED`, the opt-in `MAX_REQUESTS`/`MAX_REQUESTS_TIME` rate-limiting pair, logging and reading retention — are covered in [Server environment variables](/deployment/environment).
 
 ## Run it
 
@@ -76,10 +76,10 @@ The first `up` pulls the published image and starts one container. There is noth
 Open a browser on any device on the same network and go to:
 
 ```
-http://<hub-ip>:3000
+http://<hub-name>.local:3000
 ```
 
-Replace `<hub-ip>` with the hub's address — find it with `hostname -I` on the hub. The dashboard should load within a few seconds of the container starting.
+using the hub's name as it was baked in during SD-card provisioning. The dashboard should load within a few seconds of the container starting.
 
 If it does not load, check the container state:
 

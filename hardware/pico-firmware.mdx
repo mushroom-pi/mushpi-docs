@@ -63,7 +63,7 @@ The firmware needs two third-party libraries on the device in `lib/`: `microdot.
 |---|---|
 | `wifi.ssid` / `wifi.password` | Your Wi-Fi network name and password |
 | `wifi.networks` | Optional fallback networks, tried in order |
-| `hub_url` | The hub's announce URL, including the `/v1/` path — e.g. `http://<hub-ip>:3000/v1/pico-units/announce` |
+| `hub_url` | The hub's address only (scheme, host, port) — e.g. `http://<hub-name>.local:3000`. The firmware appends the registration path itself; older values that still include the full path keep working. A recent MicroPython is needed on the unit for name resolution to work — see [mDNS caveats](#mdns-caveats). |
 | `hub_secret` | Must match the hub's `PICO_ANNOUNCE_SECRET` |
 | `device_name` | The unit's name — becomes its `handle` on the hub |
 | `api_port` | The REST API port (default `5000`) |
@@ -83,7 +83,7 @@ With the Pico connected via USB and MicroPython flashed, deploy the firmware wit
 Press **Ctrl-D** in a serial console (Thonny or MicroPico), or unplug and reconnect the USB cable. `main.py` runs on boot, and the unit:
 
 1. Connects to your Wi-Fi network (the onboard LED stays off until it does).
-2. Announces itself to the hub at `hub_url` — if the first attempt fails it retries once, 60 seconds later.
+2. Announces itself to the hub address in `hub_url` — if the first attempt fails it retries once, 60 seconds later.
 3. Starts the control loop — reading the sensor and driving the relays every `control.period_s` seconds (default 10) — and serves the REST API on port 5000. The hub then polls it every 60 seconds.
 
 Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard.

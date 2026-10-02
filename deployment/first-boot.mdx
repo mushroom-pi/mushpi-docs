@@ -1,7 +1,7 @@
 ---
 title: "First Boot: What Happens and What to Configure"
 sidebarTitle: "First Boot"
-description: "What the Mushroom Pi hub does the first time the container starts, how to find its address, and the one setting you configure in the dashboard."
+description: "What the Mushroom Pi hub does the first time the container starts, how to reach the dashboard, and the one setting you configure in the dashboard."
 ---
 
 The first time the container starts, the hub prepares itself and then simply waits for you to open the dashboard. There is no setup wizard and no account to create — the dashboard loads the moment it is reachable.
@@ -26,15 +26,9 @@ sudo mkdir -p <MUSHPI_DATA_DIR> && sudo chown -R 1000:1000 <MUSHPI_DATA_DIR>
 
 No other situation requires manual directory preparation.
 
-## Find the hub's address
+## Open the dashboard
 
-The dashboard is served on port 3000. To open it, find the hub's local address:
-
-```bash
-hostname -I
-```
-
-Open `http://<hub-ip>:3000` in any browser on the same network, using the first address that command prints. The dashboard loads directly — there is no login page.
+The dashboard is served on the hub's name, port 3000. Open `http://<hub-name>.local:3000` in any browser on the same network. The dashboard loads directly — there is no login page.
 
 ## Configure the timezone
 

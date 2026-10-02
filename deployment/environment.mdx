@@ -13,7 +13,6 @@ The table below lists the key variables an operator actually touches — it is n
 | Variable | Default | What it does |
 |---|---|---|
 | `PICO_ANNOUNCE_SECRET` | — | The shared secret Pico units send in the `X-Pico-Secret` header when they announce. **Required in production** — the server refuses to boot without it. Use the same value as `hub_secret` in every unit's `config.json`. |
-| `APP_HOST` | `localhost` | Server host. Set it to the hub's LAN hostname so recipe and batch image URLs resolve on other devices. |
 | `APP_PORT` | — | Server port. The published container serves the dashboard and the API together on port 3000. |
 | `SQLITE_PATH` | `data/app.sqlite` | Path to the SQLite database file. Inside the published container this is `/data/app.sqlite`, under the persistent data volume. |
 | `UPLOAD_DIR` | `data` | Directory where uploaded batch and recipe images are stored. |

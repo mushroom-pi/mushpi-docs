@@ -68,7 +68,7 @@ MicroPython firmware on each Raspberry Pi Pico 2W. Runs a hysteresis-based contr
 Single SQLite file in the hub's bind-mounted data directory: the host directory `MUSHPI_DATA_DIR` (default `./mushpi-data`) is mounted at `/data` in the container, and the database lives there as `app.sqlite`. Stores all application data: Pico unit metadata, sensor readings, cultivation batches, recipes, and global settings.
 
 ### Published Image & Compose (`mushpi-ops`)
-The release/packaging repository wraps the containers above into the product a grower actually runs: a single published image, `ghcr.io/mushroom-pi/mushpi`, bundling the backend API and the built dashboard on one port (3000), plus the compose service definition that pulls that image and bind-mounts the host data directory at `/data`. `mushpi-ops` is not a runtime tier — it contains no application code; it packages the runtime. How the image is built and published is covered in [Release pipeline](/architecture/release-pipeline).
+The release/packaging repository wraps the containers above into the product a grower actually runs: a single published image, `ghcr.io/mushroom-pi/mushpi`, bundling the backend API and the built dashboard on one port (3000), plus the compose service definition that pulls that image, runs it on the host's network and binds the hub's own port directly rather than publishing a container port, and bind-mounts the host data directory at `/data`. `mushpi-ops` is not a runtime tier — it contains no application code; it packages the runtime. How the image is built and published is covered in [Release pipeline](/architecture/release-pipeline).
 
 ## Technology Stack
 

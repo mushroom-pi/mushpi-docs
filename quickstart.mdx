@@ -21,7 +21,7 @@ You need:
 2. Get the firmware files from the [mushpi-grow repository](https://github.com/mushroom-pi/mushpi-grow).
 3. Edit `config.json` and set:
    - `wifi.ssid` and `wifi.password` — your network.
-   - `hub_url` — `http://<hub-ip>:3000/v1/pico-units/announce`.
+   - `hub_url` — the hub's address only (scheme, host, port): `http://<hub-name>.local:3000`. The unit appends the registration path itself.
    - `hub_secret` — must match the hub's `PICO_ANNOUNCE_SECRET` (step 2).
    - `device_name` — a unique name for this unit; it becomes the unit's `handle` on the hub.
 4. Upload `main.py`, `config.json`, and the `app/` folder to the Pico, plus the two third-party libraries `lib/microdot.py` and `lib/urequests.py`. The repo's own tooling is the MicroPico VSCode extension, which uploads every `.py`, `.html`, and `config.json`; Thonny's file manager also works. The libraries are not tracked in the repo, so install them with `mip` or download them per the grow README.
@@ -50,7 +50,7 @@ The full deployment walkthrough — SD-card provisioning, first boot, and the en
 
 ## 3. Open the dashboard
 
-Open a browser on any device on the same network and go to `http://<hub-ip>:3000`. Find the hub's address with `hostname -I` on the hub. The dashboard loads with an empty unit list — that is expected.
+Open a browser on any device on the same network and go to `http://<hub-name>.local:3000`. The dashboard loads with an empty unit list — that is expected.
 
 ## 4. Register your Pico unit
 
