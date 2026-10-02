@@ -92,7 +92,7 @@ Once announced, the unit appears on the hub automatically; you can also register
 
 The firmware is designed to self-heal without human intervention:
 
-- **Wi-Fi reconnect backoff.** A watchdog monitors the link every 5 seconds. On a drop it reconnects with increasing delays — 5 s → 10 s → 30 s → 60 s, then staying at 60 s until the link returns — trying each configured network in order. Relay control continues throughout the outage; only the connection is affected. When the link returns, the unit re-announces so the hub learns its (possibly new) IP.
+- **Wi-Fi reconnect backoff.** A watchdog monitors the link every 5 seconds. On a drop it reconnects with increasing delays — 5 s → 10 s → 30 s → 60 s, then staying at 60 s until the link returns — trying each configured network in order. Relay control continues throughout the outage; only the connection is affected. When the link returns, the unit re-announces so the hub learns its (possibly new) IP. The re-announce is not the only way the hub keeps up: the regular 60-second poll also refreshes the stored IP on every successful poll, so a changed IP is learned without waiting for a re-announce.
 - **Watchdog timer.** A hardware watchdog reboots the Pico if the control loop freezes for more than 8 seconds. After the reboot it reconnects and re-announces.
 - **Scheduled soft reboot.** You can configure a daily soft reboot for memory hygiene via the `reboot` key in `config.json` (disabled by default). It turns the relays off, disconnects Wi-Fi, and soft-resets at the configured hour — but unlike a watchdog or power-cycle reboot it preserves cumulative uptime.
 

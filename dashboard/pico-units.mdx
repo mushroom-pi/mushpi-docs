@@ -22,7 +22,7 @@ A **Refresh** icon on each card re-reads that unit, and the list itself can be r
 
 **Connect new Pico** opens a four-step wizard that discovers and provisions a unit: **Diagnose**, **Connect**, **Setup**, **Finish**. You read the unit's LED to pick the right path, join the `mushpi-provision-…` Wi-Fi network the unit broadcasts, open the provisioning page, and the wizard then watches for the new unit to appear in the list.
 
-If the wizard cannot find the unit, you can **Register Manually** instead, which asks only for the unit's **handle**. The handle is how a unit identifies itself when it announces to the hub — the mechanics are covered in [Register a Pico unit](/deployment/pico-registration), and the Wi-Fi provisioning the wizard walks you through is covered in [Provisioning a Pico unit](/hardware/provisioning).
+If the wizard cannot find the unit, you can **Register Manually** instead, which asks only for the unit's **handle**. The handle is how a unit identifies itself when it announces to the hub — the mechanics are covered in [Register a Pico unit](/deployment/pico-registration), and the Wi-Fi provisioning the wizard walks you through is covered in [Provisioning a Pico unit](/hardware/provisioning). A manually registered unit does not wait for the next sweep: the hub polls it once immediately at creation, so its first reading and its network address are captured right away.
 
 ## A unit's own page
 

@@ -16,7 +16,7 @@ The hub matches the announcement by the unit's `handle` — the `device_name` fr
 
 Power on the Pico. It connects to Wi-Fi and announces itself, and it appears in the dashboard within a minute or two.
 
-Open the dashboard at `http://<hub-ip>:3000` and look at the monitoring view, which shows a card for each registered unit. The new unit's card appears with its `handle`, and its temperature and humidity readings start filling in after the hub's first poll — allow up to 60 seconds for the first reading.
+Open the dashboard at `http://<hub-ip>:3000` and look at the monitoring view, which shows a card for each registered unit. The new unit's card appears with its `handle`, and its temperature and humidity readings start filling in after the hub's first poll — allow up to 60 seconds for the first reading. (A unit added manually from the dashboard instead gets its first reading immediately, from a poll the hub runs at creation.)
 
 ## If the unit does not appear
 
