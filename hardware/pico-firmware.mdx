@@ -1,7 +1,7 @@
 ---
 title: "Flash and Configure Your Pico 2W MicroPython Firmware"
 sidebarTitle: "Pico Firmware"
-description: "Flash MicroPython onto a Raspberry Pi Pico 2W, install the two libraries, set config.json, and deploy the mushpi-grow firmware — then what the unit does after boot and how it self-heals."
+description: "Flash MicroPython onto a Raspberry Pi Pico 2W, install the required library, set config.json, and deploy the mushpi-grow firmware — then what the unit does after boot and how it self-heals."
 ---
 
 The grow-unit firmware lives in the [mushpi-grow](https://github.com/mushroom-pi/mushpi-grow) repository. It is MicroPython, serving a lightweight REST API on **port 5000** with [Microdot](https://github.com/miguelgrinberg/microdot) — the same API the hub polls every 60 seconds for readings and relay commands.
@@ -19,8 +19,7 @@ After you deploy, the Pico's flash holds this layout:
 ├── app/                  # firmware modules (state, control, api, wifi, …)
 │   └── provision.html    # the AP provisioning form
 └── lib/                  # third-party libraries (not tracked in git)
-    ├── microdot.py
-    └── urequests.py
+    └── microdot.py
 ```
 
 ## 1. Flash MicroPython
@@ -43,17 +42,18 @@ git clone https://github.com/mushroom-pi/mushpi-grow.git
 cd mushpi-grow
 ```
 
-The firmware needs two third-party libraries on the device in `lib/`: `microdot.py` and `urequests.py`. They are **not tracked in the repo**, so install them one of two ways:
+The firmware needs exactly one third-party library on the device in `lib/`: `microdot.py`. It is **not tracked in the repo**, so install it one of two ways:
 
 - **With `mip`** (MicroPython's package manager), from a REPL:
 
   ```python
   >>> import mip
-  >>> mip.install("urequests")
   >>> mip.install("microdot")
   ```
 
-- **Manually** — download each single file into the device's `lib/` folder, as the [grow README](https://github.com/mushroom-pi/mushpi-grow) describes.
+- **Manually** — download the single file into the device's `lib/` folder, as the [grow README](https://github.com/mushroom-pi/mushpi-grow) describes.
+
+All firmware HTTP — the announce and the responses to the hub's polls — speaks the standard `usocket` stack, so no HTTP-client library is needed. A leftover `lib/urequests.py` from an earlier flash is harmless and can be left in place.
 
 ## 3. Configure `config.json`
 
@@ -63,7 +63,7 @@ The firmware needs two third-party libraries on the device in `lib/`: `microdot.
 |---|---|
 | `wifi.ssid` / `wifi.password` | Your Wi-Fi network name and password |
 | `wifi.networks` | Optional fallback networks, tried in order |
-| `hub_url` | The hub's address only (scheme, host, port) — e.g. `http://<hub-name>.local:3000`. The firmware appends the registration path itself; older values that still include the full path keep working. A recent MicroPython is needed on the unit for name resolution to work — see [mDNS caveats](#mdns-caveats). |
+| `hub_url` | The hub's address only (scheme, host, port) — e.g. `http://<hub-name>.local:3000`. The firmware appends the registration path itself; older values that still include the full path keep working. The unit resolves the hub's name **once, at boot** — if you change the hub's address (or its name stops resolving), the unit picks up the change at its next boot, not while it is running. A recent MicroPython is needed on the unit for name resolution to work — see [mDNS caveats](#mdns-caveats). |
 | `hub_secret` | Must match the hub's `PICO_ANNOUNCE_SECRET` |
 | `device_name` | The unit's name — becomes its `handle` on the hub |
 | `api_port` | The REST API port (default `5000`) |
@@ -76,15 +76,15 @@ Make the GPIO values match your physical wiring (see [Wiring](/hardware/wiring))
 
 ## 4. Deploy the files
 
-With the Pico connected via USB and MicroPython flashed, deploy the firmware with the **MicroPico** VSCode extension: it uploads every `.py` file, `app/provision.html`, and `config.json` to the flash. Thonny's file manager (File → Save as… → MicroPython device) also works. Make sure the two libraries from step 2 landed in `lib/`.
+With the Pico connected via USB and MicroPython flashed, deploy the firmware with the **MicroPico** VSCode extension: it uploads every `.py` file, `app/provision.html`, and `config.json` to the flash. Thonny's file manager (File → Save as… → MicroPython device) also works. Make sure the library from step 2 landed in `lib/`.
 
 ## 5. Reboot and watch it start
 
 Press **Ctrl-D** in a serial console (Thonny or MicroPico), or unplug and reconnect the USB cable. `main.py` runs on boot, and the unit:
 
 1. Connects to your Wi-Fi network (the onboard LED stays off until it does).
-2. Announces itself to the hub address in `hub_url` — if the first attempt fails it retries once, 60 seconds later.
-3. Starts the control loop — reading the sensor and driving the relays every `control.period_s` seconds (default 10) — and serves the REST API on port 5000. The hub then polls it every 60 seconds.
+2. Announces itself to the hub address in `hub_url`. The announce is a background task spawned once at boot that runs alongside the control loop and REST API below: the hub address is resolved once on the boot path, before the watchdog is armed, and each attempt is bounded — about a 3-second connect ceiling, then about 6 seconds of response-waiting in 1-second slices that yield to the control loop. A failure to resolve or get a response is logged — it does not reset the unit, which keeps regulating and serving its REST API while the announce retries forever in the background, backing off 30 s → 30 s → 60 s → 120 s → 300 s (capped at 300 s), until the hub accepts it.
+3. Runs the control loop — reading the sensor and driving the relays every `control.period_s` seconds (default 10) — and serves the REST API on port 5000. The hub then polls it every 60 seconds.
 
 Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard.
 
@@ -92,8 +92,8 @@ Once announced, the unit appears on the hub automatically; you can also register
 
 The firmware is designed to self-heal without human intervention:
 
-- **Wi-Fi reconnect backoff.** A watchdog monitors the link every 5 seconds. On a drop it reconnects with increasing delays — 5 s → 10 s → 30 s → 60 s, then staying at 60 s until the link returns — trying each configured network in order. Relay control continues throughout the outage; only the connection is affected. When the link returns, the unit re-announces so the hub learns its (possibly new) IP. The re-announce is not the only way the hub keeps up: the regular 60-second poll also refreshes the stored IP on every successful poll, so a changed IP is learned without waiting for a re-announce.
-- **Watchdog timer.** A hardware watchdog reboots the Pico if the control loop freezes for more than 8 seconds. After the reboot it reconnects and re-announces.
+- **Wi-Fi reconnect backoff.** A watchdog monitors the link every 5 seconds. On a drop it reconnects with increasing delays — 5 s → 10 s → 30 s → 60 s, then staying at 60 s until the link returns — trying each configured network in order. Relay control continues throughout the outage; only the connection is affected. A Wi-Fi link bounce does not trigger a re-announce: the background announce task carries the unit's new IP on its next retry, and the regular 60-second poll also refreshes the stored IP on every successful poll — so an already-known unit recovers without any announce.
+- **Watchdog timer.** A hardware watchdog reboots the Pico if the control loop freezes for more than 8 seconds. It is armed at boot, before the control-loop, announce and Wi-Fi tasks are created; the hub address is resolved before it is armed — once, on the boot path, and never again at runtime. An unreachable hub, or one whose network name will not resolve, can therefore never cause a reset and never stops regulation: the unit keeps controlling humidity and temperature and keeps serving its REST API, while the announce keeps retrying in the background rather than resolving — a hub whose address changes is picked up only at the next boot, and if the boot-time lookup fails the unit logs that no hub address is available and keeps retrying. Each announce attempt is bounded and yields to the control loop between slices, so even a hub that accepts the connection and then stays silent does not consume the window. The 8-second window applies only to genuine hangs once the unit is running. After a watchdog reboot the unit reconnects and announces again from the boot path.
 - **Scheduled soft reboot.** You can configure a daily soft reboot for memory hygiene via the `reboot` key in `config.json` (disabled by default). It turns the relays off, disconnects Wi-Fi, and soft-resets at the configured hour — but unlike a watchdog or power-cycle reboot it preserves cumulative uptime.
 
 ## mDNS caveats

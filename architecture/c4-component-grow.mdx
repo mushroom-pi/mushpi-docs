@@ -20,9 +20,9 @@ flowchart TB
 
         HW["⚡ IO Layer<br/><b>app/hw.py</b><br/>GPIO init, relay control,<br/>LED heartbeat & provisioning blink"]
 
-        WIFI["📶 Wi-Fi Lifecycle<br/><b>app/wifi.py</b><br/>connect_wifi() (boot),<br/>reconnect_once_async() (runtime),<br/>wifi_watchdog_loop() (link monitor<br/>with backoff → re-announce on link-up)"]
+        WIFI["📶 Wi-Fi Lifecycle<br/><b>app/wifi.py</b><br/>connect_wifi() (boot),<br/>reconnect_once_async() (runtime),<br/>wifi_watchdog_loop() (link monitor<br/>with reconnect backoff)"]
 
-        ANNOUNCE["📢 Announce<br/><b>app/announce.py</b><br/>POSTs device presence to server<br/>(incl. MAC + version metadata),<br/>re-entrant: boot + link-up re-announce<br/>(STA mode only)"]
+        ANNOUNCE["📢 Announce<br/><b>app/announce.py</b><br/>POSTs device presence to server<br/>(incl. MAC + version metadata),<br/>spawned once at boot, retries forever<br/>with backoff until accepted (STA mode only)"]
 
         SHUTDOWN["🛑 Shutdown<br/><b>app/shutdown.py</b><br/>graceful_shutdown(),<br/>reboot(), soft_reboot(),<br/>stop_event"]
 
@@ -74,8 +74,6 @@ flowchart TB
     MAIN -->|"Provisioning blink<br/>(AP mode)"| HW
     MAIN -->|"finally calls<br/>graceful_shutdown()"| SHUTDOWN
 
-    WIFI -.->|"Re-announce on<br/>link-up"| ANNOUNCE
-
     SCHEDULER -->|"Persists cumulative<br/>uptime before reset"| UPTIME
     VALIDATOR -->|"Reads merged<br/>config for validation"| CONFIG
     ANNOUNCE -.->|"Gradual<br/>soft_reset<br/>(preserves uptime)"| SCHEDULER
@@ -119,8 +117,8 @@ flowchart TB
 | **Control Loop** | `app/control.py` | Async coroutine (STA only). Every `period_s` seconds: humidifier ON when `humidity ≤ target`, OFF when exceeded. Fan ON when `humidity > target + hyst_hum`, OFF when `≤ target + hyst_hum`. Deadband between `target` and `target + hyst_hum` prevents actuator fighting. Heater ON when `temperature ≤ target`, OFF when exceeded (thermal lag provides natural damping). Humidifier and fan mutually exclusive. Not started in AP mode. Owns control enablement as an `asyncio.Event` (`set_control_enabled()` / `is_control_enabled()`) — not shared state. Tracks minimum relay runtime via `mark_relay_on()` / `mark_relay_off()` / `reset_on_since()`; the `POST /outputs` manual override is the one sanctioned path that also calls these helpers so min-runtime tracking stays consistent. |
 | **DHT Reader** | `app/sensor.py` | Reads DHT11. Validates plausibility (-10°C ≤ t ≤ 60°C, 0% ≤ h ≤ 100%). Updates shared `status` dict. Supports `?force=1` for on-demand measurement. |
 | **IO Layer** | `app/hw.py` | Initializes all GPIO pins. Toggles relays (respects `active_high` config). Manages the onboard LED — its five states (OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, CONFIG ERROR) are documented in [Pico Unit Status Indicators](/hardware/status-indicators). Reads GP0 at boot for force-provision. |
-| **Wi-Fi Lifecycle** | `app/wifi.py` | Owns every Wi-Fi state transition: `connect_wifi()` (blocking boot connect), `reconnect_once_async()` (async runtime reconnect), and `wifi_watchdog_loop()` (link monitor with backoff that triggers a re-announce on link-up). |
-| **Announce** | `app/announce.py` | POSTs device info to the server's `POST /v1/pico-units/announce` — on boot and again at runtime when Wi-Fi reconnects. The payload includes the `mac` field (lowercase colon-separated hex, e.g. `"28:cd:c1:01:23:45"`), sourced from cached `system['wifi']['mac']` populated during `attach_wlan_info()`, plus `firmware_version` (from `_SOFTWARE_VERSION`) and `api_version` (from `_API_VERSION`). The function is idempotent/re-invocable; on failure it retries once after a 60 s delay. Skipped in AP mode. |
+| **Wi-Fi Lifecycle** | `app/wifi.py` | Owns every Wi-Fi state transition: `connect_wifi()` (blocking boot connect), `reconnect_once_async()` (async runtime reconnect), and `wifi_watchdog_loop()` (link monitor with reconnect backoff; its reconnection does not re-announce). |
+| **Announce** | `app/announce.py` | POSTs device info to the server's `POST /v1/pico-units/announce`. Spawned once at boot; on failure it retries forever in the background with backoff — 30 s, 30 s, 60 s, 120 s, then capped at 300 s — until accepted. Each attempt is bounded (~3 s connect ceiling, 1 s IO slices, ~6 s response-wait) and yields between slices. The payload includes the `mac` field (lowercase colon-separated hex, e.g. `"28:cd:c1:01:23:45"`), sourced from cached `system['wifi']['mac']` populated during `attach_wlan_info()`, plus `firmware_version` (from `_SOFTWARE_VERSION`) and `api_version` (from `_API_VERSION`). The retry path never re-resolves the hub name. Skipped in AP mode. |
 | **Shutdown** | `app/shutdown.py` | `graceful_shutdown()` (turns all outputs off, disconnects Wi-Fi), `reboot()`, `soft_reboot()`, and the shared `stop_event` that long-running loops check to exit cleanly. |
 | **Metrics** | `app/metrics.py` | Provides system snapshot: free RAM, filesystem free blocks, WiFi RSSI, MCU temperature, uptime, event loop utilization percentage. |
 | **Config Loader** | `app/config_loader.py` | `load_config()`: loads `config.json` with shallow merge over hardcoded defaults. `save_config()`: atomic write via `config.json.tmp` + `os.rename` — used by `POST /provision`. |
@@ -138,15 +136,26 @@ IO() → DHTReader() → load_config() → validate_config()
 → check GP0 (force-provision pin)
 → connect_wifi() (STA mode path)
     ├── SUCCESS → attach_wlan_info()  ← populates system_info (MAC, IP, hostname)
-    │   → spawn announce (STA)        ← includes "mac" in payload
+    │   → presolve_boot_hub()         ← resolves the hub address on the boot path,
+    │                                   the only name lookup the firmware ever
+    │                                   runs, before the watchdog exists
+    │   → spawn loop-utilisation meter ← minor task, incidental position
+    │   → arm the 8 s watchdog        ← armed before the control-loop, announce and
+    │                                   Wi-Fi tasks are created
+    │   → spawn reboot_scheduler_loop() (STA)
+    │   → spawn announce (STA)        ← spawned once, retries forever with backoff
+    │                                   until accepted; bounded & sliced (~6 s
+    │                                   response budget, 1 s IO slices, 3 s connect
+    │                                   ceiling), yielding between slices
     │   → spawn control_loop() (STA)
     │   → spawn wifi_watchdog_loop() (STA)
-    │   → spawn reboot_scheduler_loop() (STA)
     │   → await start_server("sta")
     └── FAILURE (ip is None)
         → io.start_provisioning_blink()
         → await start_server("ap")  (HTML form + POST /provision)
 ~~~
+
+The announce is a background coroutine, never a boot gate: it is spawned once at boot and runs alongside the control loop and the REST API, not before them. The hub address is resolved exactly once, on the boot path (`presolve_boot_hub()`), before the watchdog is armed — and never again at runtime: the retry path deliberately never looks a name up. Two accepted trades follow: a hub whose address changes is only picked up at the next boot, and if the boot-time lookup fails the unit logs that no hub address is available and keeps retrying rather than resolving. The announce task retries forever, backing off — 30 s, 30 s, 60 s, 120 s, then capped at 300 s — until the hub accepts. Each attempt is bounded and sliced — a 3 s connect ceiling, about 6 s of response-waiting in 1 s IO slices, yielding between slices — and is traced to the console (attempt number, elapsed ms and status); a failed lookup prints a no-hub-address line. The hardware watchdog is armed at boot, before the control-loop, announce and Wi-Fi tasks are created (the loop-utilisation meter is scheduled just before that line — incidental). An unreachable hub, an unresolvable hub name, or a hub that accepts and then stays silent can therefore never reset the unit, and none of them stops regulation or the REST API: the 8 s window applies only to genuine hangs once the unit is running. A Wi-Fi link bounce triggers no re-announce: the forever-retry task carries the unit's new IP on its next attempt, and the hub's own 60-second poll refreshes an already-known unit's stored IP independently.
 
 ## REST API
 

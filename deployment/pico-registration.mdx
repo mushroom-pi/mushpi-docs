@@ -26,7 +26,7 @@ That is the whole value — scheme, host and port, nothing else. The firmware ap
 
 ## How a unit appears
 
-When a flashed Pico unit boots, it connects to your Wi-Fi network and announces itself to the hub at the address you configured, sending its shared secret in the `X-Pico-Secret` header.
+When a flashed Pico unit boots, it connects to your Wi-Fi network and announces itself to the hub at the address you configured, sending its shared secret in the `X-Pico-Secret` header. The announce retries in the background forever, backing off (30 s, 30 s, 60 s, 120 s, then every 300 s) until the hub accepts it — so a unit that boots while the hub is still down announces on its own once the hub is started, with no reboot and no intervention.
 
 The hub matches the announcement by the unit's `handle` — the `device_name` from the unit's `config.json` — and upserts the unit into its database. From then on the hub polls the unit every 60 seconds for temperature and humidity readings. You do not wire anything in this step — that is covered on the [Wiring](/hardware/wiring) page.
 
@@ -42,7 +42,7 @@ Work through these checks in order:
 
 **The shared secret.** The `hub_secret` in the unit's `config.json` must exactly match the hub's `PICO_ANNOUNCE_SECRET`. A mismatch means the hub rejects the announcement and the unit never appears.
 
-**The hub address.** The `hub_url` in `config.json` must be the hub's `.local` name — `http://<hub-name>.local:3000`, the same name the dashboard opens at. If the hub's name has changed, the unit is announcing to the wrong place. Do not use an IP address: an IP can change with the DHCP lease, while the `.local` name is the stable identity.
+**The hub address.** The `hub_url` in `config.json` must be the hub's `.local` name — `http://<hub-name>.local:3000`, the same name the dashboard opens at. If the hub's name has changed, the unit is announcing to the wrong place. The unit resolves the hub's name **once, at boot** — after fixing `hub_url`, or the hub's name, reboot the unit: the change is picked up at its next boot, not while it is running. Do not use an IP address: an IP can change with the DHCP lease, while the `.local` name is the stable identity.
 
 **The unit's name.** The `device_name` in `config.json` must equal the `handle` the server uses for that unit.
 
