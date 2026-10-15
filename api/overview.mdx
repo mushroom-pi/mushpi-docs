@@ -34,6 +34,16 @@ Neither API requires authentication by default — what protection exists depend
 
 The server enables CORS with credentials for the origins it knows: the dashboard (`CLIENT_URL`) and, when enabled, its own docs UI. Browser applications on other origins will be blocked; server-side scripts and `curl` are unaffected. The Pico API is meant for local-network callers and applies no CORS rules.
 
+## Errors
+
+The notable error responses on the server API:
+
+| Status | When it is returned |
+|---|---|
+| `426 Upgrade Required` | The deployment sets `APP_SECRET` and the request is missing the `Authorization: Bearer <APP_SECRET>` header — or carries the wrong value. See [Authentication](#authentication). |
+| `429 Too Many Requests` | Rate limiting is enabled (`MAX_REQUESTS` / `MAX_REQUESTS_TIME`) and the client exceeded its request budget for the window. See [Server environment variables](/deployment/environment). |
+| `403 Forbidden` | **Only on demo deployments** (`NODE_ENV=demo`). A demo deployment is read-only: every data-changing operation — unit registration and changes, polling, rebooting, control proxies, batches, recipes, recipe and batch images, and settings changes — is refused with `403 Forbidden` and the message *"This demo deployment is read-only. Nothing was changed."* Nothing changes. Plain `GET` requests and `POST /v1/pico-units/announce` are unaffected. A self-hosted hub that has not enabled the demo environment is never affected and never returns `403`. |
+
 ## Interactive docs
 
 When the server's docs endpoint is enabled (`DOCS_ENDPOINT`), it serves the machine-readable OpenAPI document at `/<DOCS_ENDPOINT>-json` together with an interactive UI. The docs variables — like every environment variable mentioned here — are listed in [environment variables](/deployment/environment).
