@@ -39,11 +39,11 @@ Below the header, the page lays out the unit's details in cards.
 
 ### Controls
 
-The **Controls** card shows, and its dialog edits, the **target temperature**, the **target humidity**, and the **control-loop on/off toggle**. These targets are the numbers the control loop works toward — what the loop does with a target is explained in [How the control loop works](/configuration/hysteresis-control). With the loop on, the unit switches devices automatically to meet the targets; with it off, the devices have to be switched by hand.
+The **Controls** card shows, and its dialog edits, the **target temperature**, the **target humidity**, and the **control-loop on/off toggle**. These targets are the numbers the control loop works toward — what the loop does with a target is explained in [How the control loop works](/configuration/hysteresis-control). With the loop on, the unit switches devices automatically to meet the targets; with it off, the devices have to be switched by hand. The targets and the loop switch are saved on the unit the moment they are applied, so they survive a power cut — see [What survives a restart](/hardware/pico-firmware#what-survives-a-restart).
 
 ### Devices
 
-The **Devices** card shows whether the **humidifier**, **fan** and **heater** are currently on or off. Its dialog lets you switch them by hand, but only while the control loop is **off** — while the loop is on, the unit controls them and the switches are locked. A manual override is temporary: the moment you turn the loop back on, it takes over again on its own schedule and your hand-set positions no longer apply.
+The **Devices** card shows whether the **humidifier**, **fan** and **heater** are currently on or off. Its dialog lets you switch them by hand, but only while the control loop is **off** — while the loop is on, the unit controls them and the switches are locked. While the loop stays off, your hand-set **fan and humidifier** positions are saved on the unit and survive a restart; the **heater** always comes back off after a restart (why, and what else survives, is on the [Pico firmware](/hardware/pico-firmware) page). The moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets.
 
 ### PIN mapping
 

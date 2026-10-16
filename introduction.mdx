@@ -27,7 +27,7 @@ Mushroom Pi is built as three cooperating layers. You do not need to understand 
 
 ## How it works
 
-When you power on a Pico unit, it connects to your Wi-Fi network, starts reading the DHT11 sensor, and begins running the relay control loop based on the targets stored in its configuration. Every 60 seconds, the backend reaches out to the Pico, collects the latest reading, and saves it to the database.
+When you power on a Pico unit, it connects to your Wi-Fi network, starts reading the DHT11 sensor, and begins running the relay control loop toward the temperature and humidity targets you last set — the unit saves those targets itself, so they survive a power cut and are restored on the next boot. Every 60 seconds, the backend reaches out to the Pico, collects the latest reading, and saves it to the database.
 
 You open the dashboard in your browser and see the current temperature and humidity for each registered unit, alongside charts of recent history. When you want to change a target — say, raise the humidity threshold for pinning — you update it in the dashboard. The backend sends the new setting to the Pico, which applies it immediately and continues controlling the relays against the new target.
 

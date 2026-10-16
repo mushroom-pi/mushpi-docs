@@ -68,7 +68,26 @@ This produces the characteristic sawtooth oscillation that makes dashboards and 
 
 The mock serves the same `GET /ui` page a real unit serves — its own status-and-control page — but labelled as simulated: a **Simulated unit** banner marks the page, and the **Climate & outputs** and **Board-condition** cards carry simulated markers.
 
-The readings shown on that page are simulated and read-only — they have no controls on the page. The **write controls** work on the mock as they do on a unit, and are held in memory: the setpoints, the control-loop toggle, the device switches and the PIN mapping. One labelled difference: a PIN mapping saved on the mock is **lost when the mock stops**, whereas a real unit writes it to flash.
+The readings shown on that page are simulated and read-only — they have no controls on the page. The **write controls** work on the mock as they do on a unit, and your grower choices persist across a stop/start the way a real unit's do (see [Runtime state](#runtime-state)). The banner names the two differences from a real unit: the saved settings live in a **file, not flash** (delete the file and the unit resets to defaults), and the **PIN mapping is memory-only** — a real unit writes it to `config.json` and keeps it across reboots, whereas on the mock it is lost when the mock stops. The heater rule is the same as the device's: it always comes back **off**.
+
+## Runtime state
+
+The mock persists your grower choices across stopping and starting the mock service, mirroring the real unit's saved settings on flash:
+
+| What you set | Survives a stop/start? |
+|---|---|
+| Setpoints (targets) | **Yes** — restored on start |
+| Control-loop on/off flag | **Yes** — the loop restarts as it was left |
+| Hand-set fan + humidifier positions | **Yes, when the loop is off** — restored as you left them |
+| **Heater** | **Never** — always comes back **off** (same safety rule as the device) |
+| Pin mapping (`POST /setup`) | No — memory-only on the mock; a real unit writes it to `config.json` and keeps it across reboots |
+| Hysteresis config (`period_s`, `hyst_*`, …) | No — the device loads these from `config.json` at boot; they are not runtime state |
+
+State lives in one JSON file per unit handle under a state directory, written atomically, and a missing or corrupt file is never fatal — the unit starts with its defaults. Configure the directory with the `state_path` config key or the `--state-path` CLI flag (the flag overrides the config file); when unset it defaults to `~/.mushpi-mock/`.
+
+What the mock does **not** mirror is the *medium*: a real unit stores its saved settings on flash, the mock stores them in a file on your machine — so deleting the mock's state file resets a unit to its defaults (the equivalent of a flash wipe on a real unit). Pin mapping and hysteresis config are also in-process only on the mock, as the table above notes.
+
+One timing caveat mirrors the device exactly: disabling the loop turns every relay off immediately, but the mock also arms a one-shot "all outputs off" that fires on the loop's next pass. A fan or humidifier you hand-set in the moment between disabling and that pass is wiped once; hand-sets made afterwards hold while the loop stays off. The wipe never touches the saved state — your last hand-set pair still survives a stop/start.
 
 ## CLI Flags and Multiple Units
 
@@ -82,6 +101,7 @@ Every option of the `start` command is available as a CLI flag; a flag overrides
 | `--seed-days` | Days of backdated readings to seed on startup (requires `--db-path`) |
 | `--db-path` / `-d` | Path to the server's SQLite database — required for `--seed-days` |
 | `--announce-ip` | IPv4 announced as the unit's `ip` (default: `127.0.0.1`) |
+| `--state-path` | Directory for the per-handle state files (default: `~/.mushpi-mock`; the `state_path` config key sets the same) |
 | `--config` / `-c` | Path to a config JSON file overriding the defaults |
 
 To simulate a multi-unit grow operation, start several units in one command:
@@ -122,6 +142,7 @@ mushpi-mock/
     ├── main.py           # FastAPI app factory + click CLI
     ├── config.py         # Pydantic config models
     ├── state.py          # In-memory unit state
+    ├── runtime_state.py  # Per-handle state file — setpoints, loop flag, hand-set fan/humidifier (survives a stop/start)
     ├── router.py         # All Pico API endpoints + mock-only GET /version
     ├── simulation.py     # Hysteresis control-loop sensor data generator
     ├── seed.py           # Direct SQLite bulk seeding for --seed-days

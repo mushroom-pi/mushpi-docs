@@ -16,6 +16,7 @@ After you deploy, the Pico's flash holds this layout:
 /                         # flash root
 ├── main.py               # entry point — the boot sequence
 ├── config.json           # Wi-Fi, hub URL, device name, pins, control (gitignored)
+├── runtime.json          # your saved settings — targets, loop switch, hand-set fan/humidifier (written by the unit as you change them)
 ├── app/                  # firmware modules (state, control, api, wifi, …)
 │   └── provision.html    # the AP provisioning form
 └── lib/                  # third-party libraries (not tracked in git)
@@ -72,6 +73,8 @@ All firmware HTTP — the announce and the responses to the hub's polls — spea
 | `pins` | GPIO map — defaults `dht` 4, `humidifier` 6, `fan` 7, `heater` 8 |
 | `active_high` | Relay polarity — `false` (default) for active-low modules |
 
+Notice what is **not** in `config.json`: your **temperature and humidity targets** and the **control-loop on/off** state. Those are your choices, not provisioning, so the unit saves them separately and restores them at boot — see [What survives a restart](#what-survives-a-restart). Re-flashing `config.json` never touches them.
+
 Make the GPIO values match your physical wiring (see [Wiring](/hardware/wiring)). If you would rather not edit `config.json` at all, the unit can be provisioned through its access-point setup flow instead — see [Provisioning](/hardware/provisioning).
 
 ## 4. Deploy the files
@@ -95,6 +98,27 @@ The firmware is designed to self-heal without human intervention:
 - **Wi-Fi reconnect backoff.** A watchdog monitors the link every 5 seconds. On a drop it reconnects with increasing delays — 5 s → 10 s → 30 s → 60 s, then staying at 60 s until the link returns — trying each configured network in order. Relay control continues throughout the outage; only the connection is affected. A Wi-Fi link bounce does not trigger a re-announce: the background announce task carries the unit's new IP on its next retry, and the regular 60-second poll also refreshes the stored IP on every successful poll — so an already-known unit recovers without any announce.
 - **Watchdog timer.** A hardware watchdog reboots the Pico if the control loop freezes for more than 8 seconds. It is armed at boot, before the control-loop, announce and Wi-Fi tasks are created; the hub address is resolved before it is armed — once, on the boot path, and never again at runtime. An unreachable hub, or one whose network name will not resolve, can therefore never cause a reset and never stops regulation: the unit keeps controlling humidity and temperature and keeps serving its REST API, while the announce keeps retrying in the background rather than resolving — a hub whose address changes is picked up only at the next boot, and if the boot-time lookup fails the unit logs that no hub address is available and keeps retrying. Each announce attempt is bounded and yields to the control loop between slices, so even a hub that accepts the connection and then stays silent does not consume the window. The 8-second window applies only to genuine hangs once the unit is running. After a watchdog reboot the unit reconnects and announces again from the boot path.
 - **Scheduled soft reboot.** You can configure a daily soft reboot for memory hygiene via the `reboot` key in `config.json` (disabled by default). It turns the relays off, disconnects Wi-Fi, and soft-resets at the configured hour — but unlike a watchdog or power-cycle reboot it preserves cumulative uptime.
+
+## What survives a restart
+
+The unit saves the choices you make, not just the wiring you flash. Three things live in the unit's own saved settings — a file separate from `config.json` — and are restored every time it boots, after **any** restart: a power cut, a soft or hard reboot, the scheduled nightly reboot, and even a watchdog-triggered restart.
+
+| What you set | Comes back after a restart? |
+|---|---|
+| Target temperature and humidity | **Yes** — the values you last applied |
+| Control loop on/off | **Yes** — the loop restarts as you left it |
+| Hand-set fan and humidifier (loop off) | **Yes, while the loop is off** — exactly as you left them |
+| Hand-set **heater** (loop off) | **Never** — it always returns **off** |
+
+**Why the heater always comes back off** is a safety rule, not an oversight. Nothing on the unit can cool — the heater only adds heat, and the fan removes moisture — so temperature has no active cooling. While the loop is on, temperature is regulated and the heater is switched deliberately. But while the loop is **off**, nothing regulates temperature at all, so a heater that came back on would be an unattended heat source with nothing watching it. The unit therefore never restores the heater to on. You can still switch it on by hand while the unit is running; it simply never comes back on by itself after a restart.
+
+Worth knowing:
+
+- **A saved change is durable the moment it is applied.** The unit writes your change before it reports success, so once the dashboard or unit page shows it applied, it is stored. A power cut *during* the write leaves the previous value intact — the write is atomic, so the saved settings are never left half-written or corrupt.
+- **Only your actions are saved.** The loop switching relays on its own schedule never writes to the saved settings, so what comes back after a restart is your last choice, not whatever the loop happened to be doing.
+- **A batch still takes over.** After a power cut, the restored targets govern until the unit reconnects to a hub that is running a batch — at which point the batch's targets take over exactly as before.
+
+**What to check after a restart.** Glance at the unit page or the dashboard and confirm three things: the targets are the ones you want, the loop is in the state you intend, and — if the loop is off — the fan and humidifier are where you left them. The heater being off is correct, not a fault.
 
 ## mDNS caveats
 

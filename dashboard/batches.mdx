@@ -32,6 +32,8 @@ The **Unit** dropdown lists your monitored units. A unit runs one batch at a tim
 
 When you select a **Recipe**, the dialog copies the recipe's species and temperature and humidity targets into the form, and sets the **Finish** date to the **Start** date plus the recipe's **Duration (days)**. You can then override any of them for this batch — changing them here does not change the recipe, and the batch keeps its own copy of the targets.
 
+**A batch's targets override the unit's own.** While a batch is in progress, its temperature and humidity targets govern the unit — they take over from whatever targets the unit has saved, and they keep doing so after a power cut: the unit boots with its restored targets, then the batch's targets take over once it reconnects to the hub. What survives a restart is on the [Pico firmware](/hardware/pico-firmware#what-survives-a-restart) page.
+
 ### The finish date
 
 The **Finish** date is computed from the recipe's duration when you pick a recipe and a start date. You can edit it by hand afterwards. A batch's status is worked out from its dates, not stored by you.

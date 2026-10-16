@@ -53,7 +53,9 @@ The **Controls** card holds the loop switch and the two targets:
 - **Target temperature** — whole degrees, **0–50 °C**. Editable only while the loop is on.
 - **Target humidity** — whole percent, **10–90 %**. Editable only while the loop is on.
 
-What the loop *does* with a target is explained in [How the control loop works](/configuration/hysteresis-control). Hand-switching the devices is available only while the loop is **off**; the moment you turn the loop back on, it takes over again on its own schedule and your hand-set positions no longer apply.
+What the loop *does* with a target is explained in [How the control loop works](/configuration/hysteresis-control).
+
+The targets and the loop switch are **saved on the unit** — once applied they survive a power cut, and the unit comes back with the loop in the state you left it and the targets you set. Hand-switching the devices is available only while the loop is **off**; the moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets. While the loop stays **off**, your hand-set **fan and humidifier** positions are saved too and survive a restart — the **heater** is the one exception: it always comes back **off** after a restart, for the safety reason explained on the [Pico firmware](/hardware/pico-firmware) page.
 
 ![The Controls card, with the Devices card below it](/assets/screenshots/unit-page-sta-03.png)
 

@@ -3,7 +3,7 @@ title: "Pico Firmware Components (C4 Level 3)"
 description: "Component-level breakdown of the Pico firmware: sensor reading, hysteresis control loop, Wi-Fi lifecycle, announcement, and the MicroPython REST API."
 ---
 
-This page maps the inside of `mushpi-grow` — the MicroPython firmware running on the Raspberry Pi Pico 2W. It shows the entry point, the Wi-Fi lifecycle, the REST API, the hysteresis control loop, the shared state, and the hardware it drives.
+This page maps the inside of `mushpi-grow` — the MicroPython firmware running on the Raspberry Pi Pico 2W. It shows the entry point, the Wi-Fi lifecycle, the REST API, the hysteresis control loop, the shared state and its durable runtime-state store, and the hardware it drives.
 
 ```mermaid
 flowchart TB
@@ -34,6 +34,8 @@ flowchart TB
 
         UPTIME["⏱️ Uptime Tracker<br/><b>app/uptime.py</b><br/>Cumulative uptime across<br/>scheduled reboots, boot-reason<br/>classification (reset_cause)"]
 
+        RUNTIME_STATE[("💾 Runtime State<br/><b>app/runtime_state.py</b><br/>Durable grower choices — setpoints,<br/>loop flag, hand-set fan/humidifier;<br/>restored once at boot<br/>(heater never stored)")]
+
         SCHEDULER>"🕐 Reboot Scheduler<br/><b>app/reboot_scheduler.py</b><br/>NTP sync + daily scheduled<br/>soft_reset() at configured<br/>hour (STA mode only)"]
 
         PROV_HTML{"📋 Provisioning HTML<br/><b>app/provision.html</b><br/>Dark-themed form matching<br/>MushPi visual identity"}
@@ -55,12 +57,14 @@ flowchart TB
     SERVER -->|"GET / (polling), PUT<br/>/setpoints, /outputs,<br/>/control, /setup,<br/>/reboot (soft/hard)"| API
     BROWSER -.->|"Wi-Fi Direct (AP mode)<br/>GET / → HTML form<br/>POST /provision"| API
     API -.->|"Writes credentials via<br/>save_config()"| CONFIG
+    API -.->|"Persists grower choices<br/>(POST /setpoints, /outputs,<br/>/control) to runtime.json"| RUNTIME_STATE
     PROV_HTML -.->|"Rendered by<br/>GET / (AP mode)"| API
 
     CONTROL -->|"Reads setpoints,<br/>writes status & devices"| STATE
     SENSOR -->|"Writes temperature<br/>& humidity to status"| STATE
     HW -->|"Reads devices dict<br/>to set GPIOs"| STATE
     ANNOUNCE -->|"Reads system_info<br/>(handle, MAC, IP, port)"| STATE
+    RUNTIME_STATE -->|"Applies restored setpoints<br/>in place at boot"| STATE
 
     MAIN -->|"Starts Microdot<br/>server (STA or AP)"| API
     MAIN -->|"Spawns control<br/>loop coroutine"| CONTROL
@@ -71,6 +75,7 @@ flowchart TB
     MAIN -->|"Validates config<br/>(boot gate)"| VALIDATOR
     MAIN -->|"Spawns daily<br/>reboot scheduler"| SCHEDULER
     MAIN -->|"Classifies reboot<br/>reason on boot"| UPTIME
+    MAIN -->|"Restores saved grower<br/>state at boot"| RUNTIME_STATE
     MAIN -->|"Provisioning blink<br/>(AP mode)"| HW
     MAIN -->|"finally calls<br/>graceful_shutdown()"| SHUTDOWN
 
@@ -98,7 +103,7 @@ flowchart TB
     class SENSOR,HW,ANNOUNCE,METRICS,UPTIME,VALIDATOR,WIFI,SHUTDOWN core
     class CONFIG,PROV_HTML config
     class SCHEDULER loop
-    class STATE state
+    class STATE,RUNTIME_STATE state
     class SERVER server
     class DHT11,RELAY,GP0 hw
     class BROWSER user
@@ -124,6 +129,7 @@ flowchart TB
 | **Config Loader** | `app/config_loader.py` | `load_config()`: loads `config.json` with shallow merge over hardcoded defaults. `save_config()`: atomic write via `config.json.tmp` + `os.rename` — used by `POST /provision`. |
 | **Config Validator** | `app/config_validator.py` | Boot-time validation of all config fields: types, ranges, required keys, plus duplicate-GPIO detection in the effective `pins` map (any two roles sharing a GPIO — including a collision a partial `pins` object creates against a default — is fatal). Accumulates all errors and prints human-readable messages. On failure, triggers terminal `error_blink_blocking()` LED pattern. |
 | **Uptime Tracker** | `app/uptime.py` | Cumulative uptime across scheduled reboots. Classifies reboot reason via `machine.reset_cause()` (`PWRON_RESET` → power_on, `WDT_RESET` → watchdog, `SOFT_RESET` → scheduled). Persists cumulative uptime + date guard to `uptime.json`. |
+| **Runtime State** | `app/runtime_state.py` | Owns the device-local store of grower-chosen runtime state, persisted to `runtime.json`: the temperature/humidity **targets**, the **control-loop on/off flag**, and the hand-set **fan** and **humidifier** positions. Written by the three `POST` handlers (`/setpoints`, `/outputs`, `/control`) when the grower acts; restored once at boot via `restore()` so those choices survive a restart. The **heater is deliberately not stored** and always returns off. |
 | **Reboot Scheduler** | `app/reboot_scheduler.py` | Async coroutine (STA only). Syncs NTP after WiFi connect, then polls every 60s. Triggers `machine.soft_reset()` at configured hour/minute (disabled by default). Guards against double-reboot via date sentinel. |
 | **Provisioning HTML** | `app/provision.html` | Dark-themed HTML form served at `GET /` in AP mode. Matches the MushPi React frontend's visual identity. Accepts SSID and password, submits to `POST /provision`. |
 | **Shared State** | `app/state.py` | Exports mutable dictionaries (`status`, `setpoints`, `devices`) and cached `_system_info` (incl. `wifi.mac`, `wifi.ip`, board metadata). Mutate in place — never reassign. `attach_wlan_info()` populates Wi-Fi MAC, IP, and hostname from the active WLAN interface. Control enablement is *not* state — it is an `asyncio.Event` owned by `app/control.py`. |
@@ -139,6 +145,9 @@ IO() → DHTReader() → load_config() → validate_config()
     │   → presolve_boot_hub()         ← resolves the hub address on the boot path,
     │                                   the only name lookup the firmware ever
     │                                   runs, before the watchdog exists
+    │   → restore saved state        ← runtime_state.restore(): reapplies the grower's
+    │                                   targets, loop flag, and (loop off) hand-set
+    │                                   fan/humidifier before the watchdog arms
     │   → spawn loop-utilisation meter ← minor task, incidental position
     │   → arm the 8 s watchdog        ← armed before the control-loop, announce and
     │                                   Wi-Fi tasks are created
