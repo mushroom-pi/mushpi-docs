@@ -178,15 +178,25 @@ The pin map can also be changed at runtime via the unit's `POST /setup` endpoint
 
 ### GPIO validation
 
-Pin assignments are checked by **mushpi-server** when you send them to `PUT /v1/pico-units/:id/control/setup`, and then checked again by the unit's firmware when the server forwards them.
+Pin assignments are validated in two **separate** places, by two **different** rule sets. They are not the same check, and confusing them hides real behaviour.
 
-- **Valid range, server-side:** integers only, and only pins in the set `0–22, 26, 27, 28`. GP23, GP24, GP25 and GP29 are reserved by the CYW43439 (Wi-Fi/Bluetooth) and are rejected with **422**.
-- **GP0 cannot be assigned.** The firmware reads GP0 at boot to decide whether to enter provisioning mode, and it rejects pin 0 with **400** — which the server reports to you as **417 Expectation Failed**. Nothing is applied. This is deliberate, and it is why the force-provision switch is wired to GP0.
-- **No duplicates — a merged-view rule.** Duplicate detection overlays the pins in your request on the unit's current mapping and checks the combined result, so a conflict with a pin the unit already uses is caught — not just two pins inside one request. **The server checks first:** it reads the unit's live mapping and rejects a conflict with **422**, naming the pin and its current holder — `GPIO 6 is already assigned to the humidifier` — before forwarding anything to the device. **The firmware checks too**, rejecting directly with **400** — so does the mock, which mirrors the firmware's behaviour for development. The rule set is deliberately identical in all three layers; the duplication is on purpose, not an accident.
-- **What the merged view allows** — the cases a grower actually hits: re-assigning a device to the pin it already holds is fine (an idempotent re-send), and a pin freed by another device *within the same request* is fine (a swap). Only a conflict the request creates or keeps alive is rejected.
-- **At boot, the rule is separate, stricter and terminal.** Independent of the request-scoped checks above, the firmware's own boot-time config validation rejects any two roles that share a GPIO in the **effective** `pins` map — the `config.json` `pins` object shallow-merged over the built-in defaults. A collision there — even one created by a partially written `pins` object colliding with a default — is a fatal config-validation error: the unit prints one line per colliding pair (`ERROR: GPIO 6 is assigned to both pins.humidifier and pins.heater — each device needs a distinct GPIO`), enters the repeating **CONFIG ERROR** blink state (see [Status indicators](/hardware/status-indicators)) and starts no services. There is no in-place fix and no degraded mode: correction means redeploying a corrected `config.json`.
+#### The live / request-merged rule
 
-Direct calls to the Pico bypass the server's validation entirely. The firmware's own checks are `integer in 1..29` and the same merged-view duplicate rule, both returning **400** with a message that drops the article the server keeps — `GPIO 6 is already assigned to humidifier`, not `the humidifier`; it never rejects a reserved GPIO (GP23, GP24, GP25 and GP29 pass the range check), and no clamping or fallback occurs.
+This is the rule set that governs changing pins while the unit is running. It applies identically in four places: the unit page's **PIN mapping** card, a direct `POST /setup` to the unit, the hub's `PUT /v1/pico-units/:id/control/setup` proxy, and the mock (which mirrors the firmware for development).
+
+- **Valid pins:** the integers **GP1–GP22, GP26, GP27, GP28**.
+- **Reserved, refused with a named reason:** **GP0** — the force-provision jumper, sampled at every boot — and **GP23, GP24, GP25, GP29** — the CYW43439 wireless chip.
+- **Duplicates are a merged-view rule.** The pins in your request are overlaid on the unit's current mapping and the combined result is checked, so a conflict with a pin the unit already holds is caught, not just two pins inside one request. Re-assigning a device to the pin it already holds is allowed (an idempotent re-send); a pin freed by another device *within the same request* is allowed (a swap). Only a conflict the request creates or keeps alive is refused, naming the pin and its holder — `GPIO 6 is already assigned to the humidifier`.
+
+The hub returns **422** for a rejected change; the firmware and the mock return **400**. The rule set is deliberately the same across all three layers — the duplication is on purpose, not an accident.
+
+One divergence worth knowing: the hub's valid-pin list currently **includes GP0**, while the unit **reserves** it. A GP0 change sent through the hub therefore passes the hub's own check, is forwarded, and is then refused by the unit. The two layers currently disagree on GP0; this is known, and it means the hub's pre-check is not a guarantee the unit will accept a change.
+
+#### The boot rule — separate, stricter, terminal
+
+Independent of the request-scoped rule above, the firmware validates `config.json` once at boot, and the check is **stricter and terminal**. Any two roles that share a GPIO in the **effective** `pins` map — the `config.json` `pins` object shallow-merged over the built-in defaults — is a fatal config-validation error. The unit prints the colliding pair (`ERROR: GPIO 6 is assigned to both pins.humidifier and pins.heater — each device needs a distinct GPIO`), enters the repeating **CONFIG ERROR** blink state (see [Status indicators](/hardware/status-indicators)) and starts no services. There is no in-place fix and no degraded mode: correction means redeploying a corrected `config.json`. This rule is firmware-only — the mock has no boot-time config validation — and it is deliberately **not** folded into the request-merged rule above.
+
+Direct calls to the unit bypass only the hub's own pre-check. The firmware enforces the same reserved-pin and merged-view rules itself, returning **400** with a message that drops the article the hub keeps — `GPIO 6 is already assigned to humidifier`, not `the humidifier`. There is no clamping and no fallback: a reserved pin is refused with its named reason, exactly as on the page.
 
 ## After wiring
 

@@ -6,6 +6,10 @@ description: "How a Mushroom Pi Pico unit enters AP provisioning mode, how to se
 
 When a Mushroom Pi unit has no Wi-Fi credentials yet — or cannot reach the network it was given — it enters **AP provisioning mode**: the unit runs its own open access point and serves a small web form where you enter your Wi-Fi network name and password.
 
+<Note>
+In provisioning mode the relays are **off** and the control loop is **not running**. The unit still serves its status-and-control page — reachable at the access-point address already stated on this page — but as a **view-only** variant: a banner marks the mode and every control is locked, with the unit refusing changes. Recognise the mode by that banner and by the LED indication; leave it by submitting the Wi-Fi form at `/`, or, if GP0 forced it, by freeing GP0 and power-cycling. See [The unit's own page](/hardware/unit-page).
+</Note>
+
 ## When the Unit Enters Provisioning Mode
 
 The unit enters provisioning mode when any of the following is true:

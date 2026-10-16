@@ -86,7 +86,7 @@ Press **Ctrl-D** in a serial console (Thonny or MicroPico), or unplug and reconn
 2. Announces itself to the hub address in `hub_url`. The announce is a background task spawned once at boot that runs alongside the control loop and REST API below: the hub address is resolved once on the boot path, before the watchdog is armed, and each attempt is bounded — about a 3-second connect ceiling, then about 6 seconds of response-waiting in 1-second slices that yield to the control loop. A failure to resolve or get a response is logged — it does not reset the unit, which keeps regulating and serving its REST API while the announce retries forever in the background, backing off 30 s → 30 s → 60 s → 120 s → 300 s (capped at 300 s), until the hub accepts it.
 3. Runs the control loop — reading the sensor and driving the relays every `control.period_s` seconds (default 10) — and serves the REST API on port 5000. The hub then polls it every 60 seconds.
 
-Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard.
+Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard. The unit also serves its own status-and-control page — the same view it exposes to the hub's poll, in a browser — at `http://<device_name>.local:5000/ui`, with no hub required. See [The unit's own page](/hardware/unit-page).
 
 ## Recovery and resilience
 
@@ -118,4 +118,5 @@ A JSON response with RAM, storage, Wi-Fi signal, and uptime means the API is up.
 
 - [Provisioning](/hardware/provisioning) — the access-point flow for first-time setup and Wi-Fi recovery, and the force-provision switch.
 - [Status indicators](/hardware/status-indicators) — the LED pattern table.
+- [The unit's own page](/hardware/unit-page) — the status-and-control page the unit serves, usable standalone.
 - [Power](/hardware/power) — the supply requirement and load table.

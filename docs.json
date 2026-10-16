@@ -48,6 +48,7 @@
                   "hardware/power",
                   "hardware/pico-firmware",
                   "hardware/provisioning",
+                  "hardware/unit-page",
                   "hardware/status-indicators"
                 ]
               },

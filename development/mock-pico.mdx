@@ -64,6 +64,12 @@ The mock does **not** produce random noise. It simulates the same simplified thr
 
 This produces the characteristic sawtooth oscillation that makes dashboards and charts look realistic and meaningful. Relay states are tracked in memory for every unit, and the REST API surface mirrors `mushpi-grow/spec/openapi.yaml` exactly, so the server uses the same code paths for mock and real units.
 
+## The Mock's Unit Page
+
+The mock serves the same `GET /ui` page a real unit serves — its own status-and-control page — but labelled as simulated: a **Simulated unit** banner marks the page, and the **Climate & outputs** and **Board-condition** cards carry simulated markers.
+
+The readings shown on that page are simulated and read-only — they have no controls on the page. The **write controls** work on the mock as they do on a unit, and are held in memory: the setpoints, the control-loop toggle, the device switches and the PIN mapping. One labelled difference: a PIN mapping saved on the mock is **lost when the mock stops**, whereas a real unit writes it to flash.
+
 ## CLI Flags and Multiple Units
 
 Every option of the `start` command is available as a CLI flag; a flag overrides the config-file value when both are given.

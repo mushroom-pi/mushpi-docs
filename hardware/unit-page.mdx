@@ -1,0 +1,95 @@
+---
+title: "The Unit's Own Status & Control Page"
+sidebarTitle: "Unit Page"
+description: "The Mushroom Pi unit serves its own status-and-control page at GET /ui — a self-contained view of one unit's live state that works standalone, without a hub, sign-in or internet."
+---
+
+Every Mushroom Pi Pico unit serves its own web page — the **unit page** — straight from the device itself at `GET /ui`, reachable at `http://<device_name>.local:5000/ui` (or the unit's IP). It is the unit's own view of itself: live climate readings, the state of its three relays, the control-loop switch and its targets, and the GPIO pin map. No hub, no sign-in, no internet — the page is served from the Pico on your local network.
+
+<Warning>
+  **In provisioning mode this page is view-only.** While the unit waits for Wi-Fi credentials it still serves the page, but the relays are OFF, the control loop is not running, and every control is locked — the unit refuses changes with an HTTP 403. You recognise the mode by the **"Provisioning mode — view-only"** banner at the top of the page, and the slow double-blink LED. To leave it, submit the Wi-Fi form at the unit's root address (`/`), or — if you forced it by holding GP0 low at boot — free GP0 and power-cycle the unit. The full flow is on the [Provisioning](/hardware/provisioning) page.
+</Warning>
+
+## What this page is
+
+The unit page is served by the Pico itself in both of its network modes — station (STA, normal operation) and access-point (AP, provisioning). In STA mode it is the full status-and-control page; in AP mode it renders a view-only variant with a banner and every control locked (see the callout above). It is distinct from the hub's unit page in the dashboard: that one is a view *of* the unit rendered by the server, whereas this page is the unit's *own* view of itself, reached directly from the device with nothing in between.
+
+![The unit page header — device name, mDNS and IP addresses, and the Identity and Board condition cards](/assets/screenshots/unit-page-sta-01.png)
+
+## What it can change — and what it cannot
+
+The page changes only the things the unit itself owns. Everything that needs the hub's records stays on the hub dashboard.
+
+| On this page | Hub-only |
+|---|---|
+| Control-loop on/off | Batches and recipes |
+| Target temperature (0–50 °C) and humidity (10–90 %) | Historical readings and charts |
+| Hand-switch the humidifier, fan and heater (loop off only) | The monitored power switch |
+| Remap the GPIO pins | Renaming, description and face colour |
+| Soft or hard reboot | Removing units from the fleet |
+
+The hub-only list is the one the page itself prints in its footer — those features require the hub dashboard and are simply not on this page.
+
+## When to use it instead of the hub
+
+Reach for the unit page when the unit is running **standalone** — with no hub configured — or when you want direct access to one unit's live state without opening the dashboard. It is also the quickest way to confirm a unit is alive and regulating when the hub is unreachable, down, or has not yet acknowledged the unit.
+
+## Standalone operation: from no hub to an open page
+
+A unit needs no hub at all. To run one standalone, leave `hub_url` empty in `config.json` (see [Pico firmware](/hardware/pico-firmware) for the config keys and [Register a Pico unit](/deployment/pico-registration) for what a configured hub does instead). Finding the address:
+
+- The unit's name comes from the required `device_name` in `config.json`. The page is at **`http://<device_name>.local:5000/ui`** — name-based addressing needs MicroPython ≥ v1.26.0 (the mDNS caveats are on the [Pico firmware](/hardware/pico-firmware) page).
+- If mDNS is not available, use the unit's assigned **IP** from your router's DHCP table: `http://<ip>:5000/ui`.
+
+Once the page opens, it displays the unit's own IP address and mDNS name in its header, so you can confirm you are talking to the right device.
+
+Without a hub the unit still runs its **control loop**, still serves this page and its REST API on port **5000**, and simply **never announces** — the serial console logs `announce: skipped (hub_url not configured)`. The one visible difference is the LED: a no-hub unit reaches Wi-Fi and stays **solid**, because the heartbeat LED only starts once the hub acknowledges an announce, and a unit with no hub configured is never acknowledged. The full LED reference is on the [Status indicators](/hardware/status-indicators) page.
+
+## Controls
+
+The **Controls** card holds the loop switch and the two targets:
+
+- **Control loop** — on, the unit drives the devices automatically toward the targets; off, the relays are forced OFF and the devices are hand-switched below. Turning it off immediately switches every relay off.
+- **Target temperature** — whole degrees, **0–50 °C**. Editable only while the loop is on.
+- **Target humidity** — whole percent, **10–90 %**. Editable only while the loop is on.
+
+What the loop *does* with a target is explained in [How the control loop works](/configuration/hysteresis-control). Hand-switching the devices is available only while the loop is **off**; the moment you turn the loop back on, it takes over again on its own schedule and your hand-set positions no longer apply.
+
+![The Controls card, with the Devices card below it](/assets/screenshots/unit-page-sta-03.png)
+
+## If the sensor fails
+
+A sensor fault does **not** stop the loop. The unit keeps regulating on the last good reading it saw, and it cannot tell a faulted sensor from a working one — so the relays may keep switching on a now-stale number. The page's Climate card carries this warning on the unit itself; the full reasoning is in [Sensor faults are not fail-safe](/configuration/hysteresis-control#sensor-faults-are-not-fail-safe).
+
+![The Climate & outputs card — readings, relay states and sensor health](/assets/screenshots/unit-page-sta-02.png)
+
+## Hub states
+
+The **Hub** card shows two facts about the unit's relationship to the hub — whether `config.json` carries a hub address at all, and whether the hub accepted the most recent announce:
+
+| State | What the page shows | LED |
+|---|---|---|
+| Not configured | `Hub configured` off, `Hub acknowledged` off | SOLID |
+| Configured · not acknowledged | `Hub configured` on, `Hub acknowledged` off | SOLID |
+| Configured · acknowledged | `Hub configured` on, `Hub acknowledged` on | HEARTBEAT |
+
+The card is honest about what "acknowledged" means: the unit never pings the hub between announcements, so a hub outage *after* an acknowledgement is invisible here. See [Status indicators](/hardware/status-indicators) for what each LED pattern means.
+
+![The Hub card, and the hub-only features listed in the page footer](/assets/screenshots/unit-page-sta-06.png)
+
+## PIN mapping
+
+The **PIN mapping** card is where you change which GPIO drives which device. Caution comes first, and it is not decorative:
+
+1. The card shows a warning that changing assignments physically alters which pins drive your devices and can cause hardware malfunction.
+2. The four pin fields stay **locked until you tick the acknowledgement** — "I understand the risks and have verified my wiring".
+
+The unit then refuses two kinds of value with a named reason:
+
+- **Reserved pins** — **GP0** (the force-provision jumper, sampled at every boot) and **GP23, GP24, GP25, GP29** (the CYW43439 wireless chip). The card lists these with their reasons.
+- **A duplicate** — a pin already held by another device, rejected naming the pin and its current holder.
+
+A saved change is written to `config.json`, so it **persists across reboots**. The full set of rules — valid pins, reserved pins and the merged-view duplicate rule — is on the [Wiring](/hardware/wiring) page, together with the boot-time check that applies to `config.json` itself.
+
+![The PIN mapping card — the pin table, the caution and the acknowledgement](/assets/screenshots/unit-page-sta-04.png)
+
