@@ -1,0 +1,21 @@
+---
+title: "Reading the Status LED"
+sidebarTitle: "Status indicators"
+description: "The five LED patterns a Mushroom Pi Pico unit shows — OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, and CONFIG ERROR — and what each one means."
+---
+
+When a Mushroom Pi unit misbehaves, this is the reference to check before anything else: the Pico's onboard LED reports the unit's state directly, and each pattern maps to a specific condition in the firmware.
+
+## LED patterns
+
+| Signal | Pattern | What it means |
+|---|---|---|
+| SLOW DOUBLE-BLINK | 200 ms on / 200 ms off / 200 ms on / 800 ms off | The unit is **working** — regulating and serving its page — but has **no usable Wi-Fi link**: no network configured, a failed join, a force-provision boot, or a runtime link drop (during which it brings its own access point back up). **Not a fault, and not provisioning-only** — control continues throughout. |
+| SOLID | continuously lit | Wi-Fi is connected, but the hub announcement is **pending or not yet acknowledged**. A unit that reaches Wi-Fi but is never acknowledged by a hub stays lit — including a standalone unit with no hub configured. |
+| HEARTBEAT | even blink, ~800 ms period | **Acknowledged by the hub** — healthy operation *within a hub*. Not generic "normal operation": an unacknowledged unit never leaves SOLID. |
+| CONFIG ERROR | 3 fast blinks, 1 s pause, repeating | `config.json` is malformed, has invalid values, or assigns the same GPIO to two device roles. Terminal — the unit starts no services. Check the serial console, which names the conflicting GPIO and both roles. |
+| OFF | not lit | Boot-time Wi-Fi attempts only — the LED stays off while the firmware works through the candidate networks. A runtime link drop is the double-blink, not OFF. |
+
+The unit also flashes the LED briefly at power-on, before Wi-Fi connecting begins.
+
+The slow double-blink is the unit's offline operating state — see [Offline operation](/pico-units/offline-operation) for what you can do on the unit's own access point.

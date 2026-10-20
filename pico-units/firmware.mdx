@@ -6,7 +6,7 @@ description: "Flash MicroPython onto a Raspberry Pi Pico 2W, install the require
 
 The grow-unit firmware lives in the [mushpi-grow](https://github.com/mushroom-pi/mushpi-grow) repository. It is MicroPython, serving a lightweight REST API on **port 5000** with [Microdot](https://github.com/miguelgrinberg/microdot) — the same API the hub polls every 60 seconds for readings and relay commands.
 
-**Prerequisites:** Python 3.8+ on your computer, the **MicroPico** VSCode extension (`paulober.pico-w-go`) or [Thonny IDE](https://thonny.org), a data-capable micro-USB cable, and the unit wired as described in [Wiring](/hardware/wiring).
+**Prerequisites:** Python 3.8+ on your computer, the **MicroPico** VSCode extension (`paulober.pico-w-go`) or [Thonny IDE](https://thonny.org), a data-capable micro-USB cable, and the unit wired as described in [Wiring](/pico-units/wiring).
 
 ## What is on the device
 
@@ -75,7 +75,7 @@ All firmware HTTP — the announce and the responses to the hub's polls — spea
 
 Notice what is **not** in `config.json`: your **temperature and humidity targets** and the **control-loop on/off** state. Those are your choices, not provisioning, so the unit saves them separately and restores them at boot — see [What survives a restart](#what-survives-a-restart). Re-flashing `config.json` never touches them.
 
-Make the GPIO values match your physical wiring (see [Wiring](/hardware/wiring)). If you would rather not edit `config.json` at all, the unit can be provisioned through its access-point setup flow instead — see [Provisioning](/hardware/provisioning).
+Make the GPIO values match your physical wiring (see [Wiring](/pico-units/wiring)). If you would rather not edit `config.json` at all, the unit can be provisioned through its access-point setup flow instead — see [Offline operation](/pico-units/offline-operation).
 
 ## 4. Deploy the files
 
@@ -89,7 +89,7 @@ Press **Ctrl-D** in a serial console (Thonny or MicroPico), or unplug and reconn
 2. Announces itself to the hub address in `hub_url`. The announce is a background task spawned once at boot that runs alongside the control loop and REST API below: the hub address is resolved once on the boot path, before the watchdog is armed, and each attempt is bounded — about a 3-second connect ceiling, then about 6 seconds of response-waiting in 1-second slices that yield to the control loop. A failure to resolve or get a response is logged — it does not reset the unit, which keeps regulating and serving its REST API while the announce retries forever in the background, backing off 30 s → 30 s → 60 s → 120 s → 300 s (capped at 300 s), until the hub accepts it.
 3. Runs the control loop — reading the sensor and driving the relays every `control.period_s` seconds (default 10) — and serves the REST API on port 5000. The hub then polls it every 60 seconds.
 
-Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard. The unit also serves its own status-and-control page — the same view it exposes to the hub's poll, in a browser — at `http://<device_name>.local:5000/ui`, with no hub required. See [The unit's own page](/hardware/unit-page).
+Once announced, the unit appears on the hub automatically; you can also register it manually through the dashboard. The unit also serves its own status-and-control page — the same view it exposes to the hub's poll, in a browser — at `http://<device_name>.local:5000/`, with no hub required; `GET /ui` is an alias for the same page. See [The unit's own page](/pico-units/unit-page).
 
 ## Recovery and resilience
 
@@ -125,7 +125,7 @@ Worth knowing:
 The unit can be reached at `http://<device_name>.local:5000` without knowing its IP, but only when all of these hold:
 
 - **Firmware ≥ v1.26.0** — the mDNS fix landed in v1.25.0 stable, but v1.25.0 pre-release builds do not have it. v1.26.0 is the recommended minimum and the confirmed-working version.
-- **Station (normal) mode only** — mDNS does not resolve while the unit is in AP provisioning mode; use the IP (`192.168.4.1`) there.
+- **Station (normal) mode only** — mDNS does not resolve while the unit is in offline (AP) mode; use the IP (`192.168.4.1`) there.
 - **Same subnet** — mDNS is link-local. A unit on a different VLAN or subnet needs an mDNS reflector on the router.
 
 ## Verify it is running
@@ -136,11 +136,11 @@ Find the Pico's IP (your router's DHCP table, or a REPL) and request:
 curl http://<pico-ip>:5000/health
 ```
 
-A JSON response with RAM, storage, Wi-Fi signal, and uptime means the API is up. If the request times out, check the onboard LED — a **solid** LED means Wi-Fi is connected and the unit is waiting on its first hub announcement — then re-check `wifi.ssid` and `wifi.password` in `config.json` and redeploy. The full LED reference is on the [Status indicators](/hardware/status-indicators) page.
+A JSON response with RAM, storage, Wi-Fi signal, and uptime means the API is up. If the request times out, check the onboard LED — a **solid** LED means Wi-Fi is connected and the unit is waiting on its first hub announcement — then re-check `wifi.ssid` and `wifi.password` in `config.json` and redeploy. The full LED reference is on the [Status indicators](/pico-units/status-indicators) page.
 
 ## Further reading
 
-- [Provisioning](/hardware/provisioning) — the access-point flow for first-time setup and Wi-Fi recovery, and the force-provision switch.
-- [Status indicators](/hardware/status-indicators) — the LED pattern table.
-- [The unit's own page](/hardware/unit-page) — the status-and-control page the unit serves, usable standalone.
-- [Power](/hardware/power) — the supply requirement and load table.
+- [Offline operation](/pico-units/offline-operation) — the access-point flow for first-time setup and Wi-Fi recovery, and the force-provision switch.
+- [Status indicators](/pico-units/status-indicators) — the LED pattern table.
+- [The unit's own page](/pico-units/unit-page) — the status-and-control page the unit serves, usable standalone.
+- [Power](/pico-units/power) — the supply requirement and load table.

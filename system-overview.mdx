@@ -8,7 +8,7 @@ Mushroom Pi is made up of three cooperating components that each run on separate
 
 ## The three components
 
-**Pico firmware** — runs on a Raspberry Pi Pico 2W in your grow space. It reads temperature and humidity from a DHT11 sensor and drives humidifier, fan, and heater relays through a local hysteresis control loop. Relay control happens entirely on the Pico, so if the hub is temporarily unreachable, your environment stays regulated. The Pico also exposes a small REST API on port 5000 so the backend can read sensor data and push updated targets.
+**Pico firmware** — runs on a Raspberry Pi Pico 2W in your grow space. It reads temperature and humidity from a DHT11 sensor and drives humidifier, fan, and heater relays through a local hysteresis control loop. Relay control happens entirely on the Pico, so if the hub is temporarily unreachable, your environment stays regulated. A unit with no hub at all behaves the same way — it keeps regulating and serves its own page on its own network, or on its own access point with no Wi-Fi ([Pico units](/pico-units/index)). The Pico also exposes a small REST API on port 5000 so the backend can read sensor data and push updated targets.
 
 **Backend server** — a NestJS 11 application running inside a Docker container on the hub: any single-board computer that can run Docker (a Raspberry Pi 3 Model B v1.2 with a 64-bit OS is the tested reference). Every 60 seconds it polls every registered Pico unit, stores the readings in a local SQLite database, and makes them available through a full OpenAPI REST API. When you change a relay threshold or environmental target in the dashboard, the backend proxies that command to the correct Pico immediately.
 

@@ -1,18 +1,14 @@
 ---
 title: "The Unit's Own Status & Control Page"
-sidebarTitle: "Unit Page"
-description: "The Mushroom Pi unit serves its own status-and-control page at GET /ui — a self-contained view of one unit's live state that works standalone, without a hub, sign-in or internet."
+sidebarTitle: "The unit page"
+description: "The page every Mushroom Pi unit serves at GET / — a self-contained view of one unit's live state, with controls, that works standalone with no hub, sign-in or internet."
 ---
 
-Every Mushroom Pi Pico unit serves its own web page — the **unit page** — straight from the device itself at `GET /ui`, reachable at `http://<device_name>.local:5000/ui` (or the unit's IP). It is the unit's own view of itself: live climate readings, the state of its three relays, the control-loop switch and its targets, and the GPIO pin map. No hub, no sign-in, no internet — the page is served from the Pico on your local network.
-
-<Warning>
-  **In provisioning mode this page is view-only.** While the unit waits for Wi-Fi credentials it still serves the page, but the relays are OFF, the control loop is not running, and every control is locked — the unit refuses changes with an HTTP 403. You recognise the mode by the **"Provisioning mode — view-only"** banner at the top of the page, and the slow double-blink LED. To leave it, submit the Wi-Fi form at the unit's root address (`/`), or — if you forced it by holding GP0 low at boot — free GP0 and power-cycle the unit. The full flow is on the [Provisioning](/hardware/provisioning) page.
-</Warning>
+Every Mushroom Pi Pico unit serves its own web page — the **unit page** — straight from the device itself. It is the landing page: open the unit's address in a browser and you land on it. `GET /` serves it to a browser, and `GET /ui` is an alias for the same page. Reach it at `http://<device_name>.local:5000/` (or the unit's IP). It is the unit's own view of itself: live climate readings, the state of its three relays, the control-loop switch and its targets, and the GPIO pin map. No hub, no sign-in, no internet — the page is served from the Pico on your local network.
 
 ## What this page is
 
-The unit page is served by the Pico itself in both of its network modes — station (STA, normal operation) and access-point (AP, provisioning). In STA mode it is the full status-and-control page; in AP mode it renders a view-only variant with a banner and every control locked (see the callout above). It is distinct from the hub's unit page in the dashboard: that one is a view *of* the unit rendered by the server, whereas this page is the unit's *own* view of itself, reached directly from the device with nothing in between.
+The unit page is served by the Pico itself in every mode — station (STA, on your network) and offline (its own access point). It is the same page in both, with an offline banner when the unit is on its own network; the controls stay operable offline, pin remapping included. It is distinct from the hub's unit page in the dashboard: that one is a view *of* the unit rendered by the server, whereas this page is the unit's *own* view of itself, reached directly from the device with nothing in between.
 
 ![The unit page header — device name, mDNS and IP addresses, and the Identity and Board condition cards](/assets/screenshots/unit-page-sta-01.png)
 
@@ -36,14 +32,14 @@ Reach for the unit page when the unit is running **standalone** — with no hub 
 
 ## Standalone operation: from no hub to an open page
 
-A unit needs no hub at all. To run one standalone, leave `hub_url` empty in `config.json` (see [Pico firmware](/hardware/pico-firmware) for the config keys and [Register a Pico unit](/deployment/pico-registration) for what a configured hub does instead). Finding the address:
+A unit needs no hub at all. To run one standalone, leave `hub_url` empty in `config.json` (see [Firmware](/pico-units/firmware) for the config keys and [Register a Pico unit](/deployment/pico-registration) for what a configured hub does instead). Finding the address:
 
-- The unit's name comes from the required `device_name` in `config.json`. The page is at **`http://<device_name>.local:5000/ui`** — name-based addressing needs MicroPython ≥ v1.26.0 (the mDNS caveats are on the [Pico firmware](/hardware/pico-firmware) page).
-- If mDNS is not available, use the unit's assigned **IP** from your router's DHCP table: `http://<ip>:5000/ui`.
+- The unit's name comes from the required `device_name` in `config.json`. The page is at **`http://<device_name>.local:5000/`** — name-based addressing needs MicroPython ≥ v1.26.0 (the mDNS caveats are on the [Firmware](/pico-units/firmware) page).
+- If mDNS is not available, use the unit's assigned **IP** from your router's DHCP table: `http://<ip>:5000/`.
 
 Once the page opens, it displays the unit's own IP address and mDNS name in its header, so you can confirm you are talking to the right device.
 
-Without a hub the unit still runs its **control loop**, still serves this page and its REST API on port **5000**, and simply **never announces** — the serial console logs `announce: skipped (hub_url not configured)`. The one visible difference is the LED: a no-hub unit reaches Wi-Fi and stays **solid**, because the heartbeat LED only starts once the hub acknowledges an announce, and a unit with no hub configured is never acknowledged. The full LED reference is on the [Status indicators](/hardware/status-indicators) page.
+Without a hub the unit still runs its **control loop**, still serves this page and its REST API on port **5000**, and simply **never announces** — the serial console logs `announce: skipped (hub_url not configured)`. The one visible difference is the LED: a no-hub unit reaches Wi-Fi and stays **solid**, because the heartbeat LED only starts once the hub acknowledges an announce, and a unit with no hub configured is never acknowledged. The full LED reference is on the [Status indicators](/pico-units/status-indicators) page.
 
 ## Controls
 
@@ -55,7 +51,7 @@ The **Controls** card holds the loop switch and the two targets:
 
 What the loop *does* with a target is explained in [How the control loop works](/configuration/hysteresis-control).
 
-The targets and the loop switch are **saved on the unit** — once applied they survive a power cut, and the unit comes back with the loop in the state you left it and the targets you set. Hand-switching the devices is available only while the loop is **off**; the moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets. While the loop stays **off**, your hand-set **fan and humidifier** positions are saved too and survive a restart — the **heater** is the one exception: it always comes back **off** after a restart, for the safety reason explained on the [Pico firmware](/hardware/pico-firmware) page.
+The targets and the loop switch are **saved on the unit** — once applied they survive a power cut, and the unit comes back with the loop in the state you left it and the targets you set. Hand-switching the devices is available only while the loop is **off**; the moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets. While the loop stays **off**, your hand-set **fan and humidifier** positions are saved too and survive a restart — the **heater** is the one exception: it always comes back **off** after a restart, for the safety reason explained on the [Firmware](/pico-units/firmware) page.
 
 ![The Controls card, with the Devices card below it](/assets/screenshots/unit-page-sta-03.png)
 
@@ -75,7 +71,7 @@ The **Hub** card shows two facts about the unit's relationship to the hub — wh
 | Configured · not acknowledged | `Hub configured` on, `Hub acknowledged` off | SOLID |
 | Configured · acknowledged | `Hub configured` on, `Hub acknowledged` on | HEARTBEAT |
 
-The card is honest about what "acknowledged" means: the unit never pings the hub between announcements, so a hub outage *after* an acknowledgement is invisible here. See [Status indicators](/hardware/status-indicators) for what each LED pattern means.
+The card is honest about what "acknowledged" means: the unit never pings the hub between announcements, so a hub outage *after* an acknowledgement is invisible here. See [Status indicators](/pico-units/status-indicators) for what each LED pattern means.
 
 ![The Hub card, and the hub-only features listed in the page footer](/assets/screenshots/unit-page-sta-06.png)
 
@@ -91,7 +87,7 @@ The unit then refuses two kinds of value with a named reason:
 - **Reserved pins** — **GP0** (the force-provision jumper, sampled at every boot) and **GP23, GP24, GP25, GP29** (the CYW43439 wireless chip). The card lists these with their reasons.
 - **A duplicate** — a pin already held by another device, rejected naming the pin and its current holder.
 
-A saved change is written to `config.json`, so it **persists across reboots**. The full set of rules — valid pins, reserved pins and the merged-view duplicate rule — is on the [Wiring](/hardware/wiring) page, together with the boot-time check that applies to `config.json` itself.
+A saved change is written to `config.json`, so it **persists across reboots**. The full set of rules — valid pins, reserved pins and the merged-view duplicate rule — is on the [Wiring](/pico-units/wiring) page, together with the boot-time check that applies to `config.json` itself.
 
 ![The PIN mapping card — the pin table, the caution and the acknowledgement](/assets/screenshots/unit-page-sta-04.png)
 

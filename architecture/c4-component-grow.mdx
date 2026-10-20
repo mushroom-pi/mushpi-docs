@@ -12,9 +12,9 @@ flowchart TB
 
         MAIN("🚀 main.py<br/><b>Entry Point</b><br/>Startup sequence, WiFi connect/<br/>AP fallback, spawns async tasks")
 
-        API[/"🌐 API Server<br/><b>Microdot (port 5000)</b><br/>STA: REST endpoints — sensors,<br/>setpoints, outputs, control, setup,<br/>ping, health, system, reboot<br/>AP: HTML provisioning form +<br/>POST /provision"\]
+        API[/"🌐 API Server<br/><b>Microdot (port 5000)</b><br/>Full REST API in both modes — sensors,<br/>setpoints, outputs, control, setup,<br/>ping, health, system, reboot.<br/>GET / = unit page (HTML) or JSON<br/>GET /provision = Wi-Fi setup form"\]
 
-        CONTROL>"🔄 Control Loop<br/><b>app/control.py</b><br/>Hysteresis-based coroutine —<br/>reads sensor, toggles relays;<br/>owns control_enabled (asyncio.Event)<br/>+ min-runtime tracking (STA only)"]
+        CONTROL>"🔄 Control Loop<br/><b>app/control.py</b><br/>Hysteresis-based coroutine —<br/>reads sensor, toggles relays;<br/>owns control_enabled (asyncio.Event)<br/>+ min-runtime tracking. Runs in<br/>both modes, offline included"]
 
         SENSOR["🌡️ DHT Reader<br/><b>app/sensor.py</b><br/>Reads DHT11, validates<br/>plausibility, updates shared state"]
 
@@ -45,7 +45,7 @@ flowchart TB
 
     subgraph EXTERNAL["🔗 External Systems"]
         SERVER["🖥️ Backend API<br/><i>mushpi-server</i><br/>Polls GET /, sends PUT<br/>control commands"]
-        BROWSER("👤 Grower Browser<br/><i>Phone or laptop</i><br/>Connects to Pico AP for<br/>Wi-Fi provisioning")
+        BROWSER("👤 Grower Browser<br/><i>Phone or laptop</i><br/>Joins the unit's own AP when it<br/>has no Wi-Fi, or reaches it on the LAN")
     end
 
     subgraph HARDWARE["🔌 Hardware"]
@@ -55,10 +55,10 @@ flowchart TB
     end
 
     SERVER -->|"GET / (polling), PUT<br/>/setpoints, /outputs,<br/>/control, /setup,<br/>/reboot (soft/hard)"| API
-    BROWSER -.->|"Wi-Fi Direct (AP mode)<br/>GET / → HTML form<br/>POST /provision"| API
+    BROWSER -.->|"HTTP<br/>GET / unit page, GET /provision form,<br/>POST /provision (offline only)"| API
     API -.->|"Writes credentials via<br/>save_config()"| CONFIG
     API -.->|"Persists grower choices<br/>(POST /setpoints, /outputs,<br/>/control) to runtime.json"| RUNTIME_STATE
-    PROV_HTML -.->|"Rendered by<br/>GET / (AP mode)"| API
+    PROV_HTML -.->|"Served at<br/>GET /provision"| API
 
     CONTROL -->|"Reads setpoints,<br/>writes status & devices"| STATE
     SENSOR -->|"Writes temperature<br/>& humidity to status"| STATE
@@ -66,7 +66,7 @@ flowchart TB
     ANNOUNCE -->|"Reads system_info<br/>(handle, MAC, IP, port)"| STATE
     RUNTIME_STATE -->|"Applies restored setpoints<br/>in place at boot"| STATE
 
-    MAIN -->|"Starts Microdot<br/>server (STA or AP)"| API
+    MAIN -->|"Starts Microdot<br/>server (both modes)"| API
     MAIN -->|"Spawns control<br/>loop coroutine"| CONTROL
     MAIN -->|"Boot connect +<br/>spawns link watchdog"| WIFI
     MAIN -->|"Spawns announcement<br/>on boot"| ANNOUNCE
@@ -118,10 +118,10 @@ flowchart TB
 | Module | File | Responsibilities |
 |--------|------|-----------------|
 | **Entry Point** | `main.py` | Wires everything together. Sequence: IO init → DHT init → load config → check GP0 force-provision → WiFi connect (STA) or AP fallback → `attach_wlan_info(…)` (caches MAC, IP, hostname, port) → spawn async tasks → start Microdot server. The `finally` block calls `graceful_shutdown()` to turn outputs off and disconnect Wi-Fi. |
-| **API Server** | `app/api.py` | REST API on port 5000. **STA mode**: `GET /` (full snapshot), `/ping`, `/health`, `/system`, `/sensors`, `/setpoints`, `/outputs`, `/control`, `/setup`, `/reboot`. **AP mode**: `GET /` (HTML provisioning form), `POST /provision`. CORS headers on all responses. |
-| **Control Loop** | `app/control.py` | Async coroutine (STA only). Every `period_s` seconds: humidifier ON when `humidity ≤ target`, OFF when exceeded. Fan ON when `humidity > target + hyst_hum`, OFF when `≤ target + hyst_hum`. Deadband between `target` and `target + hyst_hum` prevents actuator fighting. Heater ON when `temperature ≤ target`, OFF when exceeded (thermal lag provides natural damping). Humidifier and fan mutually exclusive. Not started in AP mode. Owns control enablement as an `asyncio.Event` (`set_control_enabled()` / `is_control_enabled()`) — not shared state. Tracks minimum relay runtime via `mark_relay_on()` / `mark_relay_off()` / `reset_on_since()`; the `POST /outputs` manual override is the one sanctioned path that also calls these helpers so min-runtime tracking stays consistent. |
+| **API Server** | `app/api.py` | REST API on port 5000. Full REST API in both modes. `GET /` content-negotiates — the unit page for a browser, the JSON snapshot for an API client; `GET /ui` is an alias; `GET /provision` is the Wi-Fi setup form, `POST /provision` is offline-only. CORS headers on all responses. |
+| **Control Loop** | `app/control.py` | Async coroutine (runs in both modes, offline included). Every `period_s` seconds: humidifier ON when `humidity ≤ target`, OFF when exceeded. Fan ON when `humidity > target + hyst_hum`, OFF when `≤ target + hyst_hum`. Deadband between `target` and `target + hyst_hum` prevents actuator fighting. Heater ON when `temperature ≤ target`, OFF when exceeded (thermal lag provides natural damping). Humidifier and fan mutually exclusive. Owns control enablement as an `asyncio.Event` (`set_control_enabled()` / `is_control_enabled()`) — not shared state. Tracks minimum relay runtime via `mark_relay_on()` / `mark_relay_off()` / `reset_on_since()`; the `POST /outputs` manual override is the one sanctioned path that also calls these helpers so min-runtime tracking stays consistent. |
 | **DHT Reader** | `app/sensor.py` | Reads DHT11. Validates plausibility (-10°C ≤ t ≤ 60°C, 0% ≤ h ≤ 100%). Updates shared `status` dict. Supports `?force=1` for on-demand measurement. |
-| **IO Layer** | `app/hw.py` | Initializes all GPIO pins. Toggles relays (respects `active_high` config). Manages the onboard LED — its five states (OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, CONFIG ERROR) are documented in [Pico Unit Status Indicators](/hardware/status-indicators). Reads GP0 at boot for force-provision. |
+| **IO Layer** | `app/hw.py` | Initializes all GPIO pins. Toggles relays (respects `active_high` config). Manages the onboard LED — its five states (OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, CONFIG ERROR) are documented in [Pico Unit Status Indicators](/pico-units/status-indicators). Reads GP0 at boot for force-provision. |
 | **Wi-Fi Lifecycle** | `app/wifi.py` | Owns every Wi-Fi state transition: `connect_wifi()` (blocking boot connect), `reconnect_once_async()` (async runtime reconnect), and `wifi_watchdog_loop()` (link monitor with reconnect backoff; its reconnection does not re-announce). |
 | **Announce** | `app/announce.py` | POSTs device info to the server's `POST /v1/pico-units/announce`. Spawned once at boot; on failure it retries forever in the background with backoff — 30 s, 30 s, 60 s, 120 s, then capped at 300 s — until accepted. Each attempt is bounded (~3 s connect ceiling, 1 s IO slices, ~6 s response-wait) and yields between slices. The payload includes the `mac` field (lowercase colon-separated hex, e.g. `"28:cd:c1:01:23:45"`), sourced from cached `system['wifi']['mac']` populated during `attach_wlan_info()`, plus `firmware_version` (from `_SOFTWARE_VERSION`) and `api_version` (from `_API_VERSION`). The retry path never re-resolves the hub name. Skipped in AP mode. |
 | **Shutdown** | `app/shutdown.py` | `graceful_shutdown()` (turns all outputs off, disconnects Wi-Fi), `reboot()`, `soft_reboot()`, and the shared `stop_event` that long-running loops check to exit cleanly. |
@@ -131,7 +131,7 @@ flowchart TB
 | **Uptime Tracker** | `app/uptime.py` | Cumulative uptime across scheduled reboots. Classifies reboot reason via `machine.reset_cause()` (`PWRON_RESET` → power_on, `WDT_RESET` → watchdog, `SOFT_RESET` → scheduled). Persists cumulative uptime + date guard to `uptime.json`. |
 | **Runtime State** | `app/runtime_state.py` | Owns the device-local store of grower-chosen runtime state, persisted to `runtime.json`: the temperature/humidity **targets**, the **control-loop on/off flag**, and the hand-set **fan** and **humidifier** positions. Written by the three `POST` handlers (`/setpoints`, `/outputs`, `/control`) when the grower acts; restored once at boot via `restore()` so those choices survive a restart. The **heater is deliberately not stored** and always returns off. |
 | **Reboot Scheduler** | `app/reboot_scheduler.py` | Async coroutine (STA only). Syncs NTP after WiFi connect, then polls every 60s. Triggers `machine.soft_reset()` at configured hour/minute (disabled by default). Guards against double-reboot via date sentinel. |
-| **Provisioning HTML** | `app/provision.html` | Dark-themed HTML form served at `GET /` in AP mode. Matches the MushPi React frontend's visual identity. Accepts SSID and password, submits to `POST /provision`. |
+| **Provisioning HTML** | `app/provision.html` | Dark-themed HTML form served at `GET /provision` in both modes. Matches the MushPi React frontend's visual identity. Accepts SSID and password, submits to `POST /provision`. |
 | **Shared State** | `app/state.py` | Exports mutable dictionaries (`status`, `setpoints`, `devices`) and cached `_system_info` (incl. `wifi.mac`, `wifi.ip`, board metadata). Mutate in place — never reassign. `attach_wlan_info()` populates Wi-Fi MAC, IP, and hostname from the active WLAN interface. Control enablement is *not* state — it is an `asyncio.Event` owned by `app/control.py`. |
 
 ## Startup Sequence
@@ -161,7 +161,7 @@ IO() → DHTReader() → load_config() → validate_config()
     │   → await start_server("sta")
     └── FAILURE (ip is None)
         → io.start_provisioning_blink()
-        → await start_server("ap")  (HTML form + POST /provision)
+        → await start_server("ap")  (full API + control loop + GET /provision form)
 ~~~
 
 The announce is a background coroutine, never a boot gate: it is spawned once at boot and runs alongside the control loop and the REST API, not before them. The hub address is resolved exactly once, on the boot path (`presolve_boot_hub()`), before the watchdog is armed — and never again at runtime: the retry path deliberately never looks a name up. Two accepted trades follow: a hub whose address changes is only picked up at the next boot, and if the boot-time lookup fails the unit logs that no hub address is available and keeps retrying rather than resolving. The announce task retries forever, backing off — 30 s, 30 s, 60 s, 120 s, then capped at 300 s — until the hub accepts. Each attempt is bounded and sliced — a 3 s connect ceiling, about 6 s of response-waiting in 1 s IO slices, yielding between slices — and is traced to the console (attempt number, elapsed ms and status); a failed lookup prints a no-hub-address line. The hardware watchdog is armed at boot, before the control-loop, announce and Wi-Fi tasks are created (the loop-utilisation meter is scheduled just before that line — incidental). An unreachable hub, an unresolvable hub name, or a hub that accepts and then stays silent can therefore never reset the unit, and none of them stops regulation or the REST API: the 8 s window applies only to genuine hangs once the unit is running. A Wi-Fi link bounce triggers no re-announce: the forever-retry task carries the unit's new IP on its next attempt, and the hub's own 60-second poll refreshes an already-known unit's stored IP independently.
@@ -170,7 +170,7 @@ The announce is a background coroutine, never a boot gate: it is spawned once at
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/` | STA: Full snapshot (system + firmware/api version + health + sensors + outputs + setpoints + control). AP: HTML provisioning form. |
+| GET | `/` | Unit page for a browser (both modes); JSON full snapshot (system + firmware/api version + health + sensors + outputs + setpoints + control) for an API client. |
 | GET | `/ping` | Liveness check |
 | GET | `/health` | RAM, FS, WiFi RSSI, MCU temp, uptime, loop util |
 | GET | `/system` | Board info, MicroPython version, WiFi IP/MAC |
@@ -180,7 +180,7 @@ The announce is a background coroutine, never a boot gate: it is spawned once at
 | GET/POST | `/control` | `{"enabled": bool}` — toggles control loop |
 | GET/POST | `/setup` | GPIO pin remapping + `active_high` polarity |
 | POST | `/reboot` | Graceful reboot. Body `type` = `"soft"` or `"hard"` (optional, default `soft`). Response returns before reboot. |
-| POST | `/provision` | Wi-Fi provisioning (AP mode only). `{"wifi":{"ssid":"...","password":"..."}}` → writes config.json + reboots. |
+| POST | `/provision` | Wi-Fi provisioning (offline/AP mode only). `{"wifi":{"ssid":"...","password":"..."}}` → writes config.json + reboots. |
 
 ## Announce Payload
 
@@ -205,4 +205,4 @@ The announce POST (`POST /v1/pico-units/announce`) carries the unit's identity, 
 
 ## LED Status Indicators
 
-The Pico's onboard LED reports the unit's state through five patterns — OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, and CONFIG ERROR. The reference for reading them is [Pico Unit Status Indicators](/hardware/status-indicators).
+The Pico's onboard LED reports the unit's state through five patterns — OFF, SOLID, HEARTBEAT, SLOW DOUBLE-BLINK, and CONFIG ERROR. The reference for reading them is [Pico Unit Status Indicators](/pico-units/status-indicators).

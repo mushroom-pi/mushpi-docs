@@ -64,6 +64,8 @@ The mock does **not** produce random noise. It simulates the same simplified thr
 
 This produces the characteristic sawtooth oscillation that makes dashboards and charts look realistic and meaningful. Relay states are tracked in memory for every unit, and the REST API surface mirrors `mushpi-grow/spec/openapi.yaml` exactly, so the server uses the same code paths for mock and real units.
 
+**Provisioning endpoints are mirrored too.** `GET /provision` serves the firmware's Wi-Fi setup form (vendored byte-identical from `app/provision.html`), and `POST /provision` answers with the firmware's connected-unit refusal — `403` with `{"ok": false, "error": "provisioning is only available in AP mode"}`. The mock has no access-point or offline path, so it deliberately cannot simulate offline operation; for that, use a real unit. See [Offline operation](/pico-units/offline-operation).
+
 ## The Mock's Unit Page
 
 The mock serves the same `GET /ui` page a real unit serves — its own status-and-control page — but labelled as simulated: a **Simulated unit** banner marks the page, and the **Climate & outputs** and **Board-condition** cards carry simulated markers.

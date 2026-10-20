@@ -1,0 +1,39 @@
+---
+title: "How a Pico Unit Runs"
+sidebarTitle: "How a unit runs"
+description: "The three ways a Mushroom Pi Pico unit can run — on its own access point, on your Wi-Fi without a hub, or joined to a hub — and what each one gives you."
+---
+
+A Pico unit is a self-contained climate controller. It reads its sensor, drives its relays, and holds the targets you set — and it does all of that the same way no matter how it is networked. The only thing that changes between configurations is where you look at it, and what you get on top.
+
+## The three ways a unit runs
+
+1. **No Wi-Fi at all.** The unit keeps regulating against the targets it holds. Its readings and settings are reachable by joining the unit's own open access point — SSID **`mushpi-provision-XXXX`**, address **`192.168.4.1:5000`**. The unit page is the landing page there, and the Wi-Fi setup form is a link from it.
+2. **Joined to your Wi-Fi, no hub.** The unit keeps regulating, and its readings and settings are reachable on your network at the unit's address.
+3. **Joined to your Wi-Fi, with a Mushroom Pi hub.** The hub aggregates the units on the network, stores their readings, and organises recipes and harvests. The dashboard becomes the primary surface; the unit page remains available at the unit's own address.
+
+In every configuration the unit regulates its climate from the targets it holds and serves its own page. The hub never changes that — it only adds to it.
+
+## What each mode gives you
+
+| What | No Wi-Fi | Wi-Fi, no hub | Wi-Fi + hub |
+|---|---|---|---|
+| Climate regulation | ✅ always | ✅ always | ✅ always |
+| Unit page (readings, targets, control) | ✅ on its own AP | ✅ on the network | ✅ on the network |
+| Dashboard | — | — | ✅ |
+| Reading history | — | — | ✅ stored by the hub |
+| Batches & recipes | — | — | ✅ hub-only |
+
+## The hub adds — it is never required
+
+**Dashboard, reading history, and batches and recipes are hub-only.** A unit on no network, or one on a network without a hub, has no dashboard, no history and no batches — and it never needs any of them to keep growing. It regulates from the targets it holds and serves its own page in all three modes.
+
+Think of the hub as what you add when you want to see history and run batches, not as something a unit depends on to work.
+
+## Where to go next
+
+- [The unit's own page](/pico-units/unit-page) — read the climate, change targets, toggle the loop and switch devices, straight from the unit.
+- [Offline operation](/pico-units/offline-operation) — the unit's own access point, and how to join it and set up Wi-Fi.
+- [Status indicators](/pico-units/status-indicators) — read the onboard LED.
+- [Firmware](/pico-units/firmware) — flash and configure the unit.
+- [Your units](/dashboard/pico-units) — what the hub adds: the units list, batches and history.

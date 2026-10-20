@@ -22,13 +22,13 @@ Three values in the unit's `config.json` connect it to your hub. Two of them mus
 
 That is the whole value — scheme, host and port, nothing else. The firmware appends the registration path itself, so you never need to look up an IP address or type an API path. A unit already flashed with the old full-endpoint form keeps working — the firmware notices the extra path and uses the value unchanged — and surrounding whitespace and trailing slashes are ignored. Leave `hub_url` empty to run the unit standalone, with no hub.
 
-**Firmware requirement.** Name-based addressing needs a recent MicroPython on the unit. On an older build the unit warns at boot and `.local` names will not resolve — flash a current build (see [Pico firmware](/hardware/pico-firmware)).
+**Firmware requirement.** Name-based addressing needs a recent MicroPython on the unit. On an older build the unit warns at boot and `.local` names will not resolve — flash a current build (see [Pico firmware](/pico-units/firmware)).
 
 ## How a unit appears
 
 When a flashed Pico unit boots, it connects to your Wi-Fi network and announces itself to the hub at the address you configured, sending its shared secret in the `X-Pico-Secret` header. The announce retries in the background forever, backing off (30 s, 30 s, 60 s, 120 s, then every 300 s) until the hub accepts it — so a unit that boots while the hub is still down announces on its own once the hub is started, with no reboot and no intervention.
 
-The hub matches the announcement by the unit's `handle` — the `device_name` from the unit's `config.json` — and upserts the unit into its database. From then on the hub polls the unit every 60 seconds for temperature and humidity readings. You do not wire anything in this step — that is covered on the [Wiring](/hardware/wiring) page.
+The hub matches the announcement by the unit's `handle` — the `device_name` from the unit's `config.json` — and upserts the unit into its database. From then on the hub polls the unit every 60 seconds for temperature and humidity readings. You do not wire anything in this step — that is covered on the [Wiring](/pico-units/wiring) page.
 
 ## Confirm the unit is registered
 
@@ -46,8 +46,8 @@ Work through these checks in order:
 
 **The unit's name.** The `device_name` in `config.json` must equal the `handle` the server uses for that unit.
 
-**The unit is on the network.** If the unit never reaches your Wi-Fi network, it cannot announce. The unit's onboard LED tells you where it is stuck — Wi-Fi not connected, Wi-Fi up but the hub unreachable, or fully operational. Compare the LED against the [Status indicators](/hardware/status-indicators) page. To change the Wi-Fi credentials, see [Provisioning](/hardware/provisioning).
+**The unit is on the network.** If the unit never reaches your Wi-Fi network, it cannot announce. The unit's onboard LED tells you where it is stuck — Wi-Fi not connected, Wi-Fi up but the hub unreachable, or fully operational. Compare the LED against the [Status indicators](/pico-units/status-indicators) page. To change the Wi-Fi credentials, see [Provisioning](/pico-units/offline-operation).
 
-**The firmware is recent enough.** An older MicroPython cannot resolve `.local` names; the unit warns at boot when this is the case. If the unit connects but never appears, check that it runs a current firmware build (see [Pico firmware](/hardware/pico-firmware)).
+**The firmware is recent enough.** An older MicroPython cannot resolve `.local` names; the unit warns at boot when this is the case. If the unit connects but never appears, check that it runs a current firmware build (see [Pico firmware](/pico-units/firmware)).
 
 You can register as many units as you need — each one announces itself the same way, and each controls its own grow space.

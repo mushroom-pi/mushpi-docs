@@ -13,7 +13,7 @@ You need:
 - A Raspberry Pi Pico 2W.
 - A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux. The maintainer tests on a Raspberry Pi 3 Model B v1.2 (1 GB), so that is a known-good starting point, not a requirement. The 64-bit OS is a hard requirement — the published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it.
 - Docker Engine with the Compose v2 plugin — the `docker compose` subcommand (with a space).
-- A DHT11 sensor and a relay module, wired to the Pico. See [Wiring](/hardware/wiring).
+- A DHT11 sensor and a relay module, wired to the Pico. See [Wiring](/pico-units/wiring).
 
 ## 1. Flash the Pico
 
@@ -26,7 +26,7 @@ You need:
    - `device_name` — a unique name for this unit; it becomes the unit's `handle` on the hub.
 4. Upload `main.py`, `config.json`, and the `app/` folder to the Pico, plus the one third-party library `lib/microdot.py`. The repo's own tooling is the MicroPico VSCode extension, which uploads every `.py`, `.html`, and `config.json`; Thonny's file manager also works. The library is not tracked in the repo, so install it with `mip` or download it per the grow README.
 
-The full flashing walkthrough — wiring, pin map, and library setup — is on the [Pico firmware page](/hardware/pico-firmware). If you would rather not edit `config.json` at all, the Pico has an access-point provisioning mode: with no Wi-Fi configured it boots a form at `192.168.4.1` where you enter your network credentials. That flow is also covered on the Pico firmware page.
+The full flashing walkthrough — wiring, pin map, and library setup — is on the [Pico firmware page](/pico-units/firmware). If you would rather not edit `config.json` at all, the unit offers its own open access point when it has no Wi-Fi: join `mushpi-provision-XXXX` and open `192.168.4.1:5000`, where the unit page is the landing page and the Wi-Fi setup form is linked from it. See [Offline operation](/pico-units/offline-operation).
 
 ## 2. Start the hub
 

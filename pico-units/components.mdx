@@ -92,7 +92,7 @@ flowchart LR
     class relay,rel_ch1,rel_ch2,rel_ch3 relayModuleStyle
 ```
 
-The diagram orients the parts before you buy them. The **hub** — `mushpi-server` running in Docker on any single-board computer — talks to each unit over Wi-Fi, polling readings and sending control commands. Inside the unit, a **Raspberry Pi Pico 2W** reads the **DHT11 sensor** on one GPIO pin and drives a **relay module** on three more. The relay module switches the three **5 V actuators** — humidifier, fan, and heating mat — on the 5 V rail, and a **dedicated 5 V supply** powers both the relay module and the Pico. A **force-provision switch** on GP0 is the only other input. The pin-level wiring is on the [Wiring](/hardware/wiring) page.
+The diagram orients the parts before you buy them. The **hub** — `mushpi-server` running in Docker on any single-board computer — talks to each unit over Wi-Fi, polling readings and sending control commands. Inside the unit, a **Raspberry Pi Pico 2W** reads the **DHT11 sensor** on one GPIO pin and drives a **relay module** on three more. The relay module switches the three **5 V actuators** — humidifier, fan, and heating mat — on the 5 V rail, and a **dedicated 5 V supply** powers both the relay module and the Pico. A **force-provision switch** on GP0 is the only other input. The pin-level wiring is on the [Wiring](/pico-units/wiring) page.
 
 ## Reference implementation (the tested build)
 
@@ -118,7 +118,7 @@ Each role only needs to meet these requirements — the specific part above is w
 | Temperature & humidity sensor | A DHT11-compatible single-wire sensor the firmware can read |
 | Switching | Low-voltage DC switching for the actuators, rated for the actuator current — the relay module switches the 5 V rail only, and never carries mains |
 | Each actuator (humidifier, fan, heater) | A 5 V DC load that does the environmental work: add moisture, move air, add heat |
-| Power supply | A supply with enough current headroom for the full load — see [Power](/hardware/power) for the load table and why 5 V / 2 A+ is the tested minimum |
+| Power supply | A supply with enough current headroom for the full load — see [Power](/pico-units/power) for the load table and why 5 V / 2 A+ is the tested minimum |
 
 All of the Pico-side components are widely available from electronics distributors (Adafruit, SparkFun, Pimoroni, AliExpress, Amazon); search for "Raspberry Pi Pico 2W", "DHT11 module", and "5V 8-channel relay module".
 

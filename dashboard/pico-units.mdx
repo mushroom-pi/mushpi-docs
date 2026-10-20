@@ -22,11 +22,11 @@ A **Refresh** icon on each card re-reads that unit, and the list itself can be r
 
 **Connect new Pico** opens a four-step wizard that discovers and provisions a unit: **Diagnose**, **Connect**, **Setup**, **Finish**. You read the unit's LED to pick the right path, join the `mushpi-provision-…` Wi-Fi network the unit broadcasts, open the provisioning page, and the wizard then watches for the new unit to appear in the list.
 
-If the wizard cannot find the unit, you can **Register Manually** instead, which asks only for the unit's **handle**. The handle is how a unit identifies itself when it announces to the hub — the mechanics are covered in [Register a Pico unit](/deployment/pico-registration), and the Wi-Fi provisioning the wizard walks you through is covered in [Provisioning a Pico unit](/hardware/provisioning). A manually registered unit does not wait for the next sweep: the hub polls it once immediately at creation, so its first reading and its network address are captured right away.
+If the wizard cannot find the unit, you can **Register Manually** instead, which asks only for the unit's **handle**. The handle is how a unit identifies itself when it announces to the hub — the mechanics are covered in [Register a Pico unit](/deployment/pico-registration), and the Wi-Fi provisioning the wizard walks you through is covered in [Offline operation](/pico-units/offline-operation). A manually registered unit does not wait for the next sweep: the hub polls it once immediately at creation, so its first reading and its network address are captured right away.
 
 ## A unit's own page
 
-Click a unit to open its page. The top shows the unit's **name**, its health badge, its **handle**, its description, and a **firmware-compatibility badge** — the last of which appears only when the server flags the unit's API contract as incompatible. This hub page is not the unit's only page — the Pico itself serves a status-and-control page at its own address, with no hub required. See [The unit's own page](/hardware/unit-page).
+Click a unit to open its page. The top shows the unit's **name**, its health badge, its **handle**, its description, and a **firmware-compatibility badge** — the last of which appears only when the server flags the unit's API contract as incompatible. This hub page is not the unit's only page — the Pico itself serves a status-and-control page at its own address, with no hub required. See [The unit's own page](/pico-units/unit-page).
 
 From here you can:
 
@@ -39,11 +39,11 @@ Below the header, the page lays out the unit's details in cards.
 
 ### Controls
 
-The **Controls** card shows, and its dialog edits, the **target temperature**, the **target humidity**, and the **control-loop on/off toggle**. These targets are the numbers the control loop works toward — what the loop does with a target is explained in [How the control loop works](/configuration/hysteresis-control). With the loop on, the unit switches devices automatically to meet the targets; with it off, the devices have to be switched by hand. The targets and the loop switch are saved on the unit the moment they are applied, so they survive a power cut — see [What survives a restart](/hardware/pico-firmware#what-survives-a-restart).
+The **Controls** card shows, and its dialog edits, the **target temperature**, the **target humidity**, and the **control-loop on/off toggle**. These targets are the numbers the control loop works toward — what the loop does with a target is explained in [How the control loop works](/configuration/hysteresis-control). With the loop on, the unit switches devices automatically to meet the targets; with it off, the devices have to be switched by hand. The targets and the loop switch are saved on the unit the moment they are applied, so they survive a power cut — see [What survives a restart](/pico-units/firmware#what-survives-a-restart).
 
 ### Devices
 
-The **Devices** card shows whether the **humidifier**, **fan** and **heater** are currently on or off. Its dialog lets you switch them by hand, but only while the control loop is **off** — while the loop is on, the unit controls them and the switches are locked. While the loop stays off, your hand-set **fan and humidifier** positions are saved on the unit and survive a restart; the **heater** always comes back off after a restart (why, and what else survives, is on the [Pico firmware](/hardware/pico-firmware) page). The moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets.
+The **Devices** card shows whether the **humidifier**, **fan** and **heater** are currently on or off. Its dialog lets you switch them by hand, but only while the control loop is **off** — while the loop is on, the unit controls them and the switches are locked. While the loop stays off, your hand-set **fan and humidifier** positions are saved on the unit and survive a restart; the **heater** always comes back off after a restart (why, and what else survives, is on the [Pico firmware](/pico-units/firmware) page). The moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets.
 
 ### PIN mapping
 

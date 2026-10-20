@@ -1,0 +1,66 @@
+---
+title: "Offline Operation"
+sidebarTitle: "Offline operation"
+description: "How a Mushroom Pi Pico unit runs on its own open access point — regulating, serving its page, and accepting Wi-Fi setup and pin remapping — and how to join that network and set up Wi-Fi."
+---
+
+A Mushroom Pi unit does not need your network to work. When it has no usable Wi-Fi link it runs its **own open access point** and keeps going: it keeps regulating the climate, keeps serving its page, and lets you set up Wi-Fi or remap pins from any phone or laptop. This is a normal operating state, not a fault, and the unit can stay in it indefinitely.
+
+## When the unit runs its own access point
+
+The unit brings up its own network when any of the following is true:
+
+1. **No Wi-Fi configured** — `wifi.ssid` in `config.json` is empty (the normal path for a fresh unit).
+2. **GP0 held LOW at boot** — the force-provision input (see below).
+3. **Wi-Fi connection failed** after all connection attempts.
+4. **A Wi-Fi link drops at runtime** — the unit brings its own access point back up alongside it while it reconnects, so its page stays reachable. Regulation never stops.
+
+Throughout, the unit keeps reading its sensor and driving its relays against the targets it holds. The access point stays up for as long as the unit is in this state — it is not a temporary setup window that expires.
+
+## What you can do on the offline network
+
+Join the unit's network from any phone, laptop or tablet and open the unit page. Offline you can do everything the connected page does:
+
+- Read the live climate readings and relay states.
+- Change the target temperature and humidity, and toggle the control loop.
+- Hand-switch the fan, humidifier and heater (loop off).
+- Remap the GPIO pins — with the same validation as when the unit is connected.
+- Reboot the unit, and set up its Wi-Fi (below).
+
+What you do **not** get offline is the hub: no dashboard, no reading history, no batches or recipes — those are hub-only. See [How a Pico unit runs](/pico-units/index) for the full picture.
+
+## Routing on the unit
+
+The unit serves its pages at three fixed addresses, in every mode:
+
+- **`GET /`** — the unit page. This is the landing page: open the unit's address in a browser and you land on it.
+- **`GET /ui`** — an alias for the same unit page.
+- **`GET /provision`** — the Wi-Fi setup form, linked from the unit page's offline banner.
+
+## The Wi-Fi setup form
+
+The setup form lives at **`http://192.168.4.1:5000/provision`** while you are on the unit's own network. It asks for your network name (SSID) and password, and — once you submit — the unit saves the credentials, reboots, and joins your network.
+
+The form's card also links back to the unit page, with a note that the page works offline: you can read the climate, change the targets, toggle the loop and switch the devices even while the unit has no network.
+
+![The unit's Wi-Fi setup form at /provision. The page links back to the unit's status & control page, which works offline — you can read the climate, change targets, toggle the loop and switch devices even while the unit has no network.](/assets/screenshots/provisioning-page-01.png)
+
+## Join the unit's access point
+
+On your phone's Wi-Fi settings, look for the unit's network — **`mushpi-provision-XXXX`**, where `XXXX` is the last four hex digits of the access point's MAC address. It is open, with no password.
+
+![The phone's Wi-Fi list showing the unit's network mushpi-provision-9538 saved but not yet joined. Other networks are blurred out.](/assets/screenshots/provisioning-instructions-01.png)
+
+![The same Wi-Fi list with mushpi-provision-9538 connected. The phone warns "Connected to device. Can't provide Internet."](/assets/screenshots/provisioning-instructions-02.png)
+
+Your phone will warn that the network **"Can't provide Internet."** This is expected: the unit's access point has no internet uplink — it exists only to reach the unit. Keep the connection, and decline any prompt to switch back to mobile data or forget the network. Once you are connected, open **`http://192.168.4.1:5000`**.
+
+## Force-provision on GP0
+
+Hold **GP0 to GND** during boot to run the unit on its own access point even when Wi-Fi credentials are already configured — useful for changing networks or recovering from bad credentials. GP0 has an internal pull-up (33 kΩ–60 kΩ), so a momentary switch to GND is all that is needed. Release GP0 before the unit restarts, otherwise the next boot runs offline again.
+
+## Worth knowing
+
+- **The setup form works in both modes, but submission is offline-only.** On a connected unit the form still loads, but submitting it is refused with an HTTP 403 before anything is written — the unit is already on a network, so there is nothing to provision. Change networks by forcing the unit offline first.
+- **mDNS does not resolve on the access point.** The `<device_name>.local` name only works on a normal (station) network — on the unit's own access point, use the IP address `192.168.4.1` directly.
+- **The network is open.** The access point has no password, and the unit's HTTP API does not authenticate anyone on that network. Provision the unit on a network you trust, and keep this in mind if you run the unit offline in a shared space.

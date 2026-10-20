@@ -18,7 +18,7 @@ Mushroom Pi is built as three cooperating layers. You do not need to understand 
 
 ## Key features
 
-- **Environmental control** — temperature and humidity are held within your target ranges by a relay-based hysteresis control loop that runs entirely on the Pico, so control continues even if the hub is briefly unreachable.
+- **Environmental control** — temperature and humidity are held within your target ranges by a relay-based hysteresis control loop that runs entirely on the Pico, so control continues even if the hub is briefly unreachable. A unit needs no hub at all — it regulates and serves its own page on its own network, or on its own access point with no Wi-Fi ([Pico units](/pico-units/index)).
 - **Multi-unit support** — register as many Pico 2W units as you need. Each controls its own grow space, and the dashboard shows them all side by side.
 - **Batch and recipe management** — track cultivation runs as named batches and store reusable environment recipes (target temperature, humidity, and relay settings) so you can repeat a successful grow.
 - **Historical charts** — every sensor reading is stored in SQLite and rendered as interactive time-series charts, so you can spot trends and correlate environmental changes with outcomes.

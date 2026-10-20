@@ -104,7 +104,7 @@ The diagram shows the four kinds of connection, colour-coded by signal — **dat
 - The **dedicated 5 V supply** feeds both the relay module's coil rail and the Pico's VSYS pin (39); the Pico's 3V3(OUT) pin powers only the DHT11, not the relays. USB is shown as an alternative power path for the Pico.
 - All devices share a common **ground**.
 - The relay channels switch the three actuators on the **5 V rail** — each relay's NO/COM contact pair sits between the 5 V supply and its actuator, not between the Pico and the actuator.
-- The **force-provision switch** is a momentary switch from GP0 to ground; closing it at boot pulls GP0 low and arms provisioning mode.
+- The **force-provision switch** is a momentary switch from GP0 to ground; closing it at boot pulls GP0 low and arms offline (AP) mode.
 
 ## Wiring steps
 
@@ -142,11 +142,11 @@ For the USB-powered actuators (humidifier, heating mat), the 5 V line of the USB
 
 ### 4. Connect the force-provision switch
 
-A **momentary switch between GP0 (pin 1) and GND** arms provisioning mode: hold it closed during boot to force the unit into its access-point setup flow, even when Wi-Fi credentials are already configured. GP0 has an internal pull-up (33 kΩ–60 kΩ), so the switch alone is enough — closing it pulls the pin low. The full flow is on the [Provisioning](/hardware/provisioning) page.
+A **momentary switch between GP0 (pin 1) and GND** arms offline (AP) mode: hold it closed during boot to force the unit into its access-point setup flow, even when Wi-Fi credentials are already configured. GP0 has an internal pull-up (33 kΩ–60 kΩ), so the switch alone is enough — closing it pulls the pin low. The full flow is on the [Offline operation](/pico-units/offline-operation) page.
 
 ### 5. Connect the dedicated 5 V supply
 
-Power the relay module's VCC and the actuator circuits from a **dedicated 5 V / 2 A+ DC supply** — their combined draw exceeds what the Pico's USB port can provide, so the supply is mandatory and is not run through the Pico's USB port. The Pico itself can be powered via USB or its VSYS pin (39). During development you can power the Pico from your computer's USB port and use the same cable for flashing and serial-console access. The supply requirement and load table are on the [Power](/hardware/power) page.
+Power the relay module's VCC and the actuator circuits from a **dedicated 5 V / 2 A+ DC supply** — their combined draw exceeds what the Pico's USB port can provide, so the supply is mandatory and is not run through the Pico's USB port. The Pico itself can be powered via USB or its VSYS pin (39). During development you can power the Pico from your computer's USB port and use the same cable for flashing and serial-console access. The supply requirement and load table are on the [Power](/pico-units/power) page.
 
 ## Pin mapping reference (defaults)
 
@@ -194,10 +194,10 @@ One divergence worth knowing: the hub's valid-pin list currently **includes GP0*
 
 #### The boot rule — separate, stricter, terminal
 
-Independent of the request-scoped rule above, the firmware validates `config.json` once at boot, and the check is **stricter and terminal**. Any two roles that share a GPIO in the **effective** `pins` map — the `config.json` `pins` object shallow-merged over the built-in defaults — is a fatal config-validation error. The unit prints the colliding pair (`ERROR: GPIO 6 is assigned to both pins.humidifier and pins.heater — each device needs a distinct GPIO`), enters the repeating **CONFIG ERROR** blink state (see [Status indicators](/hardware/status-indicators)) and starts no services. There is no in-place fix and no degraded mode: correction means redeploying a corrected `config.json`. This rule is firmware-only — the mock has no boot-time config validation — and it is deliberately **not** folded into the request-merged rule above.
+Independent of the request-scoped rule above, the firmware validates `config.json` once at boot, and the check is **stricter and terminal**. Any two roles that share a GPIO in the **effective** `pins` map — the `config.json` `pins` object shallow-merged over the built-in defaults — is a fatal config-validation error. The unit prints the colliding pair (`ERROR: GPIO 6 is assigned to both pins.humidifier and pins.heater — each device needs a distinct GPIO`), enters the repeating **CONFIG ERROR** blink state (see [Status indicators](/pico-units/status-indicators)) and starts no services. There is no in-place fix and no degraded mode: correction means redeploying a corrected `config.json`. This rule is firmware-only — the mock has no boot-time config validation — and it is deliberately **not** folded into the request-merged rule above.
 
 Direct calls to the unit bypass only the hub's own pre-check. The firmware enforces the same reserved-pin and merged-view rules itself, returning **400** with a message that drops the article the hub keeps — `GPIO 6 is already assigned to humidifier`, not `the humidifier`. There is no clamping and no fallback: a reserved pin is refused with its named reason, exactly as on the page.
 
 ## After wiring
 
-Once all the connections are secure, flash the MicroPython firmware — see [Pico Firmware](/hardware/pico-firmware). After a successful boot the Pico exposes its REST API on **port 5000**; you can confirm it is reachable from any device on the same network at `http://<pico-ip>:5000/health`.
+Once all the connections are secure, flash the MicroPython firmware — see [Pico Firmware](/pico-units/firmware). After a successful boot the Pico exposes its REST API on **port 5000**; you can confirm it is reachable from any device on the same network at `http://<pico-ip>:5000/health`.

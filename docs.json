@@ -41,19 +41,16 @@
             "group": "Build & Self-Host",
             "pages": [
               {
-                "group": "Build the units",
+                "group": "Setting a Pico unit up",
                 "pages": [
-                  "hardware/components",
-                  "hardware/wiring",
-                  "hardware/power",
-                  "hardware/pico-firmware",
-                  "hardware/provisioning",
-                  "hardware/unit-page",
-                  "hardware/status-indicators"
+                  "pico-units/firmware",
+                  "pico-units/components",
+                  "pico-units/wiring",
+                  "pico-units/power"
                 ]
               },
               {
-                "group": "Deploy the hub",
+                "group": "Hub dashboard",
                 "pages": [
                   "deployment/sd-card-provisioning",
                   "deployment/self-hosting",
@@ -69,15 +66,29 @@
           {
             "group": "Using Mushroom Pi",
             "pages": [
-              "dashboard/index",
-              "dashboard/pico-units",
-              "dashboard/recipes",
-              "dashboard/batches",
-              "dashboard/monitoring",
-              "dashboard/finishing-a-batch",
-              "dashboard/server",
-              "dashboard/settings",
-              "dashboard/troubleshooting"
+              {
+                "group": "Using a Pico unit",
+                "pages": [
+                  "pico-units/index",
+                  "pico-units/unit-page",
+                  "pico-units/offline-operation",
+                  "pico-units/status-indicators"
+                ]
+              },
+              {
+                "group": "Hub dashboard",
+                "pages": [
+                  "dashboard/index",
+                  "dashboard/pico-units",
+                  "dashboard/recipes",
+                  "dashboard/batches",
+                  "dashboard/monitoring",
+                  "dashboard/finishing-a-batch",
+                  "dashboard/server",
+                  "dashboard/settings",
+                  "dashboard/troubleshooting"
+                ]
+              }
             ]
           },
           {
@@ -188,6 +199,34 @@
     {
       "source": "/api/pico/endpoints",
       "destination": "/api/overview"
+    },
+    {
+      "source": "/hardware/components",
+      "destination": "/pico-units/components"
+    },
+    {
+      "source": "/hardware/wiring",
+      "destination": "/pico-units/wiring"
+    },
+    {
+      "source": "/hardware/power",
+      "destination": "/pico-units/power"
+    },
+    {
+      "source": "/hardware/pico-firmware",
+      "destination": "/pico-units/firmware"
+    },
+    {
+      "source": "/hardware/provisioning",
+      "destination": "/pico-units/offline-operation"
+    },
+    {
+      "source": "/hardware/unit-page",
+      "destination": "/pico-units/unit-page"
+    },
+    {
+      "source": "/hardware/status-indicators",
+      "destination": "/pico-units/status-indicators"
     }
   ],
   "navbar": {
