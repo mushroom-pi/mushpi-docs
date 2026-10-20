@@ -1,19 +1,19 @@
 ---
 title: "Mushroom Pi: Automated Grow Control for Cultivators"
 sidebarTitle: "Home"
-description: "Mushroom Pi is an open-source three-tier system for automated mushroom cultivation. Monitor temperature, humidity, and relays from your browser."
+description: "Mushroom Pi is an open-source grow controller. A Raspberry Pi Pico 2W regulates temperature and humidity on its own, and an optional self-hosted hub adds a dashboard, history and batches."
 ---
 
-Mushroom Pi puts automated environmental control within reach of every home cultivator. A Raspberry Pi Pico 2W reads your grow space's temperature and humidity, drives humidifier, fan, and heater relays through a hysteresis control loop, and reports back to a self-hosted server you run on your own hardware — all visible and configurable from a web dashboard in your browser.
+Mushroom Pi puts automated environmental control within reach of every home cultivator. A Raspberry Pi Pico 2W reads your grow space's temperature and humidity and drives humidifier, fan, and heater relays through a hysteresis control loop — entirely on its own, with no server and no internet. Add a self-hosted hub when you want a dashboard, reading history, and batches on top.
 
 <CardGroup cols={2}>
   <Card title="Introduction" icon="seedling" href="/introduction">
-    Learn what Mushroom Pi is, how the three tiers fit together, and what you can do with it.
+    Learn what Mushroom Pi is, the three ways of working, and what you can do with it.
   </Card>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Flash the firmware, start the hub, and open the dashboard.
+    Flash the firmware, run a unit on its own, and optionally add the hub.
   </Card>
-  <Card title="Pico units" icon="microchip" href="/pico-units/components">
+  <Card title="Pico units" icon="microchip" href="/pico-units/index">
     How a unit runs, how to use its own page and its access point, and how to build, wire and power one.
   </Card>
   <Card title="API Reference" icon="code" href="/api/overview">
@@ -27,13 +27,13 @@ Mushroom Pi puts automated environmental control within reach of every home cult
   <Step title="Flash the firmware">
     Copy the MicroPython firmware onto your Raspberry Pi Pico 2W and set your Wi-Fi credentials.
   </Step>
-  <Step title="Start the hub">
-    Clone `mushpi-ops` and run `docker compose up -d` — one container serves the backend and dashboard on port 3000.
+  <Step title="Power up and use the unit">
+    Open the unit's own page to read the climate and set targets — no hub, no internet required.
   </Step>
-  <Step title="Open the dashboard">
-    Navigate to `http://<hub-name>.local:3000` in your browser and register your Pico unit.
+  <Step title="Add the hub dashboard (optional)">
+    Clone `mushpi-ops` and run `docker compose up -d` to add a dashboard, history and batches.
   </Step>
   <Step title="Start growing">
-    Create a batch, set your target temperature and humidity ranges, and let Mushroom Pi manage the environment.
+    Set your target temperature and humidity and let the unit hold them. If you added the hub, create a batch there to track the run.
   </Step>
 </Steps>

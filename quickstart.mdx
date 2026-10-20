@@ -1,34 +1,56 @@
 ---
-title: "Set Up Mushroom Pi: Firmware, Hub, and Dashboard"
+title: "Set Up a Pico Unit, With or Without a Hub"
 sidebarTitle: "Quickstart"
-description: "Flash the Pico firmware, start the hub with Docker Compose, and open the dashboard to register your first grow unit."
+description: "Flash the firmware and run a Pico unit on its own — no hub required — then optionally start the hub to add a dashboard, history and batches."
 ---
 
-This guide walks you through one working end-to-end setup: flash the firmware onto a Pico 2W, start the hub on a single-board computer, open the dashboard in your browser, and register your first grow unit. Each step is the shortest path that works; the Build & Self-Host pages carry the depth behind it.
+This guide walks you through running one Pico unit: flash the firmware, power it up, and use it. The hub is the optional second half — add it only when you want a dashboard, reading history, and batches. Each step is the shortest path that works; the Build & Self-Host pages carry the depth behind it.
 
 ## Before you start
 
-You need:
+**To build and run a unit you need:**
 
 - A Raspberry Pi Pico 2W.
+- A computer with a USB port, to flash the firmware over USB (any OS).
+- A DHT11 sensor and a relay module, wired to the Pico. See [Wiring](/pico-units/wiring).
+- A phone or laptop to open the unit's own page — no server, no hub, no internet connection.
+
+**For the hub dashboard, you also need (optional):**
+
 - A hub: any single-board computer (or small PC) that can run Docker on 64-bit Linux. The maintainer tests on a Raspberry Pi 3 Model B v1.2 (1 GB), so that is a known-good starting point, not a requirement. The 64-bit OS is a hard requirement — the published image is built for `arm64` and `amd64`, so a 32-bit OS cannot pull it.
 - Docker Engine with the Compose v2 plugin — the `docker compose` subcommand (with a space).
-- A DHT11 sensor and a relay module, wired to the Pico. See [Wiring](/pico-units/wiring).
+- A network the units and the hub share.
+
+The second list is optional: the first track alone ends with a working, regulating unit.
 
 ## 1. Flash the Pico
 
 1. Flash MicroPython v1.26.0 onto the Pico: hold **BOOTSEL**, connect it over USB, and drag the `.uf2` file onto the `RPI-RP2` drive. [Download v1.26.0](https://micropython.org/resources/firmware/RPI_PICO2_W-20250809-v1.26.0.uf2).
 2. Get the firmware files from the [mushpi-grow repository](https://github.com/mushroom-pi/mushpi-grow).
 3. Edit `config.json` and set:
-   - `wifi.ssid` and `wifi.password` — your network.
-   - `hub_url` — the hub's address only (scheme, host, port): `http://<hub-name>.local:3000`. The unit appends the registration path itself.
-   - `hub_secret` — must match the hub's `PICO_ANNOUNCE_SECRET` (step 2).
    - `device_name` — a unique name for this unit; it becomes the unit's `handle` on the hub.
+   - `wifi.ssid` and `wifi.password` — your network. Leave `wifi.ssid` empty and the unit runs its own open access point instead.
+   - `hub_url` and `hub_secret` — only if you run a hub (the optional section below); leave `hub_url` empty to run standalone.
 4. Upload `main.py`, `config.json`, and the `app/` folder to the Pico, plus the one third-party library `lib/microdot.py`. The repo's own tooling is the MicroPico VSCode extension, which uploads every `.py`, `.html`, and `config.json`; Thonny's file manager also works. The library is not tracked in the repo, so install it with `mip` or download it per the grow README.
 
 The full flashing walkthrough — wiring, pin map, and library setup — is on the [Pico firmware page](/pico-units/firmware). If you would rather not edit `config.json` at all, the unit offers its own open access point when it has no Wi-Fi: join `mushpi-provision-XXXX` and open `192.168.4.1:5000`, where the unit page is the landing page and the Wi-Fi setup form is linked from it. See [Offline operation](/pico-units/offline-operation).
 
-## 2. Start the hub
+## 2. Power up and use the unit
+
+Power on the Pico. If you set Wi-Fi it connects; if not, it runs its own open access point. Open the unit's page:
+
+- **On your Wi-Fi** — `http://<device_name>.local:5000/` (or the unit's IP from your router).
+- **On its own access point** — join `mushpi-provision-XXXX`, then open `192.168.4.1:5000`.
+
+You land on the unit page: live climate readings, relay states, and the controls. Change the target temperature and humidity and the unit regulates toward them — right now, on its own.
+
+You now have a working, regulating unit. No server, no hub, no internet required. The page and its controls are covered in [The unit's own page](/pico-units/unit-page); [Offline operation](/pico-units/offline-operation) covers the access point and Wi-Fi setup.
+
+## Optional: add the hub dashboard
+
+The hub adds a dashboard for several units, reading history, and batches and recipes. Skip this section entirely if a single unit is all you need.
+
+### Start the hub
 
 On the hub machine:
 
@@ -48,17 +70,17 @@ This pulls the published image `ghcr.io/mushroom-pi/mushpi` and starts one conta
 
 The full deployment walkthrough — SD-card provisioning, first boot, and the environment options — is on the [Self-hosting page](/deployment/self-hosting).
 
-## 3. Open the dashboard
+### Register your Pico unit
+
+If you skipped it earlier, set `hub_url` in the unit's `config.json` to the hub's address only — `http://<hub-name>.local:3000` — the unit appends the registration path itself, and `hub_secret` must match the hub's `PICO_ANNOUNCE_SECRET`.
 
 Open a browser on any device on the same network and go to `http://<hub-name>.local:3000`. The dashboard loads with an empty unit list — that is expected.
-
-## 4. Register your Pico unit
 
 Power on the Pico. It connects to your Wi-Fi and announces itself to the `hub_url` you set in `config.json` — the announce retries in the background until the hub accepts it, so a unit powered on before the hub is up does not need a reboot once the hub is running. The hub registers it by its `handle` — the `device_name` from `config.json` — and it appears in the dashboard within a minute or two.
 
 If it does not appear, check that `hub_secret` and `PICO_ANNOUNCE_SECRET` match, and that `hub_url` points at the hub's real address. The [Pico registration page](/deployment/pico-registration) covers the flow and its troubleshooting in detail.
 
-## 5. Start monitoring
+### Start monitoring
 
 Click your unit to open its detail view: live readings update every 60 seconds, alongside relay states and the temperature and humidity charts. To track a grow run, open **Batches**, create a batch, and set your target temperature and humidity ranges. Mushroom Pi holds those conditions from then on.
 

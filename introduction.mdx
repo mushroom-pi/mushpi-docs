@@ -1,39 +1,47 @@
 ---
-title: "What Is Mushroom Pi? Open-Source Mushroom Controller"
+title: "What Is Mushroom Pi?"
 sidebarTitle: "Introduction"
-description: "Mushroom Pi automates temperature and humidity control for mushroom cultivation using a Pico 2W, NestJS backend, and React dashboard."
+description: "Mushroom Pi is an open-source grow controller. A Raspberry Pi Pico 2W regulates temperature and humidity on its own — no server required — and an optional self-hosted hub adds a dashboard, history and batches."
 ---
 
-Mushroom Pi is an open-source automated grow controller that keeps your mushroom cultivation environment on target without constant manual intervention. You set the temperature and humidity ranges you want, and the system handles the rest — switching a humidifier, fan, or heater on and off as conditions drift, logging every reading, and giving you a live dashboard so you always know what is happening inside your grow space.
+Mushroom Pi is an open-source automated grow controller. At its heart is a Raspberry Pi Pico 2W that reads a temperature and humidity sensor and drives a humidifier, a fan, and a heater to hold your targets — and it does all of that entirely on its own, with no server, no dashboard, and no internet. The hub is what you add when you want more, not something the system depends on to work.
 
-## The three tiers
+## The three ways of working
 
-Mushroom Pi is built as three cooperating layers. You do not need to understand the internals to use it, but knowing what each layer does helps you troubleshoot and extend the system.
+Mushroom Pi works the same way at its core in every setup: a Pico unit reads its sensor and drives its relays against the targets it holds. What changes is where you look at it.
 
-**Firmware (Pico 2W)** — a small MicroPython program that runs directly on your Raspberry Pi Pico 2W. It reads a DHT11 temperature and humidity sensor every 10 seconds and drives up to three relays (humidifier, fan, and heater) through a hysteresis control loop. The loop keeps devices from switching on and off too rapidly by only acting when a reading crosses a configurable threshold. The Pico also exposes a small REST API on port 5000 so the backend can poll it and send commands.
+1. **Just the unit, no Wi-Fi.** A freshly built unit with no network still regulates — it runs its own open Wi-Fi access point, and you reach its page on any phone or laptop to read the climate and change the targets.
+2. **The unit on your Wi-Fi.** Join the unit to your home network and reach its page at a normal address. Still no server, no hub, no internet — the unit regulates and serves its own page all by itself.
+3. **Units plus a self-hosted hub.** Add the hub when you want a dashboard for several units, reading history, and batches and recipes. The hub is what you add on top — a unit never depends on it.
 
-**Backend server (NestJS)** — a NestJS 11 application that runs in a Docker container on the hub: any single-board computer that can run Docker (a Raspberry Pi 3 Model B v1.2 with a 64-bit OS is what the maintainer tests on). Every 60 seconds it polls each registered Pico unit, records the sensor readings in a local SQLite database, and proxies any control commands you send from the dashboard back to the correct unit. It also exposes a full OpenAPI REST API that the dashboard — and any other client you build — consumes.
+The detail — exactly what you get in each mode and what stays hub-only — is on [How a Pico unit runs](/pico-units/index).
 
-**Web dashboard (React)** — a React 19 single-page application served by the same container as the backend. You open it in any browser on your local network. From here you monitor live conditions, view historical charts, manage cultivation batches and recipes, and adjust relay thresholds — no command line required.
+## What every unit does
 
-## Key features
+- **Environmental control** — a relay-based hysteresis control loop runs on the unit, holding temperature and humidity near your targets. The hub is never in the control path.
+- **Its own page** — every unit serves a page showing live readings, relay states, and controls, reachable with no hub, no sign-in, and no internet.
+- **Settings that stick** — the targets and the control-loop switch are saved on the unit, so they survive a power cut and are restored on the next boot.
+- **Offline operation** — with no Wi-Fi at all, the unit runs its own open access point and keeps regulating; you reach it from any phone or laptop.
 
-- **Environmental control** — temperature and humidity are held within your target ranges by a relay-based hysteresis control loop that runs entirely on the Pico, so control continues even if the hub is briefly unreachable. A unit needs no hub at all — it regulates and serves its own page on its own network, or on its own access point with no Wi-Fi ([Pico units](/pico-units/index)).
-- **Multi-unit support** — register as many Pico 2W units as you need. Each controls its own grow space, and the dashboard shows them all side by side.
-- **Batch and recipe management** — track cultivation runs as named batches and store reusable environment recipes (target temperature, humidity, and relay settings) so you can repeat a successful grow.
-- **Historical charts** — every sensor reading is stored in SQLite and rendered as interactive time-series charts, so you can spot trends and correlate environmental changes with outcomes.
-- **Self-hosted** — everything runs on your own hardware. No cloud account and no subscription: your readings stay in a SQLite database on your own hub. To reach the dashboard when you are away from home you set up Tailscale (a private, encrypted mesh) yourself; the [remote-access guide](/configuration/remote-access) covers it.
-- **Open source** — every component — firmware, backend, dashboard, mock, and ops tooling — is published on GitHub under an open licence.
+## What the hub adds
+
+- **Dashboard** — see several units side by side and manage them from one screen.
+- **Reading history** — the hub stores every reading and charts it over time.
+- **Batches and recipes** — track cultivation runs and reuse environment settings.
+- **Self-hosted** — everything runs on your own hardware, with no cloud account and no subscription. To reach the dashboard away from home you set up Tailscale yourself; the [remote-access guide](/configuration/remote-access) covers it.
+
+Open source throughout: firmware, server, dashboard, mock and ops tooling are all published on GitHub under an open licence.
+
+See the [Hub dashboard](/dashboard/index) guide for the full walkthrough, and [System overview](/system-overview) for how the pieces fit together.
 
 ## How it works
 
-When you power on a Pico unit, it connects to your Wi-Fi network, starts reading the DHT11 sensor, and begins running the relay control loop toward the temperature and humidity targets you last set — the unit saves those targets itself, so they survive a power cut and are restored on the next boot. Every 60 seconds, the backend reaches out to the Pico, collects the latest reading, and saves it to the database.
+Power on a unit and it reads its sensor on its own loop, drives the relays toward the targets you last set, and serves its own page. No network and no hub are involved — this is the whole product for a single grow space.
 
-You open the dashboard in your browser and see the current temperature and humidity for each registered unit, alongside charts of recent history. When you want to change a target — say, raise the humidity threshold for pinning — you update it in the dashboard. The backend sends the new setting to the Pico, which applies it immediately and continues controlling the relays against the new target.
-
-If you are starting a new cultivation run, you create a batch in the dashboard, optionally attach a recipe that captures your preferred environmental settings, and the system tracks that run's conditions over its full lifetime.
+If you run a hub, the unit announces itself to it, the hub polls the unit every 60 seconds and stores each reading, and the dashboard reflects them. Changing a target from the dashboard sends it to the unit, which applies it and keeps regulating on its own.
 
 ## Next steps
 
-- [Quickstart](/quickstart) — get your first Pico unit and hub running in one session.
-- [System overview](/system-overview) — see how the firmware, backend, and dashboard communicate in detail.
+- [Quickstart](/quickstart) — run your first unit (and, optionally, the hub).
+- [System overview](/system-overview) — how the firmware, server, and dashboard fit together.
+- [How a Pico unit runs](/pico-units/index) — the three ways of working, in full.

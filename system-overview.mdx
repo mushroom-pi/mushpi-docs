@@ -1,10 +1,10 @@
 ---
 title: "Mushroom Pi Architecture: Firmware, Backend, Dashboard"
 sidebarTitle: "System Overview"
-description: "Learn how the Pico firmware, NestJS backend, and React dashboard combine to give you automated control over your mushroom grow environment."
+description: "Learn how the Pico firmware, NestJS backend, and React dashboard combine to give you automated control over your mushroom grow environment — and how a unit runs on its own without them."
 ---
 
-Mushroom Pi is made up of three cooperating components that each run on separate hardware and communicate over your local network. Understanding how they fit together helps you configure the system correctly, extend it to multiple grow spaces, and quickly pinpoint the source of any problem that arises.
+Mushroom Pi is made up of three cooperating components that each run on separate hardware and communicate over your local network. Understanding how they fit together helps you configure the system correctly, extend it to multiple grow spaces, and quickly pinpoint the source of any problem that arises. One component — the Pico unit — is self-sufficient and runs without the other two; the rest of this page shows how the three combine into a full deployment.
 
 ## The three components
 
@@ -13,6 +13,14 @@ Mushroom Pi is made up of three cooperating components that each run on separate
 **Backend server** — a NestJS 11 application running inside a Docker container on the hub: any single-board computer that can run Docker (a Raspberry Pi 3 Model B v1.2 with a 64-bit OS is the tested reference). Every 60 seconds it polls every registered Pico unit, stores the readings in a local SQLite database, and makes them available through a full OpenAPI REST API. When you change a relay threshold or environmental target in the dashboard, the backend proxies that command to the correct Pico immediately.
 
 **Web dashboard** — a React 19 single-page application served by the same container as the backend. You open it in any browser on your local network — no app installation required. It consumes the backend's OpenAPI specification through an auto-generated client, so every endpoint the backend exposes is available in the UI. From here you monitor live conditions, browse charts, and manage batches and recipes.
+
+## The unit runs on its own
+
+The three components above describe a *full* Mushroom Pi deployment — but a Pico unit is not a thin client that only works when the other two are present. A unit regulates its climate entirely on its own: it reads its DHT11 sensor, drives its relays against the targets it holds, and keeps doing so with no network and no hub. Those targets are saved on the unit, so they survive a power cut and are restored on the next boot.
+
+The unit also serves its own web page — a self-contained view of its live readings, relay states and controls — reachable with no hub, no sign-in and no internet, either on your Wi-Fi or on the unit's own access point. Control does not flow through the hub: the hub is never in the loop that drives the relays.
+
+What the hub adds is aggregation and record-keeping — a dashboard for several units, reading history, and batches and recipes. A unit never depends on any of that to keep growing. The three operating modes are laid out in full on [How a Pico unit runs](/pico-units/index).
 
 ## How polling works
 
