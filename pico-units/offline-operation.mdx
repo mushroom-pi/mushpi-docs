@@ -37,6 +37,16 @@ The unit serves its pages at three fixed addresses, in every mode:
 - **`GET /ui`** — an alias for the same unit page.
 - **`GET /provision`** — the Wi-Fi setup form, linked from the unit page's offline banner.
 
+## Join the unit's access point
+
+On your phone's Wi-Fi settings, look for the unit's network — **`mushpi-provision-XXXX`**, where `XXXX` is the last four hex digits of the access point's MAC address. It is open, with no password.
+
+![The phone's Wi-Fi list showing the unit's network mushpi-provision-9538 saved but not yet joined. Other networks are blurred out.](/assets/screenshots/provisioning-instructions-01.png)
+
+Your phone will warn that the network **"Can't provide Internet."** This is expected: the unit's access point has no internet uplink — it exists only to reach the unit. Keep the connection, and decline any prompt to switch back to mobile data or forget the network. Once you are connected, open **`http://192.168.4.1:5000`**.
+
+![The same Wi-Fi list with mushpi-provision-9538 connected. The phone warns "Connected to device. Can't provide Internet."](/assets/screenshots/provisioning-instructions-02.png)
+
 ## The Wi-Fi setup form
 
 The setup form lives at **`http://192.168.4.1:5000/provision`** while you are on the unit's own network. It asks for your network name (SSID) and password, and — once you submit — the unit saves the credentials, reboots, and joins your network.
@@ -44,16 +54,6 @@ The setup form lives at **`http://192.168.4.1:5000/provision`** while you are on
 The form's card also links back to the unit page, with a note that the page works offline: you can read the climate, change the targets, toggle the loop and switch the devices even while the unit has no network.
 
 ![The unit's Wi-Fi setup form at /provision. The page links back to the unit's status & control page, which works offline — you can read the climate, change targets, toggle the loop and switch devices even while the unit has no network.](/assets/screenshots/provisioning-page-01.png)
-
-## Join the unit's access point
-
-On your phone's Wi-Fi settings, look for the unit's network — **`mushpi-provision-XXXX`**, where `XXXX` is the last four hex digits of the access point's MAC address. It is open, with no password.
-
-![The phone's Wi-Fi list showing the unit's network mushpi-provision-9538 saved but not yet joined. Other networks are blurred out.](/assets/screenshots/provisioning-instructions-01.png)
-
-![The same Wi-Fi list with mushpi-provision-9538 connected. The phone warns "Connected to device. Can't provide Internet."](/assets/screenshots/provisioning-instructions-02.png)
-
-Your phone will warn that the network **"Can't provide Internet."** This is expected: the unit's access point has no internet uplink — it exists only to reach the unit. Keep the connection, and decline any prompt to switch back to mobile data or forget the network. Once you are connected, open **`http://192.168.4.1:5000`**.
 
 ## Force-provision on GP0
 
