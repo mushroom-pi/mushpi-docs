@@ -10,7 +10,7 @@ The first time the container starts, the hub prepares itself and then simply wai
 
 When you run `docker compose up -d` for the first time, the container does the preparation for you:
 
-1. It creates the data directory on the host — the path you set as `MUSHPI_DATA_DIR`, defaulting to `./mushpi-data` beside the compose file — along with its `images` and `logs` subdirectories.
+1. It creates the data directory on the host — the path you set as `MUSHPI_HUB_DATA_DIR`, defaulting to `./mushpi-data` beside the compose file — along with its `images` and `logs` subdirectories.
 2. It corrects the directory's ownership so the server user can write to it. You never create the directory yourself.
 3. The server creates its SQLite database at `/data/app.sqlite` inside that directory.
 
@@ -21,7 +21,7 @@ Every later start reuses the same directory, so your data survives restarts and 
 The automatic ownership fix needs to run `chown` inside the container, which some filesystems refuse — NFS with `root_squash` is the classic case. Only in that case — the container's own error message names it — prepare the directory on the host yourself, then start the stack again:
 
 ```bash
-sudo mkdir -p <MUSHPI_DATA_DIR> && sudo chown -R 1000:1000 <MUSHPI_DATA_DIR>
+sudo mkdir -p <MUSHPI_HUB_DATA_DIR> && sudo chown -R 1000:1000 <MUSHPI_HUB_DATA_DIR>
 ```
 
 No other situation requires manual directory preparation.

@@ -10,7 +10,7 @@ Mushroom Pi ships as a single container image that bundles the NestJS backend an
 
 The hub is three things, and only three:
 
-- **One image.** You pull `ghcr.io/mushroom-pi/mushpi` from GitHub Container Registry. The package is public, so the pull needs no credentials and you never build it yourself.
+- **One image.** You pull `ghcr.io/mushroom-pi/mushpi-hub` from GitHub Container Registry. The package is public, so the pull needs no credentials and you never build it yourself.
 - **One port.** Port 3000 serves the built dashboard and the API together — production is same-origin, so there is no separate frontend to run.
 - **One data directory.** All persistent state lives in one host directory that you choose: the SQLite database at `/data/app.sqlite`, plus uploaded images and logs.
 
@@ -48,8 +48,8 @@ The hub reads its configuration from a `.env` file beside the compose file. Copy
 | Variable | Required | What it sets |
 |---|---|---|
 | `PICO_ANNOUNCE_SECRET` | **Yes** | The shared secret Pico units send in the `X-Pico-Secret` header when they announce. The server refuses to boot without it in production. Generate one with `openssl rand -hex 32`, and use the same value as `hub_secret` in every unit's `config.json`. |
-| `MUSHPI_DATA_DIR` | No | The host directory that holds all persistent state. Defaults to `./mushpi-data` beside the compose file. Point it somewhere you back up. |
-| `MUSHPI_IMAGE_TAG` | No | Which image tag to pull. Defaults to `latest`. |
+| `MUSHPI_HUB_DATA_DIR` | No | The host directory that holds all persistent state. Defaults to `./mushpi-data` beside the compose file. Point it somewhere you back up. |
+| `MUSHPI_HUB_IMAGE_TAG` | No | Which image tag to pull. Defaults to `latest`. |
 
 These are the compose interpolation variables plus the one required server variable. The server's remaining settings — `APP_HTTPS_ENABLED`, the opt-in `MAX_REQUESTS`/`MAX_REQUESTS_TIME` rate-limiting pair, logging and reading retention — are covered in [Server environment variables](/deployment/environment).
 
@@ -58,8 +58,8 @@ These are the compose interpolation variables plus the one required server varia
 Clone the deployment repository and start the stack:
 
 ```bash
-git clone https://github.com/mushroom-pi/mushpi-ops.git mushpi-ops
-cd mushpi-ops
+git clone https://github.com/mushroom-pi/mushpi-hub.git mushpi-hub
+cd mushpi-hub
 cp .env.example .env
 ```
 
@@ -85,12 +85,14 @@ If it does not load, check the container state:
 
 ```bash
 docker compose ps
-docker compose logs mushpi
+docker compose logs mushpi-hub
 ```
 
 ## Validation status
 
-This deployment path has been validated in a local build and smoke test. It has not yet been validated on the target hardware, so treat the first run on your own hub as a test.
+This deployment path has been validated against a locally built image in a build and smoke test; it has not yet been validated on the target hardware, so treat the first run on your own hub as a test.
+
+One more caveat, stated plainly: `mushpi-hub:latest` **does not exist yet** — no image has been published under the new name and no `main` branch exists, so a clean-machine pull has never been tested. The clean-machine path above (`git clone` + `docker compose pull` + `up -d` with the default `MUSHPI_HUB_IMAGE_TAG`) is verified at the first `latest` publish, not before. Until that publish, the pull step cannot succeed with the default tag.
 
 ## Next steps
 

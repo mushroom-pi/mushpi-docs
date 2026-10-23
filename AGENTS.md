@@ -42,8 +42,8 @@ Migrating a page is a **move, not a rewrite**: place the already-written content
 | Server API shape | `mushpi-server/spec/openapi.json` (generated on pre-commit) |
 | Pico REST API shape | `mushpi-grow/spec/openapi.yaml` (hand-authored) |
 | Hardware BOM, pin map, power data | `mushpi-grow/HARDWARE.md` (electronics agent owns it — never edit) |
-| Packaging, release and deployment decisions | `mushpi-ops/MAINTAINING.md` (internals) · `mushpi-ops/DEPLOYMENT.md` (operator-facing) |
-| Version and release semantics | `releases.mdx` for what a release number means to a reader; the **normative** rules live in `mushpi-ops/MAINTAINING.md` §Version & Release Semantics |
+| Packaging, release and deployment decisions | `mushpi-hub/MAINTAINING.md` (internals) · `mushpi-hub/DEPLOYMENT.md` (operator-facing) |
+| Version and release semantics | `releases.mdx` for what a release number means to a reader; the **normative** rules live in `mushpi-hub/MAINTAINING.md` §Version & Release Semantics |
 | Feature status, phase, priority, effort | The GitHub Project `mushroom-pi` #1 — read via `mushpi-product-owner` |
 | Diagram palette and emoji map | `REFERENCE.md` §Diagram theme — the single source of truth for the project's Mermaid colours and emojis |
 | Mermaid shape/legend conventions | The `mermaid-diagram-conventions` skill |

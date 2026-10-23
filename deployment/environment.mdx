@@ -50,7 +50,7 @@ The file is generated from the server's Joi validation schema (`yarn docs:env`) 
 
 ## Not server environment variables
 
-Two variables you set in the deployment `.env` are **not** read by the server: `MUSHPI_DATA_DIR` (the host directory holding all persistent state) and `MUSHPI_IMAGE_TAG` (which image tag to pull). They are interpolation variables consumed by the compose file in the deployment repository, and are documented in [Self-hosting](/deployment/self-hosting).
+Two variables you set in the deployment `.env` are **not** read by the server: `MUSHPI_HUB_DATA_DIR` (the host directory holding all persistent state) and `MUSHPI_HUB_IMAGE_TAG` (which image tag to pull). They are interpolation variables consumed by the compose file in the deployment repository, and are documented in [Self-hosting](/deployment/self-hosting).
 
 ## Not server settings either
 

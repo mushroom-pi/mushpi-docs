@@ -38,7 +38,7 @@ The backend identifies each unit by its **`handle`** — the Pico's `device_name
 
 ## Repositories
 
-Every component lives in its own open-source repository. You only need to touch these directly if you are extending or contributing to Mushroom Pi — to run it, clone `mushpi-ops` and `docker compose up -d`, and the compose file pulls the published image for you.
+Every component lives in its own open-source repository. You only need to touch these directly if you are extending or contributing to Mushroom Pi — to run it, clone `mushpi-hub` and `docker compose up -d`, and the compose file pulls the published image for you.
 
 | Repository | What it contains |
 |---|---|
@@ -46,5 +46,5 @@ Every component lives in its own open-source repository. You only need to touch 
 | [`mushpi-server`](https://github.com/mushroom-pi/mushpi-server) | NestJS 11 backend — 60-second polling, SQLite storage, control proxying, batches, recipes, OpenAPI spec |
 | [`mushpi-client`](https://github.com/mushroom-pi/mushpi-client) | React 19 dashboard — auto-generated OpenAPI client, MUI v7, TanStack Query, Recharts |
 | [`mushpi-mock`](https://github.com/mushroom-pi/mushpi-mock) | FastAPI mock Pico unit — mirrors the `mushpi-grow` REST API for demos and testing without hardware |
-| [`mushpi-ops`](https://github.com/mushroom-pi/mushpi-ops) | The hub entry point — clone it and run `docker compose up -d` to pull `ghcr.io/mushroom-pi/mushpi` and start the backend and dashboard |
+| [`mushpi-hub`](https://github.com/mushroom-pi/mushpi-hub) | The hub entry point — clone it and run `docker compose up -d` to pull `ghcr.io/mushroom-pi/mushpi-hub` and start the backend and dashboard |
 | [`mushpi-docs`](https://github.com/mushroom-pi/mushpi-docs) | This documentation site |

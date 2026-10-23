@@ -55,8 +55,8 @@ The hub adds a dashboard for several units, reading history, and batches and rec
 On the hub machine:
 
 ```bash
-git clone https://github.com/mushroom-pi/mushpi-ops.git mushpi-ops
-cd mushpi-ops
+git clone https://github.com/mushroom-pi/mushpi-hub.git mushpi-hub
+cd mushpi-hub
 cp .env.example .env
 ```
 
@@ -66,7 +66,7 @@ Edit `.env` and set `PICO_ANNOUNCE_SECRET` to a value you choose. Pico units sen
 docker compose up -d
 ```
 
-This pulls the published image `ghcr.io/mushroom-pi/mushpi` and starts one container that serves the backend and the dashboard together on port 3000 — you never build anything locally. To run a specific release, set `MUSHPI_IMAGE_TAG` in `.env` (it defaults to `latest`).
+This pulls the published image `ghcr.io/mushroom-pi/mushpi-hub` and starts one container that serves the backend and the dashboard together on port 3000 — you never build anything locally. To run a specific release, set `MUSHPI_HUB_IMAGE_TAG` in `.env` (it defaults to `latest`).
 
 The full deployment walkthrough — SD-card provisioning, first boot, and the environment options — is on the [Self-hosting page](/deployment/self-hosting).
 

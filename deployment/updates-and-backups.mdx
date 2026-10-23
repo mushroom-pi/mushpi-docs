@@ -8,7 +8,7 @@ Updating Mushroom Pi is deliberately minimal: the deployment is one container pu
 
 ## Update the stack
 
-**Back up first** (next section) — then, from the `mushpi-ops` checkout on the hub — the directory that holds `docker-compose.yml`:
+**Back up first** (next section) — then, from the `mushpi-hub` checkout on the hub — the directory that holds `docker-compose.yml`:
 
 ```bash
 docker compose pull && docker compose up -d
@@ -16,15 +16,23 @@ docker compose pull && docker compose up -d
 
 `docker compose pull` fetches the newest image, and `docker compose up -d` recreates the container on it. The update is a container recreate — that is the whole mechanism. Your data is not touched: the persistent state is a host directory bind-mounted into the container, not container storage.
 
+### One-time migration from the old compose names
+
+The compose service and the image were renamed: the service and its container from `mushpi` to `mushpi-hub`, and the image from `ghcr.io/mushroom-pi/mushpi` to `ghcr.io/mushroom-pi/mushpi-hub` (the `.env` variables were renamed to `MUSHPI_HUB_DATA_DIR` and `MUSHPI_HUB_IMAGE_TAG` to match).
+
+After pulling a release that carries the rename, an existing deployment must run `docker compose down` **before** `docker compose up -d`. The old `mushpi` container still holds port 3000, and a plain `up -d` starts the new `mushpi-hub` container alongside it — the port binding collides and the new container fails to start. `docker compose down` removes the old container first.
+
+Nothing migrates: units, batches and readings survive unchanged, because all persistent state lives in the `MUSHPI_HUB_DATA_DIR` bind mount on the host, and the renamed service mounts the same host directory. The rename changes the container's name and image — not its data.
+
 ### Rolling back
 
-Pin the image tag the stack pulls by setting `MUSHPI_IMAGE_TAG` in `.env` to the older release tag (for example `MUSHPI_IMAGE_TAG=v0.8.0`), then bring the stack up again:
+Pin the image tag the stack pulls by setting `MUSHPI_HUB_IMAGE_TAG` in `.env` to the older release tag (for example `MUSHPI_HUB_IMAGE_TAG=v0.8.0`), then bring the stack up again:
 
 ```bash
 docker compose up -d
 ```
 
-By default the stack pulls `ghcr.io/mushroom-pi/mushpi:latest` — `MUSHPI_IMAGE_TAG` defaults to `latest` in `docker-compose.yml` and is documented (commented out) in `.env.example`. Removing the override and running `docker compose pull && docker compose up -d` returns you to the newest image.
+By default the stack pulls `ghcr.io/mushroom-pi/mushpi-hub:latest` — `MUSHPI_HUB_IMAGE_TAG` defaults to `latest` in `docker-compose.yml` and is documented (commented out) in `.env.example`. Removing the override and running `docker compose pull && docker compose up -d` returns you to the newest image.
 
 ## The demo's nightly reset
 
@@ -54,12 +62,12 @@ sudo systemctl disable --now mushpi-demo-reset.timer  # stop the nightly reset
 The following are **not implemented today**, so they are not documented here — none of them is a step this deployment performs:
 
 - **Image pruning** — no cleanup of old images is part of the workflow.
-- **An explicit stop before pulling** — nothing stops the stack before `docker compose pull`; Compose recreates the container in one step.
+- **An explicit stop before pulling** — nothing stops the stack before `docker compose pull`; Compose recreates the container in one step. (The one-time rename migration above is the exception: the renamed service cannot replace the old container in place, so a `docker compose down` runs first.)
 - **A post-update health check** — there is no documented verification step beyond the container running.
 
 ## Back up the data directory
 
-All persistent state lives in **one directory on the host** — whatever `MUSHPI_DATA_DIR` points at in `.env` (default `./mushpi-data` next to the compose file). That directory holds the SQLite database (`app.sqlite`), the uploaded images and the logs.
+All persistent state lives in **one directory on the host** — whatever `MUSHPI_HUB_DATA_DIR` points at in `.env` (default `./mushpi-data` next to the compose file). That directory holds the SQLite database (`app.sqlite`), the uploaded images and the logs.
 
 To back it up, **stop the stack, copy the directory, start the stack again**:
 
@@ -69,7 +77,7 @@ cp -a ./mushpi-data /path/to/backup/     # or: rsync -a ./mushpi-data /path/to/b
 docker compose start
 ```
 
-Substitute your `MUSHPI_DATA_DIR` path if you set one. Copying the directory **while the stack runs is not the documented approach** — the SQLite database can be mid-write, which is exactly what stopping avoids.
+Substitute your `MUSHPI_HUB_DATA_DIR` path if you set one. Copying the directory **while the stack runs is not the documented approach** — the SQLite database can be mid-write, which is exactly what stopping avoids.
 
 ## Pico firmware updates
 

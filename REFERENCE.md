@@ -10,7 +10,7 @@ What it does **not** include, and therefore changes how we work:
 
 - **No preview deployments.** There is no per-branch preview URL, so "review before publication" has to be solved some other way — a local `mint dev` preview, a pull request, or a manual gate. Do not promise a Mintlify preview in a review workflow.
 - **No analytics, no admin APIs, no webhooks, no rollbacks.**
-- **Multi-repo is Enterprise-only** — this site is the only repository Mintlify can read, so a page cannot link to a file in a sibling repository. A spec, however, **can be referenced by URL**: `docs.json` points the API Reference groups at the raw GitHub URLs of the server's and the Pico's specifications, so nothing is vendored here. Two consequences to remember: the spec is read from the **pushed** branch, so `mint validate` and `mint dev` judge what is pushed rather than what is in a sibling working tree; and a spec change does **not** trigger a docs rebuild (the deploy trigger is tracked as `mushpi-ops#6`).
+- **Multi-repo is Enterprise-only** — this site is the only repository Mintlify can read, so a page cannot link to a file in a sibling repository. A spec, however, **can be referenced by URL**: `docs.json` points the API Reference groups at the raw GitHub URLs of the server's and the Pico's specifications, so nothing is vendored here. Two consequences to remember: the spec is read from the **pushed** branch, so `mint validate` and `mint dev` judge what is pushed rather than what is in a sibling working tree; and a spec change does **not** trigger a docs rebuild (the deploy trigger is tracked as `mushpi-hub#6`).
 - **No PDF export** on Starter; `mint export` produces the offline snapshot instead.
 
 ## CLI mechanics
@@ -125,4 +125,4 @@ An artifact of Mintlify's Atlas generation, which produced the initial page set 
 
 - Second person, active voice, one idea per sentence — the site is read by a grower with a Pico on the bench, not by a contributor browsing a repository.
 - A page opens with what the reader will be able to do, then the steps, then troubleshooting.
-- Hardware pages must match `mushpi-grow/HARDWARE.md`. **The deployment pages are themselves the operator guide** — `mushpi-ops/DEPLOYMENT.md` was reduced to release-repo notes pointing here, so a change to a deployment procedure lands on the site and the release repo follows, never the other way round. Disagreement anywhere is a flag to the orchestrator, never a silent edit on the site.
+- Hardware pages must match `mushpi-grow/HARDWARE.md`. **The deployment pages are themselves the operator guide** — `mushpi-hub/DEPLOYMENT.md` was reduced to release-repo notes pointing here, so a change to a deployment procedure lands on the site and the release repo follows, never the other way round. Disagreement anywhere is a flag to the orchestrator, never a silent edit on the site.

@@ -65,10 +65,10 @@ NestJS 11 REST API running inside the hub's container. Six responsibilities:
 MicroPython firmware on each Raspberry Pi Pico 2W. Runs a hysteresis-based control loop that toggles relays (humidifier, fan, heater) based on DHT11 readings vs. configured setpoints. Exposes a REST API on port 5000. Announces itself to the server on boot.
 
 ### Database
-Single SQLite file in the hub's bind-mounted data directory: the host directory `MUSHPI_DATA_DIR` (default `./mushpi-data`) is mounted at `/data` in the container, and the database lives there as `app.sqlite`. Stores all application data: Pico unit metadata, sensor readings, cultivation batches, recipes, and global settings.
+Single SQLite file in the hub's bind-mounted data directory: the host directory `MUSHPI_HUB_DATA_DIR` (default `./mushpi-data`) is mounted at `/data` in the container, and the database lives there as `app.sqlite`. Stores all application data: Pico unit metadata, sensor readings, cultivation batches, recipes, and global settings.
 
-### Published Image & Compose (`mushpi-ops`)
-The release/packaging repository wraps the containers above into the product a grower actually runs: a single published image, `ghcr.io/mushroom-pi/mushpi`, bundling the backend API and the built dashboard on one port (3000), plus the compose service definition that pulls that image, runs it on the host's network and binds the hub's own port directly rather than publishing a container port, and bind-mounts the host data directory at `/data`. `mushpi-ops` is not a runtime tier — it contains no application code; it packages the runtime. How the image is built and published is covered in [Release pipeline](/architecture/release-pipeline).
+### Published Image & Compose (`mushpi-hub`)
+The release/packaging repository wraps the containers above into the product a grower actually runs: a single published image, `ghcr.io/mushroom-pi/mushpi-hub`, bundling the backend API and the built dashboard on one port (3000), plus the compose service definition that pulls that image, runs it on the host's network and binds the hub's own port directly rather than publishing a container port, and bind-mounts the host data directory at `/data`. `mushpi-hub` is not a runtime tier — it contains no application code; it packages the runtime. How the image is built and published is covered in [Release pipeline](/architecture/release-pipeline).
 
 ## Technology Stack
 
@@ -77,7 +77,7 @@ The release/packaging repository wraps the containers above into the product a g
 | Web Dashboard | TypeScript | React 19 | MUI v7, TanStack Query v5, Recharts v3, React Router v7 |
 | Backend API | TypeScript | NestJS 11 | TypeORM, SQLite, Swagger/OpenAPI, @nestjs/schedule |
 | Pico Firmware | MicroPython | — | Microdot (web) — announce and polling HTTP ride the standard `usocket` stack |
-| Published Image & Compose (`mushpi-ops`) | Dockerfile | Docker Compose | GitHub Actions publish workflows, Buildx, GHCR |
+| Published Image & Compose (`mushpi-hub`) | Dockerfile | Docker Compose | GitHub Actions publish workflows, Buildx, GHCR |
 
 ## Development-Time Alternative
 

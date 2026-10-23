@@ -3,7 +3,7 @@ title: "Releases"
 description: "What a Mushroom Pi version number means, and what has been released."
 ---
 
-Mushroom Pi versions three things independently, then bundles them. This page explains what each number means so you can read a version and know what it promises. It keeps the reader-facing version of the rules; the normative authority for the full semantics is [`mushpi-ops/MAINTAINING.md` (§ Version & Release Semantics)](https://github.com/mushroom-pi/mushpi-ops/blob/dev/MAINTAINING.md).
+Mushroom Pi versions three things independently, then bundles them. This page explains what each number means so you can read a version and know what it promises. It keeps the reader-facing version of the rules; the normative authority for the full semantics is [`mushpi-hub/MAINTAINING.md` (§ Version & Release Semantics)](https://github.com/mushroom-pi/mushpi-hub/blob/dev/MAINTAINING.md).
 
 ## Three version axes
 
@@ -29,7 +29,7 @@ One rule applies to every version string: it must be a strict `MAJOR.MINOR.PATCH
 
 ## The release bundle
 
-A **release** is a statement that a specific set of component versions are tested to work together. It is expressed in the release repository (`mushpi-ops`) as a git tag `vX.Y.Z` together with a committed `release.json` manifest recording the component versions and the `api_version` that release was tested against.
+A **release** is a statement that a specific set of component versions are tested to work together. It is expressed in the release repository (`mushpi-hub`) as a git tag `vX.Y.Z` together with a committed `release.json` manifest recording the component versions and the `api_version` that release was tested against.
 
 The bundle's counter is a **release counter, not a SemVer promise**: it does not describe API compatibility the way a component's SemVer does — it simply records which release this is. It is independent of every component version, is not required to exceed any of them, and moves on its own schedule. Once shipped, a bundle version is never moved backward.
 
@@ -45,4 +45,4 @@ It is deliberately **unlike the server's `/v1/` URI prefix**. That prefix versio
 
 Nothing, yet. No repository has any tag or release, no container image has ever been published, and the versioning path described above has not been exercised. The version numbers visible in the code are simply where each version field currently sits — not a statement that any combination has been tested to work together.
 
-Current values live in the release manifest, `release.json` in `mushpi-ops`, which is the authority for the numbers; this page deliberately does not restate them because they change.
+Current values live in the release manifest, `release.json` in `mushpi-hub`, which is the authority for the numbers; this page deliberately does not restate them because they change.
