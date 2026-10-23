@@ -26,6 +26,29 @@ docker compose up -d
 
 By default the stack pulls `ghcr.io/mushroom-pi/mushpi:latest` — `MUSHPI_IMAGE_TAG` defaults to `latest` in `docker-compose.yml` and is documented (commented out) in `.env.example`. Removing the override and running `docker compose pull && docker compose up -d` returns you to the newest image.
 
+## The demo's nightly reset
+
+The public demo — the same hub image running the read-only demo profile (`NODE_ENV=demo`) — resets itself every night, returning to a fresh, populated state at **03:00 host local time**. A `systemd` timer (`mushpi-demo-reset.timer`) on the demo host runs `mushpi-demo-reset.service`, which restarts both demo services. The server's demo-profile clean start clears its database and uploaded images on every demo boot, then re-seeds — that is what re-anchors the demo. After a reset:
+
+- the batch mix is ten finished, four in progress and three upcoming **for that day**
+- the readings history is regenerated
+- any changes a visitor made during the day are gone
+
+The demo's simulated behaviour is untouched by a reset — the drifting unit still drifts, and the offline unit still reads offline. There is a short, bounded downtime during the reset: the server does not answer until it has finished seeding, so a visitor never sees a partially seeded demo.
+
+The reset **never pulls a new image** — it restarts whatever is already present. Updating the demo is an explicit operator action: pull the new image and recreate the stack (or re-run the stack's start command), the same two commands as above.
+
+This reset belongs to the demo deployment only — it cannot run on a real hub. The reset script refuses to run unless the rendered compose configuration is the demo profile and the demo data directory is not the hub's data directory, so a self-hosted hub is never touched.
+
+To check or stop the schedule on the demo host:
+
+```bash
+systemctl status mushpi-demo-reset.timer              # schedule status, last and next run
+journalctl -u mushpi-demo-reset.service               # the reset's log
+cat mushpi-demo-reset.status                          # last successful reset (ISO 8601 UTC)
+sudo systemctl disable --now mushpi-demo-reset.timer  # stop the nightly reset
+```
+
 ## What this page does not document
 
 The following are **not implemented today**, so they are not documented here — none of them is a step this deployment performs:
