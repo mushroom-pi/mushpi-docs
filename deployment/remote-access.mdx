@@ -1,0 +1,93 @@
+---
+title: "Access Your Mushroom Pi Dashboard Remotely with Tailscale"
+sidebarTitle: "Remote Access"
+description: "Reach your Mushroom Pi dashboard from any device on your tailnet with Tailscale — no port forwarding, no public exposure — and get HTTPS with tailscale serve."
+---
+
+By default, the Mushroom Pi dashboard is reachable only from devices on the same local network as the hub. The recommended way to reach it from anywhere else is **Tailscale** — a private mesh VPN built on WireGuard. Your devices connect directly to each other over an encrypted tunnel: no port forwarding, nothing exposed to the public internet, and the dashboard stays reachable only from devices on your tailnet. MagicDNS gives the hub a stable hostname you can reach from any of them.
+
+## Create a free Tailscale account
+
+Sign up at [tailscale.com](https://tailscale.com) on the free **Personal** plan — you can use an email address, Google, Microsoft, GitHub, or Apple account. Once you are in, you land in the admin console at [login.tailscale.com](https://login.tailscale.com). That account is your *tailnet*: it is what you sign in with on the hub and on every device you add.
+
+## Install Tailscale on the hub
+
+1. **Install Tailscale on the hub.** Run the official install script on the Pi that hosts the Mushroom Pi container:
+
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   ```
+
+2. **Authenticate the hub to your tailnet.** Start Tailscale and follow the authentication link it prints:
+
+   The hub is usually headless — no desktop, no browser, no monitor — so the URL that `sudo tailscale up` prints does not need to be opened on the hub. Open it on any other device on your home network, such as a phone or laptop, and sign in with the account you created earlier (if that device is already signed in to Tailscale, it just asks you to confirm).
+
+   ```bash
+   sudo tailscale up
+   ```
+
+   Once you authorize the device, the hub finishes joining the tailnet on its own — no browser is ever needed on the host, and you return to the SSH session only to see the command complete. The hub is now a member of your tailnet.
+
+<Note>
+Joining the tailnet is like putting the hub on the same network as every other device on it: those devices can reach the services the hub is listening on directly, not only the dashboard — the dashboard is simply the one this guide points you at. A new tailnet's default access policy allows this between all of its devices; Tailscale's [Manage permissions using ACLs](https://tailscale.com/kb/1018/acls) documentation explains that default and how to narrow it. None of this publishes anything to the public internet — that is a separate Tailscale feature, [Tailscale Funnel](https://tailscale.com/kb/1223/funnel), which stays off unless you explicitly enable it, and this guide never does.
+</Note>
+
+### The admin console
+
+After you authorize the hub in step 2, it appears in the **Machines** list in the admin console at [login.tailscale.com](https://login.tailscale.com). Sign in with the free account you created, then approve the device from there.
+
+Where you get stuck:
+
+- **The `sudo tailscale up` link expired.** The authentication URL is short-lived. Rerun `sudo tailscale up` (or `sudo tailscale login`) and follow the fresh link.
+- **The device does not appear.** Refresh the **Machines** list — authorization is what puts it there.
+- **The MagicDNS hostname does not resolve.** Confirm MagicDNS is enabled on the **DNS** page of the admin console, and use the machine name exactly as it is listed there.
+
+## Reach the dashboard with `tailscale serve`
+
+Install Tailscale on your phone, laptop, or any other device and sign in to the same tailnet. `tailscale serve` terminates TLS for the hub's tailnet hostname and proxies requests to the dashboard's port 3000, so the same MagicDNS name is reached over `https://`:
+
+```
+https://<magicdns-hostname>
+```
+
+The hostname is the MagicDNS name Tailscale assigns to the hub — something like `raspberrypi.tail1234.ts.net`. The dashboard loads exactly as it does on your LAN.
+
+The first time you run `tailscale serve`, it prints **"Serve is not enabled on your tailnet."** and gives you a link. That is expected on a first run, not an error: open the link and follow the steps it leads to, then re-run the command. Tailscale also suggests running `sudo tailscale set --operator=$USER` once, so later `tailscale serve` commands do not need `sudo`.
+
+Enable it as one procedure. First, run `tailscale serve` in the background:
+
+```bash
+tailscale serve --bg http://localhost:3000
+```
+
+Then, in the same pass, set `APP_HTTPS_ENABLED=true` in `.env` and recreate the stack with `docker compose up -d`. The flag does not configure TLS itself — it declares that the browser-facing deployment is genuinely served over HTTPS, which makes the server send the HSTS header and the CSP `upgrade-insecure-requests` directive.
+
+**Set the flag `true` only together with serve — the two are one indivisible step.** On a plain-HTTP deployment those directives make the browser rewrite the dashboard's own asset URLs to `https://`, which renders a blank page. Keep `APP_HTTPS_ENABLED` at `false` whenever the dashboard is served over plain HTTP.
+
+<Note>
+Behind `tailscale serve` the server does not trust proxy headers, so every household client shares one rate-limit bucket. Leave `MAX_REQUESTS` / `MAX_REQUESTS_TIME` unset behind the proxy unless a shared budget is what you intend — see [Rate limiting](/deployment/environment#rate-limiting).
+</Note>
+
+<Note>
+MagicDNS assigns a stable hostname to every device on the tailnet. It is enabled in the Tailscale admin console (on by default for new accounts), and each device's name is listed there.
+</Note>
+
+## The plain HTTP path
+
+Before you enable `tailscale serve`, the dashboard is reachable over plain HTTP at:
+
+```
+http://<magicdns-hostname>:3000
+```
+
+This works immediately after installing Tailscale and authenticating the hub — no serve needed — and it uses the same `<hostname>:3000` form the dashboard uses on your LAN, so it is a useful "does the mesh work at all" check before you set up HTTPS. It is not the recommended way to use the dashboard remotely; enable `tailscale serve` for that.
+
+## When remote access is down
+
+Remote access rides the host's Wi-Fi link and needs a reachable path to Tailscale's coordination server, so when your home internet or the host's Wi-Fi is down, the dashboard is not reachable from away. You can still reach it on the LAN, and a remote outage does not stop regulation — the hub is never in the control loop, so your units keep holding their targets. If the host's Wi-Fi is the problem, [host Wi-Fi recovery](/deployment/host-wifi-recovery) is the physical recovery path.
+
+## Headscale — the self-hosted escape hatch
+
+Tailscale's coordination service is hosted by Tailscale. For anyone who would rather not use that hosted service, [Headscale](https://github.com/juanfont/headscale) is an open-source, self-hosted implementation of the same control plane — your devices still form a WireGuard mesh, but the coordinator runs on a server you control. It is an alternative worth knowing about, not a supported Mushroom Pi setup path, and this guide does not cover installing it.
+
+Self-hosters may also choose a different remote-access approach entirely, or stay LAN-only.

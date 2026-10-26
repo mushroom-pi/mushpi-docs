@@ -16,7 +16,7 @@ The hub is three things, and only three:
 
 The hub runs on any Docker-capable single-board computer. A Raspberry Pi 3 Model B v1.2 (1 GB) is what the maintainer tests on, so that is a known-good starting point, not a requirement.
 
-For access from outside your local network, you set up Tailscale — a private, encrypted mesh that needs no port forwarding and no TLS certificates. The [remote-access guide](/configuration/remote-access) covers it.
+For access from outside your local network, you set up Tailscale — a private, encrypted mesh that needs no port forwarding and no TLS certificates. The [remote-access guide](/deployment/remote-access) covers it.
 
 ## Prerequisites
 
@@ -90,7 +90,9 @@ docker compose logs mushpi-hub
 
 ## Validation status
 
-This deployment path has been validated against a locally built image in a build and smoke test; it has not yet been validated on the target hardware, so treat the first run on your own hub as a test.
+This deployment path has been validated on the target hardware, remote access included. On 2026-10-26 the maintainer ran the hub on a Raspberry Pi 3 with a 64-bit OS, joined it to a tailnet, enabled `tailscale serve`, and reached the dashboard over HTTPS at the MagicDNS hostname from a phone with Wi-Fi disabled — off the home LAN, over the mobile network only, and with no router changes and no port forwarding.
+
+Public-internet exposure was **not** tested: Tailscale Funnel was never enabled, and it is not part of this guide. The remote-access path serves the dashboard to your tailnet only, and nothing here validates exposing it to the open internet.
 
 One more caveat, stated plainly: `mushpi-hub:latest` **does not exist yet** — no image has been published under the new name and no `main` branch exists, so a clean-machine pull has never been tested. The clean-machine path above (`git clone` + `docker compose pull` + `up -d` with the default `MUSHPI_HUB_IMAGE_TAG`) is verified at the first `latest` publish, not before. Until that publish, the pull step cannot succeed with the default tag.
 

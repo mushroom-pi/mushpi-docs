@@ -58,6 +58,7 @@
                   "deployment/first-boot",
                   "deployment/pico-registration",
                   "deployment/updates-and-backups",
+                  "deployment/remote-access",
                   "deployment/host-wifi-recovery"
                 ]
               }
@@ -94,8 +95,7 @@
           {
             "group": "Configuration",
             "pages": [
-              "configuration/hysteresis-control",
-              "configuration/remote-access"
+              "configuration/hysteresis-control"
             ]
           },
           {
@@ -227,6 +227,10 @@
     {
       "source": "/hardware/status-indicators",
       "destination": "/pico-units/status-indicators"
+    },
+    {
+      "source": "/configuration/remote-access",
+      "destination": "/deployment/remote-access"
     }
   ],
   "navbar": {
