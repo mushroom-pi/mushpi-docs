@@ -10,10 +10,9 @@ Three regressions this repo must not cause: publishing content that is not publi
 |---|---|
 | `index.mdx` | Landing page |
 | `introduction.mdx` · `quickstart.mdx` · `system-overview.mdx` | Getting Started: what Mushroom Pi is, the first-run path, the three-tier shape |
-| `pico-units/` | The units, in two navigation groups: **usage** — `index.mdx` (how a unit runs), `unit-page.mdx`, `offline-operation.mdx`, `status-indicators.mdx` under Using Mushroom Pi → Using a Pico unit; **build** — `firmware.mdx`, `components.mdx`, `wiring.mdx`, `power.mdx` under Build & Self-Host → Setting a Pico unit up |
+| `pico-units/` | The units, in two navigation groups: **usage** — `index.mdx` (how a unit runs), `hysteresis-control.mdx` (the firmware control loop), `unit-page.mdx`, `offline-operation.mdx`, `status-indicators.mdx` under Using Mushroom Pi → Using a Pico unit; **build** — `firmware.mdx`, `components.mdx`, `wiring.mdx`, `power.mdx` under Build & Self-Host → Setting a Pico unit up |
 | `deployment/` | Deploying the hub: `sd-card-provisioning.mdx`, `self-hosting.mdx`, `environment.mdx`, `first-boot.mdx`, `pico-registration.mdx`, `updates-and-backups.mdx`, `remote-access.mdx`, `host-wifi-recovery.mdx` |
 | `dashboard/` | Using Mushroom Pi — the grower guide: `index.mdx`, `pico-units.mdx`, `recipes.mdx`, `batches.mdx`, `monitoring.mdx`, `finishing-a-batch.mdx`, `server.mdx`, `settings.mdx`, `troubleshooting.mdx` |
-| `configuration/` | `hysteresis-control.mdx` (the firmware control loop) |
 | `development/` | Contributors: `mock-pico.mdx`, `contributing.mdx` |
 | `api/` | API Reference section — `overview.mdx` only. The endpoint pages are **generated** by Mintlify from the two OpenAPI specifications, referenced by raw URL in `docs.json`: the server spec and the Pico spec, each in its own group. There is no hand-written endpoint page |
 | `docs.json` | **The site's index**: navigation tabs/groups, branding (`colors`, `appearance`, `background`, `fonts`, `logo`, `favicon`), navbar, and any OpenAPI spec references. A page not listed here is not published |

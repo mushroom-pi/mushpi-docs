@@ -49,7 +49,7 @@ The **Controls** card holds the loop switch and the two targets:
 - **Target temperature** — whole degrees, **0–50 °C**. Editable only while the loop is on.
 - **Target humidity** — whole percent, **10–90 %**. Editable only while the loop is on.
 
-What the loop *does* with a target is explained in [How the control loop works](/configuration/hysteresis-control).
+What the loop *does* with a target is explained in [How the control loop works](/pico-units/hysteresis-control).
 
 The targets and the loop switch are **saved on the unit** — once applied they survive a power cut, and the unit comes back with the loop in the state you left it and the targets you set. Hand-switching the devices is available only while the loop is **off**; the moment you turn the loop back on, it takes over again on its own schedule and drives all three devices from the targets. While the loop stays **off**, your hand-set **fan and humidifier** positions are saved too and survive a restart — the **heater** is the one exception: it always comes back **off** after a restart, for the safety reason explained on the [Firmware](/pico-units/firmware) page.
 
@@ -57,7 +57,7 @@ The targets and the loop switch are **saved on the unit** — once applied they 
 
 ## If the sensor fails
 
-A sensor fault does **not** stop the loop. The unit keeps regulating on the last good reading it saw, and it cannot tell a faulted sensor from a working one — so the relays may keep switching on a now-stale number. The page's Climate card carries this warning on the unit itself; the full reasoning is in [Sensor faults are not fail-safe](/configuration/hysteresis-control#sensor-faults-are-not-fail-safe).
+A sensor fault does **not** stop the loop. The unit keeps regulating on the last good reading it saw, and it cannot tell a faulted sensor from a working one — so the relays may keep switching on a now-stale number. The page's Climate card carries this warning on the unit itself; the full reasoning is in [Sensor faults are not fail-safe](/pico-units/hysteresis-control#sensor-faults-are-not-fail-safe).
 
 ![The Climate & outputs card — readings, relay states and sensor health](/assets/screenshots/unit-page-sta-02.png)
 

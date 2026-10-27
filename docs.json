@@ -71,6 +71,7 @@
                 "group": "Using a Pico unit",
                 "pages": [
                   "pico-units/index",
+                  "pico-units/hysteresis-control",
                   "pico-units/unit-page",
                   "pico-units/offline-operation",
                   "pico-units/status-indicators"
@@ -90,12 +91,6 @@
                   "dashboard/troubleshooting"
                 ]
               }
-            ]
-          },
-          {
-            "group": "Configuration",
-            "pages": [
-              "configuration/hysteresis-control"
             ]
           },
           {
@@ -164,6 +159,10 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/configuration/hysteresis-control",
+      "destination": "/pico-units/hysteresis-control"
+    },
     {
       "source": "/configuration/environment",
       "destination": "/deployment/environment"
