@@ -1,0 +1,41 @@
+---
+title: "Upgrading the Mushroom Pi System"
+sidebarTitle: "Upgrading"
+description: "The durable upgrade procedures: re-flash the units with a pin audit, update the mock alongside them, and bring the server up last."
+---
+
+Upgrading Mushroom Pi spans two halves that must move in a specific order. This page records the procedures that outlive any single release. In short: **re-flash the units first** (after a pin audit), **update the mock alongside them**, and **bring the server up last**. Never update the server alone.
+
+## Upgrade order: firmware and mock first, server last
+
+The unit's announce payload and poll snapshot replaced `software_version` with **`firmware_version`** (strict SemVer `MAJOR.MINOR.PATCH`, no `-rc`/`+build` suffixes) and added **`api_version`** (an integer contract generation).
+
+Because the server's validation pipe forbids unknown properties, **old firmware announcing `software_version` to a new server is rejected with 422** — and that rejection also costs the server its IP-refresh fallback for that unit. Firmware and server therefore must move together, in one order: **firmware and the mock first, the server last, never the server alone.**
+
+The server reads the `api_version` a unit reports and **judges** it against its supported range, exposing a computed three-state verdict — `compatible`, `incompatible`, or `unknown`. An out-of-range `api_version` is flagged, never rejected, so a unit is never lost.
+
+`/metrics` was removed from the server API. Anything scraping it should be removed or updated at the same time.
+
+## Re-flash the firmware and audit the pins
+
+A re-flash is required for this release. **Before flashing, audit each unit's `config.json` `pins` map for duplicate GPIO assignments.**
+
+The firmware now treats two roles sharing a GPIO in the **effective (default-merged) map** as a **fatal, terminal boot error**: it prints the conflicting GPIO and roles, holds all outputs off, starts no services, and stays in that state until a corrected `config.json` is flashed. The check runs over the `pins` object merged with the built-in defaults, so it can catch configs that were previously accepted — including a *partial* `pins` object that collides with a retained default. For example, `{"pins":{"humidifier":4}}` duplicates the default `dht: 4` and is now fatal.
+
+The reserved pins:
+
+| Pin | Why it is reserved |
+| --- | --- |
+| **GP0** | The force-provision jumper, sampled at every boot |
+| **GP23, GP24, GP25, GP29** | The CYW43439 wireless chip |
+
+The assignable set is **GP1–GP22, GP26, GP27, GP28**.
+
+This boot rule is deliberately **stricter than, and separate from**, the runtime `/setup` rule. The runtime rule allows re-assigning a device to the pin it already holds, and allows a pin freed by another device within the same request. The boot rule has no such allowances — there is no live mapping to merge against at boot, so any duplicate in the effective map is fatal. A corrected `config.json` is the only fix.
+
+Two deployment notes:
+
+- **`.svg` files are now synced by the deploy tooling**, so the favicon must upload with the rest — it is no longer skipped.
+- **No new `config.json` keys are required and no re-pairing is needed** — the existing keys and the unit's pairing to the hub are unchanged.
+
+The pin map and its validation are explained on the [Wiring](/pico-units/wiring) page; the first-run flash procedure is on [Pico firmware](/pico-units/firmware).

@@ -58,6 +58,7 @@
                   "deployment/first-boot",
                   "deployment/pico-registration",
                   "deployment/updates-and-backups",
+                  "deployment/upgrading",
                   "deployment/remote-access",
                   "deployment/host-wifi-recovery"
                 ]
@@ -111,6 +112,7 @@
                 "group": "Development",
                 "pages": [
                   "development/mock-pico",
+                  "demo-environment",
                   "development/contributing"
                 ]
               }

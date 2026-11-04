@@ -1,0 +1,40 @@
+---
+title: "The Demo Environment"
+sidebarTitle: "Demo environment"
+description: "The public read-only Mushroom Pi demo — what it is, the read-only demo profile, and the boot requirements a demo instance must meet."
+---
+
+The Mushroom Pi demo is a public, read-only instance of the hub running against **simulated** Pico units — there is nothing to flash and nothing real to control. It shows the dashboard, charts, batches and recipes with realistic data, so you can explore the system without any hardware.
+
+## The read-only demo profile
+
+A hub booted with `NODE_ENV=demo` runs the **read-only demo profile**:
+
+- **Writes return 403.** Every data-changing operation — unit registration and changes, polling, rebooting, control proxies, batches, recipes, images, and settings — is refused with `403` and the message *"This demo deployment is read-only. Nothing was changed."* Plain `GET` requests are unaffected.
+- **External unit announcements are refused.** The demo accepts Pico announcements from the server network only — the simulated unit beside the server — and refuses announcements arriving from anywhere else.
+- **Host details are withheld.** On a demo boot, the server's health and error bodies omit host details such as the operating system, CPU, disk and database path.
+
+## Boot requirements
+
+A demo boot **fails at startup by design** if its required environment is missing. Two things are mandatory when `NODE_ENV=demo`:
+
+- **`PICO_ANNOUNCE_SECRET`** — required, and the known development default is refused: a demo that kept the public development value (`mushpi-dev-secret`) would leave the announce endpoint open.
+- **Six rate-limiter values** — three request-count/time pairs:
+
+| Pair | What it paces |
+| --- | --- |
+| `VISITOR_MAX_REQUESTS` / `VISITOR_MAX_REQUESTS_TIME` | Per-visitor browse pace, across all endpoints |
+| `ABUSE_MAX_REQUESTS` / `ABUSE_MAX_REQUESTS_TIME` | Per-visitor refused-change pace (a stricter allowance for requests the read-only guard would refuse) |
+| `GLOBAL_MAX_REQUESTS` / `GLOBAL_MAX_REQUESTS_TIME` | Whole-instance backstop, across all visitors |
+
+These are always-on for the demo profile and ignored on every other boot.
+
+## Demo instances only
+
+Everything on this page is the **demo profile**. It applies to demo instances and **never** to a self-hosted production instance: a self-hosted hub does not return `403` for writes, does not refuse external announcements, and withholds no host details.
+
+## How the demo behaves
+
+The public demo resets itself every night, returning to a fresh, populated state — the details and the reset schedule are on the [Updates & backups](/deployment/updates-and-backups) page. Its simulated units are `mushpi-mock`, described on the [Mock Pico](/development/mock-pico) page.
+
+The demo environment itself is a hosted deployment — it is not part of the self-hostable suite, and self-hosters do not need it.

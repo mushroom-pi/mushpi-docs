@@ -62,13 +62,15 @@ The mock does **not** produce random noise. It simulates the same simplified thr
 - **Humidity**: drifts down → when `humidity ≤ setpoint`, humidifier ON, fan OFF (chases the target upward aggressively) → when `humidity > setpoint + hyst_hum`, fan ON, humidifier OFF (corrects overshoot) → deadband between `setpoint` and `setpoint + hyst_hum` where both are OFF (natural drift). Humidifier and fan are mutually exclusive.
 - **Temperature**: drifts down → when `temperature ≤ setpoint`, heater ON → when `temperature > setpoint`, heater OFF. No explicit hysteresis band — thermal lag in the drift rates produces natural oscillation around the setpoint.
 
-This produces the characteristic sawtooth oscillation that makes dashboards and charts look realistic and meaningful. Relay states are tracked in memory for every unit, and the REST API surface mirrors `mushpi-grow/spec/openapi.yaml` exactly, so the server uses the same code paths for mock and real units.
+This produces the characteristic sawtooth oscillation that makes dashboards and charts look realistic and meaningful. Relay states are tracked in memory for every unit, and the REST API surface mirrors `mushpi-grow/spec/openapi.yaml` exactly, so the server uses the same code paths for mock and real units. The announce payload is the firmware's current **11-key** payload — `handle`, `ip`, `mac`, `port`, `micropython_version`, `firmware_version`, `api_version`, `board`, `board_total_mem_byte`, `board_total_fs_byte`, `board_cpu_freq_mhz` — and the retired `software_version` key no longer appears anywhere in it.
 
 **Provisioning endpoints are mirrored too.** `GET /provision` serves the firmware's Wi-Fi setup form (vendored byte-identical from `app/provision.html`), and `POST /provision` answers with the firmware's connected-unit refusal — `403` with `{"ok": false, "error": "provisioning is only available in AP mode"}`. The mock has no access-point or offline path, so it deliberately cannot simulate offline operation; for that, use a real unit. See [Offline operation](/pico-units/offline-operation).
 
+Each simulated unit gets its **own MAC address** (previously every unit shared one placeholder), derived from its handle. The mock's `GET /` snapshot also carries the firmware's additive `hub` acknowledgement object — whether a hub address is configured and whether the hub accepted the most recent announce — so the unit page and the dashboard read it exactly as they would from a real unit.
+
 ## The Mock's Unit Page
 
-The mock serves the same `GET /ui` page a real unit serves — its own status-and-control page — but labelled as simulated: a **Simulated unit** banner marks the page, and the **Climate & outputs** and **Board-condition** cards carry simulated markers.
+The mock serves the same `GET /ui` page a real unit serves — its own status-and-control page — but labelled as simulated: a **Simulated unit** banner marks the page, and the **Climate & outputs** and **Board-condition** cards carry simulated markers. The page's static assets are served too, through `GET /static/<file>` (the `unit.js` script and `favicon.svg`), from a byte-identical vendored copy of the firmware's assets.
 
 The readings shown on that page are simulated and read-only — they have no controls on the page. The **write controls** work on the mock as they do on a unit, and your grower choices persist across a stop/start the way a real unit's do (see [Runtime state](#runtime-state)). The banner names the two differences from a real unit: the saved settings live in a **file, not flash** (delete the file and the unit resets to defaults), and the **PIN mapping is memory-only** — a real unit writes it to `config.json` and keeps it across reboots, whereas on the mock it is lost when the mock stops. The heater rule is the same as the device's: it always comes back **off**.
 
@@ -137,27 +139,32 @@ mushpi-mock/
 ├── LICENSE               # MIT
 ├── .python-version       # Python version pin
 ├── scripts/
-│   └── check-version-alignment.sh  # grow ⇔ mock version check (run manually)
+│   ├── check-version-alignment.sh  # grow ⇔ mock version check (run manually)
+│   ├── check-unit-page-drift.sh    # vendored page assets vs grow (exit 0/1/2)
+│   └── refresh-unit-page.sh        # re-vendor from ../mushpi-grow after a page change
 └── src/mushpi_mock/
     ├── __init__.py       # Package docstring + the mock's own __version__
     ├── VERSION           # Represented firmware version (must match grow)
     ├── main.py           # FastAPI app factory + click CLI
     ├── config.py         # Pydantic config models
-    ├── state.py          # In-memory unit state
+    ├── state.py          # In-memory unit state (represented versions, per-handle MAC, poll/announce stamps)
     ├── runtime_state.py  # Per-handle state file — setpoints, loop flag, hand-set fan/humidifier (survives a stop/start)
     ├── router.py         # All Pico API endpoints + mock-only GET /version
+    ├── unit_page.py      # Vendored page loader + mock-only render seam
+    ├── pins.py           # Reserved-GPIO rules mirrored from grow
     ├── simulation.py     # Hysteresis control-loop sensor data generator
     ├── seed.py           # Direct SQLite bulk seeding for --seed-days
-    └── announce.py       # Server announce + retry logic
+    ├── announce.py       # Server announce + retry; poll-aware re-announce watchdog
+    └── static/           # Byte-identical vendored page assets + VENDOR manifest
 ```
 
 ## Version Alignment
 
-The mock carries **two represented versions plus its own**, and the represented ones must always match the firmware they represent:
+The mock carries **two represented versions plus its own**, and the represented ones must always match the firmware they represent. The represented firmware version surfaces as `firmware_version` — in the announce payload and in `GET /` — because the retired `software_version` key no longer exists in the contract:
 
 | Version identity | Lives in | Must match | Surfaces in |
 |---|---|---|---|
-| Represented firmware version | `src/mushpi_mock/VERSION` + `state.py::_SOFTWARE_VERSION` | `mushpi-grow/app/state.py::_SOFTWARE_VERSION` | `GET /system`, `GET /`, the announce payload |
+| Represented firmware version | `src/mushpi_mock/VERSION` + `state.py::_SOFTWARE_VERSION` | `mushpi-grow/app/state.py::_SOFTWARE_VERSION` | `GET /system`, `GET /`'s `firmware_version` key, the announce payload |
 | Represented API contract version | `state.py::_API_VERSION` | `mushpi-grow/app/state.py::_API_VERSION` | `GET /`'s `api_version` key, the announce payload |
 | The mock's own service version | `pyproject.toml` `version` | nothing — independent SemVer | mock-only `GET /version` (`mock_version`) |
 
@@ -169,12 +176,20 @@ The server displays the reported version, so a mock that drifted from the firmwa
 
 `GET /version` is a mock-only route — not part of the mirrored Pico API — and returns all three versions: `mock_version`, `represented_firmware_version`, and `represented_api_version`.
 
+## Mock-only divergences
+
+The mock mirrors the firmware, but three behaviours are **deliberately mock-only** — the real firmware does **not** do them:
+
+- **A re-announce watchdog.** A unit that announced successfully but has seen no poll for **180 s** re-announces, clamped to **once per 300 s**. The real firmware announces on boot plus one retry and has no such watchdog. The mock adds it so a unit whose announced address the hub lost can recover on a demo network where mDNS does not resolve.
+- **`GET /version`.** A mock-only endpoint returning the mock's three version identities (`mock_version`, `represented_firmware_version`, `represented_api_version`). It is not part of the mirrored Pico API and never appears in the grow spec.
+- **Static-asset caching.** The mock serves `GET /static/<file>` assets with a caching header, while the firmware deliberately serves them uncached. This is a known divergence — the page does not hide it, and it is not reconciled here.
+
 ## Screenshots for the Dashboard Guide
 
 The dashboard guide on this site is illustrated with annotated screenshots showing real-looking data — unit health statuses, active batches, sensor charts, and warnings. These screenshots are captured with the mock running, connected to a local server with seeded historical data. The guide describes the production system from the grower's perspective and never mentions the mock — but the mock is the tool that makes those screenshots possible.
 
 <Note>
-`mushpi-mock` is a development and testing tool only — it does not interface with any GPIO pins, relays, or sensors. Running it in a production deployment alongside real Pico units is harmless but pointless; it will never control real hardware.
+`mushpi-mock` serves development and demo environments only — it is **not** part of the self-hostable suite, and self-hosters do not need it. It does not interface with any GPIO pins, relays, or sensors; running it in a production deployment alongside real Pico units is harmless but pointless — it will never control real hardware.
 </Note>
 
 The standalone quick-start guide lives in `mushpi-mock/README.md` in the mock repository.
