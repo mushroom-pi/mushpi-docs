@@ -1,25 +1,29 @@
 ---
 title: "Releases and Versioning"
-description: "How Mushroom Pi versions the suite, what a release is, and where the single canonical changelog lives."
+description: "How Mushroom Pi versions its components, what a release is, and where the single canonical changelog lives."
 ---
 
-Mushroom Pi ships as one versioned suite, and **GitHub Releases is its single canonical changelog**. This page explains what the version numbers mean and where to find the per-release record. It is written once and does not change from release to release — there are no per-release notes, release summaries, or "latest version" pointers hosted on this site.
+Mushroom Pi versions each component independently, and **GitHub Releases is its single canonical changelog**. This page explains what the version numbers mean and where to find the per-release record. It is written once and does not change from release to release — there are no per-release notes, release summaries, or "latest version" pointers hosted on this site.
 
-## One suite-wide version
+## Each component carries its own version
 
-The whole system — the Pico firmware (`mushpi-grow`), the server (`mushpi-server`), the dashboard (`mushpi-client`), the mock unit (`mushpi-mock`), and the release repo (`mushpi-hub`) — shares **one SemVer version**, `MAJOR.MINOR.PATCH`. When a release is cut, the five move together to the same number; none carries an independent version of its own.
+Every shipping component — the Pico firmware (`mushpi-grow`), the server (`mushpi-server`), the dashboard (`mushpi-client`), the mock unit (`mushpi-mock`), and the hub bundle (`mushpi-hub`) — carries **its own SemVer version**, `MAJOR.MINOR.PATCH`, bumped when that component changes. There is no single suite version the five must all equal: a component that did not change keeps its previous version and tag.
+
+A release is one number — recorded in `mushpi-hub/release.json` and tagged `vX.Y.Z` — that **names** the versions it ships rather than imposing a shared number. When a release is cut, only the components that changed move; the rest are carried forward unchanged.
+
+The mock unit impersonates the firmware, so its version always equals the firmware's: `mushpi-mock`'s version mirrors `mushpi-grow`'s `_SOFTWARE_VERSION`, and the hub's verify script asserts they agree. The firmware therefore lands first in any release that touches it.
 
 Every version string is a strict `MAJOR.MINOR.PATCH` — no pre-release suffixes (`-rc`) and no build metadata (`+build`).
 
 ## `api_version` is not a release number
 
-Separate from the suite version is **`api_version`** — a plain integer marking the generation of the Pico↔Server REST contract. It is bumped only when that contract breaks (an endpoint removed or renamed, an incompatible request or response shape), never for additive changes or bug fixes.
+Separate from the component versions is **`api_version`** — a plain integer marking the generation of the Pico↔Server REST contract. It is bumped only when that contract breaks (an endpoint removed or renamed, an incompatible request or response shape), never for additive changes or bug fixes, and never merely because a release is cut.
 
 The server reads the `api_version` a unit reports and **judges** it against its supported range, flagging the unit `compatible`, `incompatible`, or `unknown`. It flags an out-of-range value — it never rejects the unit. `api_version` is a contract generation, not a release and not a version of anything.
 
 ## What a release is
 
-A release is a **`v*` git tag** in the release repository (`mushpi-hub`) — for example `v0.9.0`. The single canonical per-release record is the **GitHub Release** attached to that tag: what changed, what to test, and any upgrade notes.
+A release is a **`v*` git tag** in the release repository (`mushpi-hub`) — for example `v0.9.0` — paired with the `release.json` manifest that records the release number alongside the version of each shipped component. The single canonical per-release record is the **GitHub Release** attached to that tag: what changed, what to test, and any upgrade notes.
 
 ## The changelog lives on GitHub
 
