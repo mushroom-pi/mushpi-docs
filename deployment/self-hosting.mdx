@@ -94,7 +94,7 @@ This deployment path has been validated on the target hardware, remote access in
 
 Public-internet exposure was **not** tested: Tailscale Funnel was never enabled, and it is not part of this guide. The remote-access path serves the dashboard to your tailnet only, and nothing here validates exposing it to the open internet.
 
-One more caveat, stated plainly: `mushpi-hub:latest` **does not exist yet** — no image has been published under the new name and no `main` branch exists, so a clean-machine pull has never been tested. The clean-machine path above (`git clone` + `docker compose pull` + `up -d` with the default `MUSHPI_HUB_IMAGE_TAG`) is verified at the first `latest` publish, not before. Until that publish, the pull step cannot succeed with the default tag.
+The image is real now: `ghcr.io/mushroom-pi/mushpi-hub` is published — a public, multi-arch package (`amd64` and `arm64`) with the `latest` tag plus per-release version tags. The clean-machine path above (`git clone` + `docker compose pull` + `up -d` with the default `MUSHPI_HUB_IMAGE_TAG`) pulls that `latest` tag with no registry login.
 
 ## Next steps
 
