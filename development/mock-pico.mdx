@@ -1,7 +1,7 @@
 ---
 title: "Develop Without Hardware Using the mushpi-mock Service"
 sidebarTitle: "Mock Pico"
-description: "Run mushpi-mock, a FastAPI service that simulates a Raspberry Pi Pico 2W unit, so you can develop and test Mushroom Pi without physical hardware."
+description: "Run mushpi-mock, the FastAPI service that simulates a Raspberry Pi Pico 2W unit — the same simulated units behind the public demo — to develop and test without physical hardware."
 ---
 
 `mushpi-mock` is a FastAPI service that mirrors the full `mushpi-grow` REST API — the announce endpoint, the status polling endpoint, and the relay control endpoint — responding exactly as a real Pico 2W would. The Mushroom Pi backend cannot tell the difference between a mock unit and a real one. This means you can build new server features, test dashboard flows, and experiment with recipe logic on your laptop without owning any hardware at all.
@@ -189,7 +189,7 @@ The mock mirrors the firmware, but three behaviours are **deliberately mock-only
 The dashboard guide on this site is illustrated with annotated screenshots showing real-looking data — unit health statuses, active batches, sensor charts, and warnings. These screenshots are captured with the mock running, connected to a local server with seeded historical data. The guide describes the production system from the grower's perspective and never mentions the mock — but the mock is the tool that makes those screenshots possible.
 
 <Note>
-`mushpi-mock` serves development and demo environments only — it is **not** part of the self-hostable suite, and self-hosters do not need it. It does not interface with any GPIO pins, relays, or sensors; running it in a production deployment alongside real Pico units is harmless but pointless — it will never control real hardware.
+`mushpi-mock` is a simulator, not a real Pico: it never touches GPIO pins, relays or sensors, and it will never control real hardware. It is what powers the [public demo](/try-the-demo), and it is also the tool for developing and testing against simulated units. It is **not** part of the self-hostable suite — self-hosters do not need it, and running it in a production deployment alongside real units is harmless but pointless.
 </Note>
 
 The standalone quick-start guide lives in `mushpi-mock/README.md` in the mock repository.

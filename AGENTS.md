@@ -9,15 +9,15 @@ Three regressions this repo must not cause: publishing content that is not publi
 | Path | What exists there |
 |---|---|
 | `index.mdx` | Landing page |
-| `introduction.mdx` · `quickstart.mdx` · `system-overview.mdx` | Getting Started: what Mushroom Pi is, the first-run path, the three-tier shape |
+| `introduction.mdx` · `quickstart.mdx` · `try-the-demo.mdx` · `system-overview.mdx` | Getting Started: what Mushroom Pi is, the first-run path, the public demo explainer, the three-tier shape |
 | `pico-units/` | The units, in two navigation groups: **usage** — `index.mdx` (how a unit runs), `hysteresis-control.mdx` (the firmware control loop), `unit-page.mdx`, `offline-operation.mdx`, `status-indicators.mdx` under Using Mushroom Pi → Using a Pico unit; **build** — `firmware.mdx`, `components.mdx`, `wiring.mdx`, `power.mdx` under Build & Self-Host → Setting a Pico unit up |
 | `deployment/` | Deploying the hub: `sd-card-provisioning.mdx`, `self-hosting.mdx`, `environment.mdx`, `first-boot.mdx`, `pico-registration.mdx`, `updates-and-backups.mdx`, `remote-access.mdx`, `host-wifi-recovery.mdx` |
 | `dashboard/` | Using Mushroom Pi — the grower guide: `index.mdx`, `pico-units.mdx`, `recipes.mdx`, `batches.mdx`, `monitoring.mdx`, `finishing-a-batch.mdx`, `server.mdx`, `settings.mdx`, `troubleshooting.mdx` |
-| `development/` | Contributors: `mock-pico.mdx`, `contributing.mdx` |
+| `development/` · `demo-environment.mdx` | Contributors: `mock-pico.mdx`, `contributing.mdx`; plus the demo-environment operator page at root level, which sits in the Development nav group |
 | `api/` | API Reference section — `overview.mdx` only. The endpoint pages are **generated** by Mintlify from the two OpenAPI specifications, referenced by raw URL in `docs.json`: the server spec and the Pico spec, each in its own group. There is no hand-written endpoint page |
 | `docs.json` | **The site's index**: navigation tabs/groups, branding (`colors`, `appearance`, `background`, `fonts`, `logo`, `favicon`), navbar, and any OpenAPI spec references. A page not listed here is not published |
 | `logo/` · `favicon.svg` | Brand assets |
-| `assets/screenshots/` | Real-unit captures: the unit page's five, `unit-page-sta-01.png`…`-04.png` and `-06.png` (there is no `-05`; that duplicate was removed), referenced from `pico-units/unit-page.mdx`; and the three provisioning captures — `provisioning-page-01.png` (the `/provision` form) and `provisioning-instructions-01.png`/`-02.png` (a phone joining the unit's access point before and after) — referenced from `pico-units/offline-operation.mdx` |
+| `assets/screenshots/` | Product captures: the unit page's five, `unit-page-sta-01.png`…`-04.png` and `-06.png` (there is no `-05`; that duplicate was removed), referenced from `pico-units/unit-page.mdx`; the three provisioning captures — `provisioning-page-01.png` (the `/provision` form) and `provisioning-instructions-01.png`/`-02.png` (a phone joining the unit's access point before and after) — referenced from `pico-units/offline-operation.mdx`; and the demo dashboard — `mushpi-demo-01.png` (the populated public demo, six simulated units) — referenced from `try-the-demo.mdx` |
 | `style.css` | Global stylesheet Mintlify injects into every page — navbar logo sizing and the desktop header/TOC geometry that follows from it |
 | `.mintignore` | Files Mintlify must not render |
 | `.atlas-analysis.json` | Atlas code-generation artifact — see `REFERENCE.md` |

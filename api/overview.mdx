@@ -42,7 +42,7 @@ The notable error responses on the server API:
 |---|---|
 | `426 Upgrade Required` | The deployment sets `APP_SECRET` and the request is missing the `Authorization: Bearer <APP_SECRET>` header — or carries the wrong value. See [Authentication](#authentication). |
 | `429 Too Many Requests` | Rate limiting is enabled (`MAX_REQUESTS` / `MAX_REQUESTS_TIME`) and the client exceeded its request budget for the window. See [Server environment variables](/deployment/environment). |
-| `403 Forbidden` | **Only on demo deployments** (`NODE_ENV=demo`). A demo deployment is read-only: every data-changing operation — unit registration and changes, polling, rebooting, control proxies, batches, recipes, recipe and batch images, and settings changes — is refused with `403 Forbidden` and the message *"This demo deployment is read-only. Nothing was changed."* Nothing changes. Plain `GET` requests and `POST /v1/pico-units/announce` are unaffected. A self-hosted hub that has not enabled the demo environment is never affected and never returns `403`. |
+| `403 Forbidden` | **Only on demo deployments** (`NODE_ENV=demo`). A demo deployment is read-only: every data-changing operation — unit registration and changes, polling, rebooting, control proxies, batches, recipes, recipe and batch images, and settings changes — is refused with `403 Forbidden` and the message *"Sorry: this demo version of Mushroom Pi is read-only"*. Nothing changes. Plain `GET` requests and `POST /v1/pico-units/announce` are unaffected. A self-hosted hub that has not enabled the demo environment is never affected and never returns `403`. |
 
 ## Interactive docs
 

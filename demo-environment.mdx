@@ -6,11 +6,13 @@ description: "The public read-only Mushroom Pi demo — what it is, the read-onl
 
 The Mushroom Pi demo is a public, read-only instance of the hub running against **simulated** Pico units — there is nothing to flash and nothing real to control. It shows the dashboard, charts, batches and recipes with realistic data, so you can explore the system without any hardware.
 
+What a visitor sees is explained on [Try the demo](/try-the-demo); this page is the operator and contributor view of the same instance.
+
 ## The read-only demo profile
 
 A hub booted with `NODE_ENV=demo` runs the **read-only demo profile**:
 
-- **Writes return 403.** Every data-changing operation — unit registration and changes, polling, rebooting, control proxies, batches, recipes, images, and settings — is refused with `403` and the message *"This demo deployment is read-only. Nothing was changed."* Plain `GET` requests are unaffected.
+- **Writes return 403.** Every data-changing operation — unit registration and changes, polling, rebooting, control proxies, batches, recipes, images, and settings — is refused with `403` and the message *"Sorry: this demo version of Mushroom Pi is read-only"*. Plain `GET` requests are unaffected.
 - **External unit announcements are refused.** The demo accepts Pico announcements from the server network only — the simulated unit beside the server — and refuses announcements arriving from anywhere else.
 - **Host details are withheld.** On a demo boot, the server's health and error bodies omit host details such as the operating system, CPU, disk and database path.
 
