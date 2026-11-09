@@ -144,7 +144,7 @@ mushpi-mock/
 │   └── refresh-unit-page.sh        # re-vendor from ../mushpi-grow after a page change
 └── src/mushpi_mock/
     ├── __init__.py       # Package docstring + the mock's own __version__
-    ├── VERSION           # Represented firmware version (must match grow)
+    ├── VERSION           # Mock's own release version (tag-guarded; NOT the simulated firmware version)
     ├── main.py           # FastAPI app factory + click CLI
     ├── config.py         # Pydantic config models
     ├── state.py          # In-memory unit state (represented versions, per-handle MAC, poll/announce stamps)
@@ -160,21 +160,21 @@ mushpi-mock/
 
 ## Version Alignment
 
-The mock carries **one version identity equal to the firmware's** plus the represented API contract version — both must match what the firmware reports. Because the mock impersonates firmware, it has no separate tool SemVer of its own: its `pyproject.toml` `version` equals the firmware it represents. The represented firmware version surfaces as `firmware_version` — in the announce payload and in `GET /` — because the retired `software_version` key no longer exists in the contract:
+The mock carries **two version identities** plus the represented API contract version. Its **own release version** (`pyproject.toml` `version` and `src/mushpi_mock/VERSION`) tracks its packaging and image tag; the **firmware version it simulates** (`state.py::_SOFTWARE_VERSION`) always equals the real firmware's. The two are independent — the mock's own version **may lead** the firmware version it simulates. The represented firmware version surfaces as `firmware_version` — in the announce payload and in `GET /` — because the retired `software_version` key no longer exists in the contract:
 
 | Version identity | Lives in | Must match | Surfaces in |
 |---|---|---|---|
-| Represented firmware version | `src/mushpi_mock/VERSION` + `state.py::_SOFTWARE_VERSION` | `mushpi-grow/app/state.py::_SOFTWARE_VERSION` | `GET /system`, `GET /`'s `firmware_version` key, the announce payload |
+| Mock's own release version | `pyproject.toml` `version` + `src/mushpi_mock/VERSION` | each other, and this repo's `v*` tag | mock-only `GET /version` (`mock_version`), the published image tag |
+| Simulated firmware version | `state.py::_SOFTWARE_VERSION` | `mushpi-grow/app/state.py::_SOFTWARE_VERSION` | `GET /system`, `GET /`'s `firmware_version` key, the announce payload |
 | Represented API contract version | `state.py::_API_VERSION` | `mushpi-grow/app/state.py::_API_VERSION` | `GET /`'s `api_version` key, the announce payload |
-| The mock's own service version | `pyproject.toml` `version` | `mushpi-grow/app/state.py::_SOFTWARE_VERSION` (same value as the represented firmware version — no independent SemVer) | mock-only `GET /version` (`mock_version`) |
 
-The server displays the reported version, so a mock that drifted from the firmware it represents would silently mask a real incompatibility — when `mushpi-grow` bumps its firmware version or its Pico↔Server API contract version, the mock's `VERSION` file and `state.py` constants are updated in the same pass. Check alignment at any time with:
+The server displays the reported version, so a mock that drifted from the firmware it represents would silently mask a real incompatibility — when `mushpi-grow` bumps its firmware version or its Pico↔Server API contract version, the mock's `state.py` constants are updated in the same pass (the mock's own `VERSION` does not ride along). Check alignment at any time with:
 
 ```bash
 ./scripts/check-version-alignment.sh
 ```
 
-`GET /version` is a mock-only route — not part of the mirrored Pico API — and returns three fields: `mock_version`, `represented_firmware_version`, and `represented_api_version`. `mock_version` and `represented_firmware_version` always carry the same value — the mock has no version apart from the firmware it emulates — and the two fields stay separate only so a demo can tell "which tool is this" from "which firmware does it emulate".
+`GET /version` is a mock-only route — not part of the mirrored Pico API — and returns three fields: `mock_version`, `represented_firmware_version`, and `represented_api_version`. `mock_version` is the mock's own release version and `represented_firmware_version` is the firmware version it simulates; the two may differ when the mock ships ahead of the firmware.
 
 ## Mock-only divergences
 

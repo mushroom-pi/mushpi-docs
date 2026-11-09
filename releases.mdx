@@ -11,7 +11,7 @@ Every shipping component — the Pico firmware (`mushpi-grow`), the server (`mus
 
 A release is one number — recorded in `mushpi-hub/release.json` and tagged `vX.Y.Z` — that **names** the versions it ships rather than imposing a shared number. When a release is cut, only the components that changed move; the rest are carried forward unchanged.
 
-The mock unit impersonates the firmware, so its version always equals the firmware's: `mushpi-mock`'s version mirrors `mushpi-grow`'s `_SOFTWARE_VERSION`, and the hub's verify script asserts they agree. The firmware therefore lands first in any release that touches it.
+The mock unit carries **two version identities**. Its **own release version** — `mushpi-mock`'s `pyproject.toml` and `VERSION` — tracks its packaging and image tag, and its **simulated firmware version** — `state.py::_SOFTWARE_VERSION` — always equals the real `mushpi-grow` firmware version. The two are independent: the mock's own version **may lead the firmware version it simulates**, so a mock release can ship a tool change while the firmware stands still. The hub's verify script asserts each against its own source — `firmware` against grow's `_SOFTWARE_VERSION` and `mock` against the mock's `VERSION` — never against each other.
 
 Every version string is a strict `MAJOR.MINOR.PATCH` — no pre-release suffixes (`-rc`) and no build metadata (`+build`).
 
