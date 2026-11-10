@@ -42,7 +42,7 @@ The public demo — the same hub image running the read-only demo profile (`NODE
 - the readings history is regenerated
 - any changes a visitor made during the day are gone
 
-The demo's simulated behaviour is untouched by a reset — the drifting unit still drifts, and the offline unit still reads offline. There is a short, bounded downtime during the reset: the server does not answer until it has finished seeding, so a visitor never sees a partially seeded demo.
+The demo's simulated behaviour is untouched by a reset — the drifting unit still drifts, and the offline unit still reads offline. There is a short, bounded downtime during the reset: the server does not answer until it has finished seeding, so a visitor never sees a partially seeded demo — through the public link they see a page saying the demo is coming back instead of the dashboard, which returns by itself once seeding finishes.
 
 The reset **never pulls a new image** — it restarts whatever is already present. Updating the demo is an explicit operator action: pull the new image and recreate the stack (or re-run the stack's start command), the same two commands as above.
 
