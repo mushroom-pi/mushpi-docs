@@ -9,35 +9,40 @@ flowchart TB
 
     subgraph MUSHROOM_PI["🍄 Mushroom Pi System"]
         direction LR
-        SYSTEM["Automated humidity & temperature<br/>control for mushroom growing"]
+        UNIT["🌱 Pico Unit<br/><i>Self-contained climate controller —<br/>serves its own status-and-control page</i>"]
+        HUB["🖥️ Hub & Web Dashboard<br/><i>Optional — aggregates units, stores readings,<br/>batches & recipes</i>"]
     end
 
     ENVIRONMENT{{"🌿 Growing Environment<br/><i>Physical grow space with<br/>temperature & humidity conditions</i>"}}
 
-    GROWER -->|"Views data, sets targets,<br/>manages batches via web dashboard"| SYSTEM
-    SYSTEM -->|"Controls humidifier, fan,<br/>heater via relay-driven actuators"| ENVIRONMENT
-    ENVIRONMENT -->|"Provides temperature & humidity<br/>readings via DHT11 sensor"| SYSTEM
+    GROWER -->|"Hub route — web dashboard:<br/>history, batches, recipes,<br/>every unit in one place"| HUB
+    GROWER -.->|"Direct — the unit's own page, no hub in between:<br/>readings, targets, loop, devices, pins"| UNIT
+    HUB -->|"Polls readings · proxies control"| UNIT
+    UNIT -->|"Controls humidifier, fan,<br/>heater via relay-driven actuators"| ENVIRONMENT
+    ENVIRONMENT -->|"Provides temperature & humidity<br/>readings via DHT11 sensor"| UNIT
 
     classDef user fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef grow fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef server fill:#f59e0b,stroke:#d97706,color:#111
     classDef ext fill:#ef4444,stroke:#dc2626,color:#fff
-    classDef system fill:#3b82f6,stroke:#1d4ed8,color:#fff
 
     class GROWER user
+    class UNIT grow
+    class HUB server
     class ENVIRONMENT ext
-    class SYSTEM system
 
     style MUSHROOM_PI fill:#1e293b,stroke:#475569,color:#e2e8f0
 ```
 
 ## Narrative
 
-The Mushroom Pi system automates climate control for mushroom cultivation. A **grower** interacts through a web dashboard to monitor conditions, set temperature/humidity targets, and manage cultivation batches.
+The Mushroom Pi system automates climate control for mushroom cultivation. A **grower** reaches it two ways. Through the **hub's web dashboard** — the hub route — they monitor conditions, browse reading history, set temperature/humidity targets, and manage batches and recipes across every unit. Directly, through **each unit's own status-and-control page**, they read that unit's live climate readings and relay states, set its target temperature and humidity, toggle its control loop, hand-switch the humidifier, fan and heater, remap its GPIO pins, and reboot it — all served by the unit itself, with no hub in between.
 
-The system reads environmental data (temperature, humidity) from a DHT11 sensor and controls three actuators — a humidifier, a fan, and a heating mat — via relay switches running a hysteresis-based control loop.
+Each unit reads environmental data (temperature, humidity) from a DHT11 sensor and controls three actuators — a humidifier, a fan, and a heating mat — via relay switches running a hysteresis-based control loop. The hub is never in that loop: it polls each unit for readings and proxies control changes, but the unit decides and actuates on its own.
 
-Multiple Pico 2W units can be deployed, each controlling its own growing environment. The central server polls each unit, stores historical readings, and serves the data to the dashboard.
+Multiple Pico 2W units can be deployed, each controlling its own growing environment — and each works standalone, with no hub at all. The central server polls each unit, stores historical readings, and serves the data to the dashboard.
 
 ### External systems
 
 - **Growing Environment**: The physical space. Not a software system — it's the real-world conditions the sensors measure and the actuators affect.
-- **Grower**: The human operator. No direct system integration — interacts solely through the web dashboard.
+- **Grower**: The human operator. Reaches the system two ways — the hub's web dashboard (history, batches, recipes), and each unit's own page directly (live readings, targets, loop, devices, pins). Neither route requires the other: a unit's page works with no hub configured.

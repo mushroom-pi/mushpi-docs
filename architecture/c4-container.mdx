@@ -16,22 +16,31 @@ flowchart LR
 
         DB[("🗄️ Database<br/><b>SQLite</b><br/>Readings, batches,<br/>recipes, Pico metadata,<br/>settings")]
 
-        PICO["🌱 Pico Firmware<br/><b>MicroPython, Pico 2W</b><br/>Sensor reading, relay<br/>control, hysteresis loop"]
+        subgraph PICO["🌱 Pico Firmware [1..n]<br/><b>MicroPython, Pico 2W</b><br/>one per grow space"]
+            direction TB
+            UI["🖼️ Status-and-control page<br/><b>GET / · GET /ui</b><br/>the unit's own UI — readings,<br/>targets, loop, devices, pins"]
+            REST[/"🌐 Firmware REST API<br/><b>port 5000 · both modes</b><br/>JSON snapshot + control endpoints"/]
+            LOOP["🎮 Control loop<br/>DHT11 read → relay drive<br/>hysteresis — runs in both modes"]
+        end
     end
 
     ENVIRONMENT{{"🌿 Growing Environment<br/><i>Physical grow space</i>"}}
 
-    GROWER -->|"Uses<br/>HTTP"| CLIENT
+    GROWER -->|"Hub route — web dashboard<br/>HTTP"| CLIENT
+    GROWER -.->|"Direct — the unit's own page,<br/>no hub in between<br/>HTTP"| UI
     CLIENT -->|"Consumes REST API<br/>JSON/HTTP<br/><i>incl. on-demand poll</i>"| SERVER
     SERVER -->|"Reads/writes<br/>SQLite"| DB
-    SERVER -->|"Polls sensor data (cron + on-demand)<br/>sends control commands<br/>REST/HTTP"| PICO
-    PICO -->|"Reads sensor, controls<br/>actuators via GPIO"| ENVIRONMENT
-    ENVIRONMENT -->|"Provides temperature &<br/>humidity via DHT11"| PICO
+    SERVER -->|"Polls readings & proxies control —<br/>every unit's REST API<br/>REST/HTTP"| REST
+    UI -->|"page consumes the unit's own<br/>REST API<br/>HTTP"| REST
+    REST -->|"applies targets, loop switch,<br/>device switches"| LOOP
+    LOOP -->|"Reads sensor, controls<br/>actuators via GPIO"| ENVIRONMENT
+    ENVIRONMENT -->|"Provides temperature &<br/>humidity via DHT11"| LOOP
 
     classDef user fill:#8b5cf6,stroke:#7c3aed,color:#fff
     classDef client fill:#10b981,stroke:#059669,color:#fff
     classDef server fill:#f59e0b,stroke:#d97706,color:#111
     classDef db fill:#f97316,stroke:#ea580c,color:#fff
+    classDef page fill:#6366f1,stroke:#4f46e5,color:#fff
     classDef grow fill:#3b82f6,stroke:#1d4ed8,color:#fff
     classDef ext fill:#ef4444,stroke:#dc2626,color:#fff
 
@@ -39,15 +48,18 @@ flowchart LR
     class CLIENT client
     class SERVER server
     class DB db
-    class PICO grow
+    class REST page
+    class UI page
+    class LOOP grow
     class ENVIRONMENT ext
 
     style MUSHROOM_PI fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style PICO fill:#e0e7ff,stroke:#6366f1,color:#1e293b
 ```
 
 ## Narrative
 
-The runtime tiers run on a single hub machine — the hub runs on any Docker-capable single-board computer, and a Raspberry Pi 3 Model B v1.2 (1 GB) is what the maintainer tests on, so that is a known-good starting point, not a requirement. The dashboard and the API ship together in one published container image, serving both on port 3000.
+The **hub-side tiers** — the web dashboard, the backend API and the SQLite database — run together on one machine, the hub: any Docker-capable single-board computer, with a Raspberry Pi 3 Model B v1.2 (1 GB) as the maintainer's tested reference — a known-good starting point, not a requirement. Each **Pico unit** is a separate device in its own grow space, not part of that machine. The dashboard and the API ship together in one published container image, serving both on port 3000.
 
 ### Web Dashboard (`mushpi-client`)
 React 19 single-page application served from the hub's container — the same image and port 3000 as the backend API. Consumes the server's OpenAPI spec via auto-generated TypeScript client. Never talks to Pico units directly. Triggers on-demand Pico polls on page navigation and after control mutations for live hardware feedback.
@@ -62,7 +74,9 @@ NestJS 11 REST API running inside the hub's container. Six responsibilities:
 6. **Settings**: Provides `GET /v1/settings` and `PATCH /v1/settings` for timezone configuration. A global interceptor (`TimezoneInterceptor`) converts all `Date` instances and ISO-8601 UTC strings in API responses to the configured display timezone. Zero-cost passthrough when the timezone is `UTC`.
 
 ### Pico Firmware (`mushpi-grow`)
-MicroPython firmware on each Raspberry Pi Pico 2W. Runs a hysteresis-based control loop that toggles relays (humidifier, fan, heater) based on DHT11 readings vs. configured setpoints. Exposes a REST API on port 5000. Announces itself to the server on boot.
+MicroPython firmware on each Raspberry Pi Pico 2W. Runs a hysteresis-based control loop that toggles relays (humidifier, fan, heater) based on DHT11 readings vs. configured setpoints. Exposes a REST API on port 5000 **and serves its own status-and-control page** at `GET /` (alias `GET /ui`), in both modes — station and offline. Announces itself to the server on boot.
+
+**The unit page's operator set** — everything the grower can do there, with no dashboard required: read live climate readings and relay states; set the target temperature (0–50 °C) and humidity (10–90 %); toggle the control loop; hand-switch the humidifier, fan and heater while the loop is off; remap the GPIO pins; soft- or hard-reboot the unit; and, offline, provision Wi-Fi. Hub-only features — batches, recipes, reading history, and renaming or removing units — are not on this page. See [The unit's own page](/pico-units/unit-page). The hub is never in the loop that drives the relays: it polls readings and proxies control changes, but the loop runs entirely on the unit.
 
 ### Database
 Single SQLite file in the hub's bind-mounted data directory: the host directory `MUSHPI_HUB_DATA_DIR` (default `./mushpi-data`) is mounted at `/data` in the container, and the database lives there as `app.sqlite`. Stores all application data: Pico unit metadata, sensor readings, cultivation batches, recipes, and global settings.
@@ -81,6 +95,6 @@ The release/packaging repository wraps the containers above into the product a g
 
 ## Development-Time Alternative
 
-During development, demos, and screenshot capture, the **Pico Firmware** container can be substituted with `mushpi-mock` — a Python FastAPI service that mirrors the Pico REST API with hysteresis-simulated sensor data. Mock units announce themselves to the server and respond to polling identically to real Picos. From the server's perspective, there is no difference.
+During development, demos, and screenshot capture, the **Pico Firmware** container can be substituted with `mushpi-mock` — a Python FastAPI service that mirrors the Pico REST API with hysteresis-simulated sensor data, and serves the **same unit page, labelled as simulated** (a *Simulated unit* banner marks it). Mock units announce themselves to the server and respond to polling identically to real Picos. From the server's perspective, there is no difference.
 
 See [Mock Pico](/development/mock-pico) for the full mock documentation.
