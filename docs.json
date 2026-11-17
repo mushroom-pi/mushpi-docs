@@ -72,6 +72,7 @@
               {
                 "group": "Using a Pico unit",
                 "pages": [
+                  "pico-units/what-a-unit-is",
                   "pico-units/index",
                   "pico-units/hysteresis-control",
                   "pico-units/unit-page",
@@ -82,6 +83,7 @@
               {
                 "group": "Hub dashboard",
                 "pages": [
+                  "dashboard/what-the-dashboard-is",
                   "dashboard/index",
                   "dashboard/pico-units",
                   "dashboard/recipes",

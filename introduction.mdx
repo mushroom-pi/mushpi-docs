@@ -6,6 +6,85 @@ description: "Mushroom Pi is an open-source grow controller. A Raspberry Pi Pico
 
 Mushroom Pi is an open-source automated grow controller. At its heart is a Raspberry Pi Pico 2W that reads a temperature and humidity sensor and drives a humidifier, a fan, and a heater to hold your targets — and it does all of that entirely on its own, with no server, no dashboard, and no internet. The hub is what you add when you want more, not something the system depends on to work.
 
+## The growing unit
+
+```mermaid
+flowchart LR
+    grower(["👤 Grower"]):::users
+    targets["⚙️ Targets<br/>temperature · humidity"]:::config
+
+    subgraph unit["🌱 Growing unit — a Raspberry Pi Pico 2W"]
+        direction TB
+        sensor{{"🌡️ Sensor<br/>measures temperature & humidity"}}:::hw
+        loop["🎮 Control loop<br/>reads · compares · switches"]:::grow
+    end
+
+    humid{{"💧 Humidifier"}}:::hw
+    fan{{"🌀 Fan"}}:::hw
+    heater{{"🔥 Heater"}}:::hw
+
+    grower -->|"sets"| targets
+    targets -->|"saved on the unit"| loop
+    sensor -->|"readings"| loop
+    loop -->|"ON to increase humidity"| humid
+    loop -->|"ON to decrease humidity"| fan
+    loop -->|"ON to increase temperature"| heater
+
+    classDef users fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef config fill:#6b7280,stroke:#4b5563,color:#fff
+    classDef grow fill:#6366f1,stroke:#4f46e5,color:#fff
+    classDef hw fill:#ef4444,stroke:#dc2626,color:#fff
+
+    style unit fill:#e0e7ff,stroke:#6366f1,color:#1e293b
+```
+
+*A growing unit reads its sensor and switches three devices to hold the temperature and humidity you set — entirely on its own.*
+
+One unit is the whole product for a single grow space. It reads its sensor on its own loop, switches the humidifier, the fan and the heater toward the targets you set, and never needs a server, a dashboard or the internet to do any of it. For the full picture — what it senses, what it switches, how it decides, and how it behaves with no network — read [What a growing unit is](/pico-units/what-a-unit-is).
+
+## The hub
+
+```mermaid
+flowchart
+    grower(["👤 Grower"]):::users
+
+    subgraph hub["🖥️ Self-hosted hub"]
+        direction TB
+        dash["📈 Dashboard<br/>every unit on one screen"]:::client
+        server["🖥️ Server<br/>polls · stores · relays"]:::server
+        store[("🗄️ Store<br/>readings · batches · recipes")]:::db
+    end
+
+    subgraph grow["🌱 Growing environment"]
+        direction TB
+        unit1{{"📡 Unit 1"}}:::unit
+        unit2{{"📡 Unit 2"}}:::unit
+        unit3{{"📡 Unit 3"}}:::unit
+        unitn{{"📡 Unit n"}}:::unit
+        unit1 ~~~ unit3
+        unit2 ~~~ unitn
+    end
+
+    grower -->|"opens & controls every unit from here"| dash
+    dash <-->|"reads & writes"| server
+    server -->|"saves readings, batches, recipes"| store
+    server -->|"polls each unit<br/>about once a minute"| grow
+    server -.->|"sends target & control changes"| grow
+
+    classDef users fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    classDef client fill:#10b981,stroke:#059669,color:#fff
+    classDef server fill:#f59e0b,stroke:#d97706,color:#111
+    classDef db fill:#f97316,stroke:#ea580c,color:#fff
+    classDef unit fill:#6366f1,stroke:#4f46e5,color:#fff
+
+    style hub fill:#fef3c7,stroke:#f59e0b,color:#1e293b
+    style grow fill:#e0e7ff,stroke:#6366f1,color:#1e293b
+```
+
+*Several units report to one self-hosted hub, which saves their readings and gives you one place to control them all — while each unit keeps regulating on its own.*
+
+The hub is what you add on top, never something a unit depends on. It polls each unit about once a minute, saves every reading, and gives you a single dashboard for all of your units — plus batches and recipes. Changing a target from the dashboard sends it to the unit, which applies it and keeps regulating on its own. For the full picture — which units it shows, what it stores, and what it does not do — read [What the dashboard is](/dashboard/what-the-dashboard-is).
+
 ## The three ways of working
 
 Mushroom Pi works the same way at its core in every setup: a Pico unit reads its sensor and drives its relays against the targets it holds. What changes is where you look at it.
@@ -18,7 +97,7 @@ The detail — exactly what you get in each mode and what stays hub-only — is 
 
 ## What every unit does
 
-- **Environmental control** — a relay-based hysteresis control loop runs on the unit, holding temperature and humidity near your targets. The hub is never in the control path.
+- **Environmental control** — a relay-based control loop runs on the unit, holding temperature and humidity near your targets. The hub is never in the control path.
 - **Its own page** — every unit serves a page showing live readings, relay states, and controls, reachable with no hub, no sign-in, and no internet.
 - **Settings that stick** — the targets and the control-loop switch are saved on the unit, so they survive a power cut and are restored on the next boot.
 - **Offline operation** — with no Wi-Fi at all, the unit runs its own open access point and keeps regulating; you reach it from any phone or laptop.
@@ -45,3 +124,5 @@ If you run a hub, the unit announces itself to it, the hub polls the unit every 
 - [Quickstart](/quickstart) — run your first unit (and, optionally, the hub).
 - [System overview](/system-overview) — how the firmware, server, and dashboard fit together.
 - [How a Pico unit runs](/pico-units/index) — the three ways of working, in full.
+- [What a growing unit is](/pico-units/what-a-unit-is) — the unit in pictures and plain language.
+- [What the dashboard is](/dashboard/what-the-dashboard-is) — the hub's dashboard in plain language.
