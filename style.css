@@ -3,6 +3,14 @@ img.nav-logo {
     width: auto !important;
 }
 
+/* Content images: a subtle frame so dark dashboard screenshots
+   separate from the dark page background. The navbar logo
+   (img.nav-logo) is excluded. */
+img:not(.nav-logo) {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 6px;
+}
+
 @media (min-width: 1024px) {
     img.nav-logo {
         height: 6.5rem !important;

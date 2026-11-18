@@ -18,6 +18,10 @@ The list shows one card per unit, in a grid, with pagination when you have enoug
 
 A **Refresh** icon on each card re-reads that unit, and the list itself can be refetched. A unit that is offline is dimmed, and its card shows a **Reconnect** button, which re-runs the connect flow for that unit.
 
+![The Pico Units list showing six unit cards in a grid. Each card shows the unit name and handle, a health badge, last-seen age, host address, a firmware and API-generation caption and a Monitored switch. Tent Six is dimmed and offline with a Reconnect button](/assets/screenshots/mushpi-hub-units-page-01.png)
+
+*The Pico Units list — one card per unit with health, last seen and a firmware/API caption (Mushroom Pi 0.9.1).*
+
 ## Connect a new Pico
 
 **Connect new Pico** opens a four-step wizard that discovers and provisions a unit: **Diagnose**, **Connect**, **Setup**, **Finish**. You read the unit's LED to pick the right path, join the `mushpi-provision-…` Wi-Fi network the unit broadcasts, open the provisioning page, and the wizard then watches for the new unit to appear in the list.
@@ -34,6 +38,10 @@ From here you can:
 - **Reboot** the unit — a soft reboot (faster, keeps cumulative uptime) or a hard reboot (a full power-cycle).
 - **Reconnect** the unit — shown only when it is offline.
 - **Delete** the unit — permanent, and it removes the unit's readings and configuration too.
+
+![The Reconnect Tent Six dialog open at step 1 over an offline unit's page. It asks what the Pico's LED looks like and offers LED off, three fast blinks plus pause, slow double-blink, solid on and heartbeat blink, with Back and Next buttons](/assets/screenshots/mushpi-hub-unit-page-03-reconnect.png)
+
+*The reconnect wizard, step 1 — read the unit's LED and pick what you see (Mushroom Pi 0.9.1).*
 
 Below the header, the page lays out the unit's details in cards.
 
@@ -52,3 +60,9 @@ The mapping card shows which **GPIO pin** each device uses — the DHT11 sensor,
 ### Batches
 
 The unit's own **Batches** card lists the batches that have run on this unit, with the active one marked, and a button to start a new batch directly on it.
+
+![The lower portion of a unit's own page: the Controls card with the control-loop toggle and target temperature and humidity; the Devices card showing the humidifier, fan and heater states; the PIN Mapping card listing DHT11 on GP4, humidifier on GP6, fan on GP7 and heater on GP8; and the Batches table with status chips](/assets/screenshots/mushpi-hub-unit-page-02.png)
+
+*A unit's own page, lower half — the Controls, Devices, PIN Mapping and Batches cards (Mushroom Pi 0.9.1).*
+
+Open the [public demo](https://mushroom-pi.demo.amda.dev/) to see the dashboard live, populated with sample data.

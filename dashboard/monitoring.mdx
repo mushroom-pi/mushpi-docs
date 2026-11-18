@@ -41,6 +41,10 @@ Below the cards, the Dashboard summarises the rest:
 
 A **stats row** at the top gives the totals at a glance: units (and how many are paused), active batches, total batches, and total readings.
 
+![Lower portion of the Dashboard: unit cards for Tent Four, Tent Five and Tent Six with health, temperature and humidity and active-batch chips, and below them the Active Batches, Approaching Completion and Most Used Recipes widgets with days-remaining chips](/assets/screenshots/mushpi-hub-dashboard-01.png)
+
+*The Dashboard's lower half — three unit cards and the batch and recipe widgets (Mushroom Pi 0.9.1). The warnings banner and stats row sit above this crop.*
+
 ## The Readings page
 
 Click **Readings** in the sidebar for the full history of a unit. The page has four controls:
@@ -60,6 +64,10 @@ Click **Readings** in the sidebar for the full history of a unit. The page has f
 
 The batch detail screen shows the same three tabs, but clamped to that batch's dates.
 
+![The Readings page for a unit: the unit selector, time-range buttons with Last 6h selected, the Temperature & humidity tab showing a split chart of humidity and temperature against their targets, the Devices and Control loop tabs, the 200 aggregation-points setting and the CSV button](/assets/screenshots/mushpi-hub-readings-page-01.png)
+
+*The Readings page — Last 6 h, temperature and humidity split view, with the CSV export button (Mushroom Pi 0.9.1).*
+
 ## Reading what you see
 
 **What healthy looks like:** the unit's health is **healthy**, there are no warnings, and temperature and humidity track close to the targets — small, short dips and rises either side of the target line are normal, because that is the control loop doing its job.
@@ -67,3 +75,5 @@ The batch detail screen shows the same three tabs, but clamped to that batch's d
 **What drift is worth acting on:** a reading that stays away from the target for an extended stretch, or a warning that keeps returning, is worth investigating. Check the unit first — power, sensor, and whether the devices are actually switching — before changing targets.
 
 **How the control loop responds to the targets:** the loop on the Pico reads the sensor and switches the heater, fan and humidifier to bring conditions back toward the targets you set on the batch. How far conditions may drift before it acts — the hysteresis band — is explained in [Hysteresis control](/pico-units/hysteresis-control).
+
+Open the [public demo](https://mushroom-pi.demo.amda.dev/) to see the dashboard live, populated with sample data.

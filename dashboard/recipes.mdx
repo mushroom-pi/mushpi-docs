@@ -20,7 +20,13 @@ Mushroom Pi ships with **no pre-loaded recipes**. Every recipe in your list is o
 | **Notes** | Free text, optional |
 | **Image** | One optional photo |
 
+![The detail page for the Lion's Mane on Hardwood recipe, showing its name, species, temperature and humidity targets, duration and notes, Edit and Delete buttons, and a Batches using this recipe panel with the batch and its status](/assets/screenshots/mushpi-hub-recipe-page-01.png)
+
+*A recipe's detail page — its targets and the batches using it (Mushroom Pi 0.9.1).*
+
 The **temperature target** and **humidity target** are the values the Pico unit's control loop tries to maintain: the loop switches the heater, fan and humidifier on and off to keep conditions close to them. How tightly it holds them — how far conditions may drift before the loop acts — is explained in [Hysteresis control](/pico-units/hysteresis-control).
+
+The targets are bounded: **0–50 °C** for temperature and **10–90 %** for humidity. A value outside that range is rejected until it is corrected.
 
 The **duration** matters when you start a batch: it is used to work out the batch's finish date.
 
@@ -33,6 +39,16 @@ The **duration** matters when you start a batch: it is used to work out the batc
 
 The recipe now appears in the Recipes list, and in the **Recipe** dropdown when you create a batch.
 
+![The Recipes list showing rows with columns for name, species, temperature, humidity, duration in days and created date, plus a New Recipe button and a name-column sort arrow](/assets/screenshots/mushpi-hub-recipes-page-01.png)
+
+*The Recipes list — name, species, targets, duration and created date (Mushroom Pi 0.9.1).*
+
 ## Edit or delete a recipe
 
 Open a recipe from the list to see its targets, its duration, and the batches that use it. From there you can **Edit** it or **Delete** it. Changing a recipe affects only that recipe — batches that were created from it keep their own copy of the targets, so an existing grow does not change underneath you.
+
+![The Edit Recipe dialog with a humidity target of 120 shown with a red outline and a validation message that the value must be 90 or less, the Save button disabled until the value is corrected](/assets/screenshots/mushpi-hub-recipe-page-02-edit.png)
+
+*Editing a recipe: a humidity target above 90 % is rejected until it is back in the 10–90 % range (Mushroom Pi 0.9.1).*
+
+Open the [public demo](https://mushroom-pi.demo.amda.dev/) to see the dashboard live, populated with sample data.
