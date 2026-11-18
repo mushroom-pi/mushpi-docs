@@ -1,7 +1,7 @@
 ---
 title: "Wiring Your Pico 2W: Sensor, Relays, Actuators, and Force-Provision"
 sidebarTitle: "Wiring"
-description: "Wire a DHT11 sensor, an eight-channel relay module, three 5 V actuators, and a force-provision switch to a Raspberry Pi Pico 2W — the defaults, how to remap the pins, and the low-voltage-only safety rule."
+description: "Wire a DHT11 sensor, a four-channel relay module, three 5 V actuators, and a force-provision switch to a Raspberry Pi Pico 2W — the defaults, how to remap the pins, and the low-voltage-only safety rule."
 ---
 
 The pin map on this page is a **set of defaults, not a fixed wiring**. The firmware ships with the DHT11 on **GP4** and the relays on **GP6 / GP7 / GP8**, and those assignments are configurable — you can change them in `config.json` (see [Changing the pin assignments](#changing-the-pin-assignments)). The defaults are documented first, then how to change them.
@@ -31,7 +31,7 @@ flowchart LR
         dgnd["GND"]
     end
 
-    subgraph relay["⚙️ 8-Channel Relay (SRD-05VDC)"]
+    subgraph relay["⚙️ 4-Channel Relay (SRD-05VDC)"]
         rvcc["VCC"]
         rgnd["GND"]
         rin1["IN1 (CH1)"]

@@ -90,7 +90,7 @@ For wiring and schematic diagrams, colour-code edges by signal type and include 
 | Config | ⚙️ | Monitoring | 🏥 |
 | Sensors | 🌡️ | Relay | ⚙️ |
 | Humidifier | 💧 | Fan | 🌀 |
-| Heating Mat | 🔥 | DHT11 | 🌡️ |
+| Heater | 🔥 | DHT11 | 🌡️ |
 | USB Power | ⚡ | Force-Provision | 🔘 |
 | Product owner / Tracker | 🗂️ | | |
 

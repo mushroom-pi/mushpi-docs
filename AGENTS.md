@@ -18,6 +18,7 @@ Three regressions this repo must not cause: publishing content that is not publi
 | `docs.json` | **The site's index**: navigation tabs/groups, branding (`colors`, `appearance`, `background`, `fonts`, `logo`, `favicon`), navbar, and any OpenAPI spec references. A page not listed here is not published |
 | `logo/` · `favicon.svg` | Brand assets |
 | `assets/screenshots/` | Product captures: the unit page's five, `unit-page-sta-01.png`…`-04.png` and `-06.png` (there is no `-05`; that duplicate was removed), referenced from `pico-units/unit-page.mdx`; the three provisioning captures — `provisioning-page-01.png` (the `/provision` form) and `provisioning-instructions-01.png`/`-02.png` (a phone joining the unit's access point before and after) — referenced from `pico-units/offline-operation.mdx`; and the demo dashboard — `mushpi-demo-01.png` (the populated public demo, six simulated units) — referenced from `try-the-demo.mdx` |
+| `assets/pics/` | Hardware photographs referenced from `pico-units/components.mdx`: `prototype-annotated.png` (the reference breadboard build carrying the owner's colour-coded call-out labels) and `prototype.jpg` (the same shot before annotation, EXIF-stripped) |
 | `style.css` | Global stylesheet Mintlify injects into every page — navbar logo sizing and the desktop header/TOC geometry that follows from it |
 | `.mintignore` | Files Mintlify must not render |
 | `.atlas-analysis.json` | Atlas code-generation artifact — see `REFERENCE.md` |
